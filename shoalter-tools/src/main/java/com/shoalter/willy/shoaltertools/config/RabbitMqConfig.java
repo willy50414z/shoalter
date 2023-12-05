@@ -29,8 +29,6 @@ import org.springframework.retry.support.RetryTemplate;
 public class RabbitMqConfig {
   @Autowired private ObjectMapper objectMapperWithLocalDateTimeSupport;
 
-
-
   @Bean
   public Jackson2JsonMessageConverter jsonMessageConverter() {
     return new Jackson2JsonMessageConverter(objectMapperWithLocalDateTimeSupport);

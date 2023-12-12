@@ -14,6 +14,7 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.data.redis.core.ReactiveRedisTemplate;
 import reactor.core.publisher.Mono;
@@ -21,7 +22,17 @@ import reactor.core.publisher.Mono;
 @SpringBootTest
 @Slf4j
 public class UpdateProductInfoTest {
-  @Autowired ReactiveRedisTemplate<String, String> redisTempl;
+  @Autowired
+  @Qualifier("redisIIDSTemplate")
+  ReactiveRedisTemplate<String, String> redisTempl;
+
+  @Autowired
+  @Qualifier("redisLMTemplate")
+  ReactiveRedisTemplate<String, String> redisLMTempl;
+
+  @Autowired
+  @Qualifier("redisHKTVTemplate")
+  ReactiveRedisTemplate<String, String> redisHKTVTempl;
 
   @Autowired private RabbitTemplate defaultRabbitTemplate;
 
@@ -30,18 +41,29 @@ public class UpdateProductInfoTest {
 
   private String BASIC_URL = "http://127.0.0.1:8099/s2s/v3";
 
+  // EditProduct case 10
   @Test
-  void updateProduct_testcase0001() {
+  void updateProduct_testcase0001() throws InterruptedException {
     String time = "20231207134648";
     String uuid = "iids-integration-test-testcase-0005";
     String sku = "iims-integration-test-testcase-0005";
+    String updEventKey = buildExpectedUpdateEventKey(sku, "H0000101");
 
+    redisTempl.delete("inventory:" + uuid, uuid).block();
+    redisHKTVTempl.delete(sku, updEventKey).block();
+    redisLMTempl.delete(uuid).block();
+
+    // createProduct
     defaultRabbitTemplate.convertAndSend(
         EXCHANGE, ROUTING_KEY, buildProductInfoDto_testcase0001(uuid, sku));
 
+    // updateProduct
     defaultRabbitTemplate.convertAndSend(
         EXCHANGE, ROUTING_KEY, updateProductInfoDto_testcase0001(uuid, sku));
 
+    Thread.sleep(1000L);
+
+    // 驗證IIDS資料
     Assertions.assertEquals(
         buildExpectedStockLevel_testcase0001(sku, time),
         redisTempl
@@ -62,21 +84,88 @@ public class UpdateProductInfoTest {
                   return Mono.just(entryMap);
                 })
             .block());
+
+    // 驗證HKTV資料
+    Assertions.assertEquals(
+        buildExpectedHktvStockLevel("H0000101", "0", "notSpecified", "0", uuid, time),
+        redisTempl
+            .<String, String>opsForHash()
+            .entries(sku)
+            .collectList()
+            .flatMap(
+                entries -> {
+                  Map<String, String> entryMap = new HashMap<>();
+                  for (Map.Entry<String, String> entry : entries) {
+                    if (entry.getKey().equals("H0000101_updatestocktime")) {
+                      entryMap.put(entry.getKey(), time);
+                    } else {
+                      entryMap.put(entry.getKey(), entry.getValue());
+                    }
+                  }
+                  return Mono.just(entryMap);
+                })
+            .block());
+
+    // 驗證HKTV updateEvent資料
+    Assertions.assertTrue(
+        redisTempl
+            .opsForList()
+            .range(updEventKey, 0, -1)
+            .switchIfEmpty(Mono.just(""))
+            .collectList()
+            .block()
+            .contains(buildExpectedUpdateEventValue(sku, "H0000101")));
+
+    // 驗證LM資料
+    Assertions.assertEquals(
+        buildExpectedLMStockLevel("0", "notSpecified", "0", time),
+        redisLMTempl
+            .<String, String>opsForHash()
+            .entries(uuid)
+            .collectList()
+            .flatMap(
+                entries -> {
+                  Map<String, String> entryMap = new HashMap<>();
+                  for (Map.Entry<String, String> entry : entries) {
+                    if (entry.getKey().equals("updatestocktime")) {
+                      entryMap.put(entry.getKey(), time);
+                    } else {
+                      entryMap.put(entry.getKey(), entry.getValue());
+                    }
+                  }
+                  return Mono.just(entryMap);
+                })
+            .block());
+
+    redisTempl.delete("inventory:" + uuid, uuid).block();
+    redisHKTVTempl.delete(sku, updEventKey).block();
+    redisLMTempl.delete(uuid).block();
   }
 
+  // EditProduct case 12
   @Test
-  void updateProduct_testcase0002() {
+  void updateProduct_testcase0002() throws InterruptedException {
     String time = "20231207134648";
     String uuid = "iids-integration-test-testcase-0006";
     String sku = "iims-integration-test-testcase-0006";
     String newSku = "iims-integration-test-testcase-0006-new";
+    String updEventKey = buildExpectedUpdateEventKey(sku, "H0000101");
+    String newUpdEventKey = buildExpectedUpdateEventKey(newSku, "H0000101");
 
+    redisTempl.delete("inventory:" + uuid, uuid).block();
+    redisHKTVTempl.delete(sku, newSku, updEventKey, newUpdEventKey).block();
+
+    // createProduct
     defaultRabbitTemplate.convertAndSend(
         EXCHANGE, ROUTING_KEY, buildProductInfoDto_testcase0002(uuid, sku));
 
+    // updateProduct
     defaultRabbitTemplate.convertAndSend(
         EXCHANGE, ROUTING_KEY, updateProductInfoDto_testcase0002(uuid, newSku));
 
+    Thread.sleep(1000L);
+
+    // 驗證IIDS資料
     Assertions.assertEquals(
         buildExpectedStockLevel_testcase0002(newSku, time),
         redisTempl
@@ -97,21 +186,79 @@ public class UpdateProductInfoTest {
                   return Mono.just(entryMap);
                 })
             .block());
+
+    // 驗證HKTV舊資料不存在
+    Assertions.assertFalse(redisTempl.hasKey(sku).block());
+
+    // 驗證HKTV資料
+    Assertions.assertEquals(
+        buildExpectedHktvStockLevel("H0000101", "0", "notSpecified", "0", uuid, time),
+        redisTempl
+            .<String, String>opsForHash()
+            .entries(newSku)
+            .collectList()
+            .flatMap(
+                entries -> {
+                  Map<String, String> entryMap = new HashMap<>();
+                  for (Map.Entry<String, String> entry : entries) {
+                    if (entry.getKey().equals("H0000101_updatestocktime")) {
+                      entryMap.put(entry.getKey(), time);
+                    } else {
+                      entryMap.put(entry.getKey(), entry.getValue());
+                    }
+                  }
+                  return Mono.just(entryMap);
+                })
+            .block());
+
+    // 驗證HKTV updateEvent資料
+    Assertions.assertTrue(
+        redisTempl
+            .opsForList()
+            .range(updEventKey, 0, -1)
+            .switchIfEmpty(Mono.just(""))
+            .collectList()
+            .block()
+            .contains(buildExpectedUpdateEventValue(sku, "H0000101")));
+
+    // 驗證HKTV updateEvent資料
+    Assertions.assertTrue(
+        redisTempl
+            .opsForList()
+            .range(newUpdEventKey, 0, -1)
+            .switchIfEmpty(Mono.just(""))
+            .collectList()
+            .block()
+            .contains(buildExpectedUpdateEventValue(newSku, "H0000101")));
+
+    redisTempl.delete("inventory:" + uuid, uuid).block();
+    redisHKTVTempl.delete(sku, newSku, updEventKey, newUpdEventKey).block();
   }
 
+  // EditProduct case 13
   @Test
-  void updateProduct_testcase0003() {
+  void updateProduct_testcase0003() throws InterruptedException {
     String time = "20231207134648";
     String uuid = "iids-integration-test-testcase-0007";
     String sku = "iims-integration-test-testcase-0007";
     String newSku = "iims-integration-test-testcase-0007-new";
+    String updEventKey = buildExpectedUpdateEventKey(sku, "H0000101");
+    String newUpdEventKey = buildExpectedUpdateEventKey(newSku, "H0000102");
 
+    redisTempl.delete("inventory:" + uuid, uuid).block();
+    redisHKTVTempl.delete(sku, newSku, updEventKey, newUpdEventKey).block();
+
+    // createProduct
     defaultRabbitTemplate.convertAndSend(
         EXCHANGE, ROUTING_KEY, buildProductInfoDto_testcase0003(uuid, sku));
 
+    // updateProduct
     defaultRabbitTemplate.convertAndSend(
         EXCHANGE, ROUTING_KEY, updateProductInfoDto_testcase0003(uuid, newSku));
 
+    Thread.sleep(1000L);
+
+    // 驗證IIDS資料
     Assertions.assertEquals(
         buildExpectedStockLevel_testcase0003(newSku, time),
         redisTempl
@@ -132,17 +279,73 @@ public class UpdateProductInfoTest {
                   return Mono.just(entryMap);
                 })
             .block());
+
+    // 驗證HKTV舊資料不存在
+    Assertions.assertFalse(redisTempl.hasKey(sku).block());
+
+    // 驗證HKTV資料
+    Assertions.assertEquals(
+        buildExpectedHktvStockLevel("H0000102", "0", "notSpecified", "0", uuid, time),
+        redisTempl
+            .<String, String>opsForHash()
+            .entries(newSku)
+            .collectList()
+            .flatMap(
+                entries -> {
+                  Map<String, String> entryMap = new HashMap<>();
+                  for (Map.Entry<String, String> entry : entries) {
+                    if (entry.getKey().equals("H0000102_updatestocktime")) {
+                      entryMap.put(entry.getKey(), time);
+                    } else {
+                      entryMap.put(entry.getKey(), entry.getValue());
+                    }
+                  }
+                  return Mono.just(entryMap);
+                })
+            .block());
+
+    // 驗證HKTV updateEvent資料
+    Assertions.assertTrue(
+        redisTempl
+            .opsForList()
+            .range(updEventKey, 0, -1)
+            .switchIfEmpty(Mono.just(""))
+            .collectList()
+            .block()
+            .contains(buildExpectedUpdateEventValue(sku, "H0000101")));
+
+    // 驗證HKTV updateEvent資料
+    Assertions.assertTrue(
+        redisTempl
+            .opsForList()
+            .range(newUpdEventKey, 0, -1)
+            .switchIfEmpty(Mono.just(""))
+            .collectList()
+            .block()
+            .contains(buildExpectedUpdateEventValue(newSku, "H0000102")));
+
+    redisTempl.delete("inventory:" + uuid, uuid).block();
+    redisHKTVTempl.delete(sku, newSku, updEventKey, newUpdEventKey).block();
   }
 
+  // EditProduct case 14
   @Test
-  void updateProduct_testcase0004() {
+  void updateProduct_testcase0004() throws InterruptedException {
     String time = "20231207134648";
     String uuid = "iids-integration-test-testcase-0008";
     String sku = "iims-integration-test-testcase-0008";
+    String updEventKey = buildExpectedUpdateEventKey(sku, "H0000101");
+    String newUpdEventKey = buildExpectedUpdateEventKey(sku, "H0000102");
 
+    redisTempl.delete("inventory:" + uuid, uuid).block();
+    redisHKTVTempl.delete(sku, updEventKey, newUpdEventKey).block();
+    redisLMTempl.delete(uuid).block();
+
+    // createProduct
     defaultRabbitTemplate.convertAndSend(
         EXCHANGE, ROUTING_KEY, buildProductInfoDto_testcase0004(uuid, sku));
 
+    // setting init value
     given()
         .contentType("application/json")
         .body(
@@ -156,6 +359,7 @@ public class UpdateProductInfoTest {
         .log()
         .all();
 
+    // setting init value
     given()
         .contentType("application/json")
         .body(
@@ -169,9 +373,13 @@ public class UpdateProductInfoTest {
         .log()
         .all();
 
+    // updateProduct
     defaultRabbitTemplate.convertAndSend(
         EXCHANGE, ROUTING_KEY, updateProductInfoDto_testcase0004(uuid, sku));
 
+    Thread.sleep(1000L);
+
+    // 驗證IIDS資料
     Assertions.assertEquals(
         buildExpectedStockLevel_testcase0004(sku, time),
         redisTempl
@@ -192,20 +400,98 @@ public class UpdateProductInfoTest {
                   return Mono.just(entryMap);
                 })
             .block());
+
+    // 驗證HKTV資料
+    Assertions.assertEquals(
+        buildExpectedHktvStockLevel("H0000102", "0", "notSpecified", "0", uuid, time),
+        redisTempl
+            .<String, String>opsForHash()
+            .entries(sku)
+            .collectList()
+            .flatMap(
+                entries -> {
+                  Map<String, String> entryMap = new HashMap<>();
+                  for (Map.Entry<String, String> entry : entries) {
+                    if (entry.getKey().equals("H0000102_updatestocktime")) {
+                      entryMap.put(entry.getKey(), time);
+                    } else {
+                      entryMap.put(entry.getKey(), entry.getValue());
+                    }
+                  }
+                  return Mono.just(entryMap);
+                })
+            .block());
+
+    // 驗證HKTV updateEvent資料
+    Assertions.assertTrue(
+        redisTempl
+            .opsForList()
+            .range(updEventKey, 0, -1)
+            .switchIfEmpty(Mono.just(""))
+            .collectList()
+            .block()
+            .contains(buildExpectedUpdateEventValue(sku, "H0000101")));
+
+    // 驗證HKTV updateEvent資料
+    Assertions.assertTrue(
+        redisTempl
+            .opsForList()
+            .range(newUpdEventKey, 0, -1)
+            .switchIfEmpty(Mono.just(""))
+            .collectList()
+            .block()
+            .contains(buildExpectedUpdateEventValue(sku, "H0000102")));
+
+    // 驗證LM資料
+    Assertions.assertEquals(
+        buildExpectedLMStockLevel("30", "notSpecified", "1", time),
+        redisLMTempl
+            .<String, String>opsForHash()
+            .entries(uuid)
+            .collectList()
+            .flatMap(
+                entries -> {
+                  Map<String, String> entryMap = new HashMap<>();
+                  for (Map.Entry<String, String> entry : entries) {
+                    if (entry.getKey().equals("updatestocktime")) {
+                      entryMap.put(entry.getKey(), time);
+                    } else {
+                      entryMap.put(entry.getKey(), entry.getValue());
+                    }
+                  }
+                  return Mono.just(entryMap);
+                })
+            .block());
+
+    redisTempl.delete("inventory:" + uuid, uuid).block();
+    redisHKTVTempl.delete(sku, updEventKey, newUpdEventKey).block();
+    redisLMTempl.delete(uuid).block();
   }
 
+  // EditProduct case 15
   @Test
-  void updateProduct_testcase0005() {
+  void updateProduct_testcase0005() throws InterruptedException {
     String time = "20231207134648";
     String uuid = "iids-integration-test-testcase-0009";
     String sku = "iims-integration-test-testcase-0009";
+    String updEventKey = buildExpectedUpdateEventKey(sku, "H0000101");
+    String newUpdEventKey = buildExpectedUpdateEventKey(sku, "H0000102");
 
+    redisTempl.delete("inventory:" + uuid, uuid).block();
+    redisHKTVTempl.delete(sku, updEventKey, newUpdEventKey).block();
+    redisLMTempl.delete(uuid).block();
+
+    // createProduct
     defaultRabbitTemplate.convertAndSend(
         EXCHANGE, ROUTING_KEY, buildProductInfoDto_testcase0005(uuid, sku));
 
+    // updateProduct
     defaultRabbitTemplate.convertAndSend(
         EXCHANGE, ROUTING_KEY, updateProductInfoDto_testcase0005(uuid, sku));
 
+    Thread.sleep(1000L);
+
+    // 驗證IIDS資料
     Assertions.assertEquals(
         buildExpectedStockLevel_testcase0005(sku, time),
         redisTempl
@@ -226,17 +512,88 @@ public class UpdateProductInfoTest {
                   return Mono.just(entryMap);
                 })
             .block());
+
+    // 驗證HKTV資料
+    Assertions.assertEquals(
+        buildExpectedHktvStockLevel("H0000102", "0", "notSpecified", "0", uuid, time),
+        redisTempl
+            .<String, String>opsForHash()
+            .entries(sku)
+            .collectList()
+            .flatMap(
+                entries -> {
+                  Map<String, String> entryMap = new HashMap<>();
+                  for (Map.Entry<String, String> entry : entries) {
+                    if (entry.getKey().equals("H0000102_updatestocktime")) {
+                      entryMap.put(entry.getKey(), time);
+                    } else {
+                      entryMap.put(entry.getKey(), entry.getValue());
+                    }
+                  }
+                  return Mono.just(entryMap);
+                })
+            .block());
+
+    // 驗證HKTV updateEvent資料
+    Assertions.assertTrue(
+        redisTempl
+            .opsForList()
+            .range(updEventKey, 0, -1)
+            .switchIfEmpty(Mono.just(""))
+            .collectList()
+            .block()
+            .contains(buildExpectedUpdateEventValue(sku, "H0000101")));
+
+    // 驗證HKTV updateEvent資料
+    Assertions.assertTrue(
+        redisTempl
+            .opsForList()
+            .range(newUpdEventKey, 0, -1)
+            .switchIfEmpty(Mono.just(""))
+            .collectList()
+            .block()
+            .contains(buildExpectedUpdateEventValue(sku, "H0000102")));
+
+    // 驗證LM資料
+    Assertions.assertEquals(
+        buildExpectedLMStockLevel("0", "notSpecified", "0", time),
+        redisLMTempl
+            .<String, String>opsForHash()
+            .entries(uuid)
+            .collectList()
+            .flatMap(
+                entries -> {
+                  Map<String, String> entryMap = new HashMap<>();
+                  for (Map.Entry<String, String> entry : entries) {
+                    if (entry.getKey().equals("updatestocktime")) {
+                      entryMap.put(entry.getKey(), time);
+                    } else {
+                      entryMap.put(entry.getKey(), entry.getValue());
+                    }
+                  }
+                  return Mono.just(entryMap);
+                })
+            .block());
+
+    redisTempl.delete("inventory:" + uuid, uuid).block();
+    redisHKTVTempl.delete(sku, updEventKey, newUpdEventKey).block();
+    redisLMTempl.delete(uuid).block();
   }
 
+  // EditProduct case 16
   @Test
-  void updateProduct_testcase0006() {
+  void updateProduct_testcase0006() throws InterruptedException {
     String time = "20231207134648";
     String uuid = "iids-integration-test-testcase-0010";
-    String sku = "iims-integration-test-testcase-0010";
 
+    redisTempl.delete("inventory:" + uuid, uuid).block();
+    redisLMTempl.delete(uuid).block();
+
+    // createProduct
     defaultRabbitTemplate.convertAndSend(
-        EXCHANGE, ROUTING_KEY, buildProductInfoDto_testcase0006(uuid, sku));
+        EXCHANGE, ROUTING_KEY, buildProductInfoDto_testcase0006(uuid));
 
+    // setting init value
     given()
         .contentType("application/json")
         .body(
@@ -250,6 +607,7 @@ public class UpdateProductInfoTest {
         .log()
         .all();
 
+    // setting init value
     given()
         .contentType("application/json")
         .body(
@@ -263,11 +621,15 @@ public class UpdateProductInfoTest {
         .log()
         .all();
 
+    // updateProduct
     defaultRabbitTemplate.convertAndSend(
-        EXCHANGE, ROUTING_KEY, updateProductInfoDto_testcase0006(uuid, sku));
+        EXCHANGE, ROUTING_KEY, updateProductInfoDto_testcase0006(uuid));
 
+    Thread.sleep(1000L);
+
+    // 驗證IIDS資料
     Assertions.assertEquals(
-        buildExpectedStockLevel_testcase0006(sku, time),
+        buildExpectedStockLevel_testcase0006(time),
         redisTempl
             .<String, String>opsForHash()
             .entries("inventory:" + uuid)
@@ -286,17 +648,51 @@ public class UpdateProductInfoTest {
                   return Mono.just(entryMap);
                 })
             .block());
+
+    // 驗證LM資料
+    Assertions.assertEquals(
+        buildExpectedLMStockLevel("0", "notSpecified", "0", time),
+        redisLMTempl
+            .<String, String>opsForHash()
+            .entries(uuid)
+            .collectList()
+            .flatMap(
+                entries -> {
+                  Map<String, String> entryMap = new HashMap<>();
+                  for (Map.Entry<String, String> entry : entries) {
+                    if (entry.getKey().equals("updatestocktime")) {
+                      entryMap.put(entry.getKey(), time);
+                    } else {
+                      entryMap.put(entry.getKey(), entry.getValue());
+                    }
+                  }
+                  return Mono.just(entryMap);
+                })
+            .block());
+
+    redisTempl.delete("inventory:" + uuid, uuid).block();
+    redisLMTempl.delete(uuid).block();
   }
 
+  // EditProduct case 17
   @Test
-  void updateProduct_testcase0007() {
+  void updateProduct_testcase0007() throws InterruptedException {
     String time = "20231207134648";
     String uuid = "iids-integration-test-testcase-0011";
     String sku = "iims-integration-test-testcase-0011";
+    String updEventKey = buildExpectedUpdateEventKey(sku, "H0000101");
 
+    redisTempl.delete("inventory:" + uuid, uuid).block();
+    redisHKTVTempl.delete(sku, updEventKey).block();
+    redisLMTempl.delete(uuid).block();
+
+    // createProduct
     defaultRabbitTemplate.convertAndSend(
         EXCHANGE, ROUTING_KEY, buildProductInfoDto_testcase0007(uuid, sku));
 
+    Thread.sleep(1000L);
+
+    // setting init value
     given()
         .contentType("application/json")
         .body(
@@ -310,6 +706,7 @@ public class UpdateProductInfoTest {
         .log()
         .all();
 
+    // setting init value
     given()
         .contentType("application/json")
         .body(
@@ -323,9 +720,13 @@ public class UpdateProductInfoTest {
         .log()
         .all();
 
+    // updateProduct
     defaultRabbitTemplate.convertAndSend(
-        EXCHANGE, ROUTING_KEY, updateProductInfoDto_testcase0007(uuid, sku));
+        EXCHANGE, ROUTING_KEY, updateProductInfoDto_testcase0007(uuid));
 
+    Thread.sleep(1000L);
+
+    // 驗證IIDS資料
     Assertions.assertEquals(
         buildExpectedStockLevel_testcase0007(sku, time),
         redisTempl
@@ -346,17 +747,63 @@ public class UpdateProductInfoTest {
                   return Mono.just(entryMap);
                 })
             .block());
+
+    // 驗證HKTV資料不存在
+    Assertions.assertFalse(redisTempl.hasKey(sku).block());
+
+    // 驗證HKTV updateEvent資料
+    Assertions.assertTrue(
+        redisTempl
+            .opsForList()
+            .range(updEventKey, 0, -1)
+            .switchIfEmpty(Mono.just(""))
+            .collectList()
+            .block()
+            .contains(buildExpectedUpdateEventValue(sku, "H0000101")));
+
+    // 驗證LM資料
+    Assertions.assertEquals(
+        buildExpectedLMStockLevel("100", "notSpecified", "1", time),
+        redisLMTempl
+            .<String, String>opsForHash()
+            .entries(uuid)
+            .collectList()
+            .flatMap(
+                entries -> {
+                  Map<String, String> entryMap = new HashMap<>();
+                  for (Map.Entry<String, String> entry : entries) {
+                    if (entry.getKey().equals("updatestocktime")) {
+                      entryMap.put(entry.getKey(), time);
+                    } else {
+                      entryMap.put(entry.getKey(), entry.getValue());
+                    }
+                  }
+                  return Mono.just(entryMap);
+                })
+            .block());
+
+    redisTempl.delete("inventory:" + uuid, uuid).block();
+    redisHKTVTempl.delete(sku, updEventKey).block();
+    redisLMTempl.delete(uuid).block();
   }
 
+  // EditProduct case 18
   @Test
-  void updateProduct_testcase0008() {
+  void updateProduct_testcase0008() throws InterruptedException {
     String time = "20231207134648";
     String uuid = "iids-integration-test-testcase-0012";
     String sku = "iims-integration-test-testcase-0012";
+    String updEventKey = buildExpectedUpdateEventKey(sku, "H0000101");
+    String newUpdEventKey = buildExpectedUpdateEventKey(sku, "H0000102");
 
+    redisTempl.delete("inventory:" + uuid, uuid).block();
+    redisHKTVTempl.delete(sku, updEventKey, newUpdEventKey).block();
+
+    // createProduct
     defaultRabbitTemplate.convertAndSend(
         EXCHANGE, ROUTING_KEY, buildProductInfoDto_testcase0008(uuid, sku));
 
+    // setting init value
     given()
         .contentType("application/json")
         .body(
@@ -370,6 +817,7 @@ public class UpdateProductInfoTest {
         .log()
         .all();
 
+    // setting init value
     given()
         .contentType("application/json")
         .body("[{\"uuid\":\"" + uuid + "\",\"stockLevels\":[{\"mall\":\"hktv\",\"share\":1}]}]")
@@ -380,9 +828,13 @@ public class UpdateProductInfoTest {
         .log()
         .all();
 
+    // updateProduct
     defaultRabbitTemplate.convertAndSend(
         EXCHANGE, ROUTING_KEY, updateProductInfoDto_testcase0008(uuid, sku));
 
+    Thread.sleep(1000L);
+
+    // 驗證IIDS資料
     Assertions.assertEquals(
         buildExpectedStockLevel_testcase0008(sku, time),
         redisTempl
@@ -403,17 +855,71 @@ public class UpdateProductInfoTest {
                   return Mono.just(entryMap);
                 })
             .block());
+
+    // 驗證HKTV資料
+    Assertions.assertEquals(
+        buildExpectedHktvStockLevel("H0000102", "0", "notSpecified", "0", uuid, time),
+        redisTempl
+            .<String, String>opsForHash()
+            .entries(sku)
+            .collectList()
+            .flatMap(
+                entries -> {
+                  Map<String, String> entryMap = new HashMap<>();
+                  for (Map.Entry<String, String> entry : entries) {
+                    if (entry.getKey().equals("H0000102_updatestocktime")) {
+                      entryMap.put(entry.getKey(), time);
+                    } else {
+                      entryMap.put(entry.getKey(), entry.getValue());
+                    }
+                  }
+                  return Mono.just(entryMap);
+                })
+            .block());
+
+    // 驗證HKTV updateEvent資料
+    Assertions.assertTrue(
+        redisTempl
+            .opsForList()
+            .range(updEventKey, 0, -1)
+            .switchIfEmpty(Mono.just(""))
+            .collectList()
+            .block()
+            .contains(buildExpectedUpdateEventValue(sku, "H0000101")));
+
+    // 驗證HKTV updateEvent資料
+    Assertions.assertTrue(
+        redisTempl
+            .opsForList()
+            .range(newUpdEventKey, 0, -1)
+            .switchIfEmpty(Mono.just(""))
+            .collectList()
+            .block()
+            .contains(buildExpectedUpdateEventValue(sku, "H0000102")));
+
+    redisTempl.delete("inventory:" + uuid, uuid).block();
+    redisHKTVTempl.delete(sku, updEventKey, newUpdEventKey).block();
   }
 
+  // EditProduct case 19
   @Test
-  void updateProduct_testcase0009() {
+  void updateProduct_testcase0009() throws InterruptedException {
     String time = "20231207134648";
     String uuid = "iids-integration-test-testcase-0013";
     String sku = "iims-integration-test-testcase-0013";
+    String updEventKey = buildExpectedUpdateEventKey(sku, "H0000101");
 
+    redisTempl.delete("inventory:" + uuid, uuid).block();
+    redisHKTVTempl.delete(sku, updEventKey).block();
+    redisLMTempl.delete(uuid).block();
+
+    // createProduct
     defaultRabbitTemplate.convertAndSend(
         EXCHANGE, ROUTING_KEY, buildProductInfoDto_testcase0009(uuid, sku));
 
+    Thread.sleep(1000L);
+
+    // setting init value
     given()
         .contentType("application/json")
         .body(
@@ -427,6 +933,7 @@ public class UpdateProductInfoTest {
         .log()
         .all();
 
+    // setting init value
     given()
         .contentType("application/json")
         .body(
@@ -440,9 +947,13 @@ public class UpdateProductInfoTest {
         .log()
         .all();
 
+    // updateProduct
     defaultRabbitTemplate.convertAndSend(
         EXCHANGE, ROUTING_KEY, updateProductInfoDto_testcase0009(uuid, sku));
 
+    Thread.sleep(1000L);
+
+    // 驗證IIDS資料
     Assertions.assertEquals(
         buildExpectedStockLevel_testcase0009(sku, time),
         redisTempl
@@ -463,17 +974,65 @@ public class UpdateProductInfoTest {
                   return Mono.just(entryMap);
                 })
             .block());
+
+    // 驗證HKTV資料
+    Assertions.assertEquals(
+        buildExpectedHktvStockLevel("H0000101", "150", "notSpecified", "1", uuid, time),
+        redisTempl
+            .<String, String>opsForHash()
+            .entries(sku)
+            .collectList()
+            .flatMap(
+                entries -> {
+                  Map<String, String> entryMap = new HashMap<>();
+                  for (Map.Entry<String, String> entry : entries) {
+                    if (entry.getKey().equals("H0000101_updatestocktime")) {
+                      entryMap.put(entry.getKey(), time);
+                    } else {
+                      entryMap.put(entry.getKey(), entry.getValue());
+                    }
+                  }
+                  return Mono.just(entryMap);
+                })
+            .block());
+
+    // 驗證HKTV updateEvent資料
+    Assertions.assertTrue(
+        redisTempl
+            .opsForList()
+            .range(updEventKey, 0, -1)
+            .switchIfEmpty(Mono.just(""))
+            .collectList()
+            .block()
+            .contains(buildExpectedUpdateEventValue(sku, "H0000101")));
+
+    // 驗證LM資料不存在
+    Assertions.assertFalse(redisLMTempl.hasKey(uuid).block());
+
+    redisTempl.delete("inventory:" + uuid, uuid).block();
+    redisHKTVTempl.delete(sku, updEventKey).block();
+    redisLMTempl.delete(uuid).block();
   }
 
+  // EditProduct case 20
   @Test
-  void updateProduct_testcase0010() {
+  void updateProduct_testcase0010() throws InterruptedException {
     String time = "20231207134648";
     String uuid = "iids-integration-test-testcase-0014";
     String sku = "iims-integration-test-testcase-0014";
+    String updEventKey = buildExpectedUpdateEventKey(sku, "H0000101");
 
+    redisTempl.delete("inventory:" + uuid, uuid).block();
+    redisHKTVTempl.delete(sku, updEventKey).block();
+    redisLMTempl.delete(uuid).block();
+
+    // createProduct
     defaultRabbitTemplate.convertAndSend(
         EXCHANGE, ROUTING_KEY, buildProductInfoDto_testcase0010(uuid, sku));
 
+    Thread.sleep(1000L);
+
+    // setting init value
     given()
         .contentType("application/json")
         .body(
@@ -487,6 +1046,7 @@ public class UpdateProductInfoTest {
         .log()
         .all();
 
+    // setting init value
     given()
         .contentType("application/json")
         .body(
@@ -500,9 +1060,13 @@ public class UpdateProductInfoTest {
         .log()
         .all();
 
+    // updateProduct
     defaultRabbitTemplate.convertAndSend(
         EXCHANGE, ROUTING_KEY, updateProductInfoDto_testcase0010(uuid, sku));
 
+    Thread.sleep(1000L);
+
+    // 驗證IIDS資料
     Assertions.assertEquals(
         buildExpectedStockLevel_testcase0010(sku, time),
         redisTempl
@@ -523,17 +1087,84 @@ public class UpdateProductInfoTest {
                   return Mono.just(entryMap);
                 })
             .block());
+
+    // 驗證HKTV資料
+    Assertions.assertEquals(
+        buildExpectedHktvStockLevel("H0000101", "50", "notSpecified", "0", uuid, time),
+        redisTempl
+            .<String, String>opsForHash()
+            .entries(sku)
+            .collectList()
+            .flatMap(
+                entries -> {
+                  Map<String, String> entryMap = new HashMap<>();
+                  for (Map.Entry<String, String> entry : entries) {
+                    if (entry.getKey().equals("H0000101_updatestocktime")) {
+                      entryMap.put(entry.getKey(), time);
+                    } else {
+                      entryMap.put(entry.getKey(), entry.getValue());
+                    }
+                  }
+                  return Mono.just(entryMap);
+                })
+            .block());
+
+    // 驗證HKTV updateEvent資料
+    Assertions.assertTrue(
+        redisTempl
+            .opsForList()
+            .range(updEventKey, 0, -1)
+            .switchIfEmpty(Mono.just(""))
+            .collectList()
+            .block()
+            .contains(buildExpectedUpdateEventValue(sku, "H0000101")));
+
+    // 驗證LM資料
+    Assertions.assertEquals(
+        buildExpectedLMStockLevel("0", "notSpecified", "0", time),
+        redisLMTempl
+            .<String, String>opsForHash()
+            .entries(uuid)
+            .collectList()
+            .flatMap(
+                entries -> {
+                  Map<String, String> entryMap = new HashMap<>();
+                  for (Map.Entry<String, String> entry : entries) {
+                    if (entry.getKey().equals("updatestocktime")) {
+                      entryMap.put(entry.getKey(), time);
+                    } else {
+                      entryMap.put(entry.getKey(), entry.getValue());
+                    }
+                  }
+                  return Mono.just(entryMap);
+                })
+            .block());
+
+    redisTempl.delete("inventory:" + uuid, uuid).block();
+    redisHKTVTempl.delete(sku, updEventKey).block();
+    redisLMTempl.delete(uuid).block();
   }
 
+  // EditProduct case 21
   @Test
-  void updateProduct_testcase0011() {
+  void updateProduct_testcase0011() throws InterruptedException {
     String time = "20231207134648";
     String uuid = "iids-integration-test-testcase-0015";
     String sku = "iims-integration-test-testcase-0015";
+    String updEventKey = buildExpectedUpdateEventKey(sku, "H0000101");
+    String newUpdEventKey = buildExpectedUpdateEventKey(sku, "H0000102");
 
+    redisTempl.delete("inventory:" + uuid, uuid).block();
+    redisHKTVTempl.delete(sku, updEventKey, newUpdEventKey).block();
+    redisLMTempl.delete(uuid).block();
+
+    // createProduct
     defaultRabbitTemplate.convertAndSend(
         EXCHANGE, ROUTING_KEY, buildProductInfoDto_testcase0011(uuid, sku));
 
+    Thread.sleep(1000L);
+
+    // setting init value
     given()
         .contentType("application/json")
         .body(
@@ -547,6 +1178,7 @@ public class UpdateProductInfoTest {
         .log()
         .all();
 
+    // setting init value
     given()
         .contentType("application/json")
         .body(
@@ -560,9 +1192,13 @@ public class UpdateProductInfoTest {
         .log()
         .all();
 
+    // updateProduct
     defaultRabbitTemplate.convertAndSend(
         EXCHANGE, ROUTING_KEY, updateProductInfoDto_testcase0011(uuid, sku));
 
+    Thread.sleep(1000L);
+
+    // 驗證IIDS資料
     Assertions.assertEquals(
         buildExpectedStockLevel_testcase0011(sku, time),
         redisTempl
@@ -583,20 +1219,97 @@ public class UpdateProductInfoTest {
                   return Mono.just(entryMap);
                 })
             .block());
+
+    // 驗證HKTV資料
+    Assertions.assertEquals(
+        buildExpectedHktvStockLevel("H0000102", "0", "notSpecified", "0", uuid, time),
+        redisTempl
+            .<String, String>opsForHash()
+            .entries(sku)
+            .collectList()
+            .flatMap(
+                entries -> {
+                  Map<String, String> entryMap = new HashMap<>();
+                  for (Map.Entry<String, String> entry : entries) {
+                    if (entry.getKey().equals("H0000102_updatestocktime")) {
+                      entryMap.put(entry.getKey(), time);
+                    } else {
+                      entryMap.put(entry.getKey(), entry.getValue());
+                    }
+                  }
+                  return Mono.just(entryMap);
+                })
+            .block());
+
+    // 驗證HKTV updateEvent資料
+    Assertions.assertTrue(
+        redisTempl
+            .opsForList()
+            .range(updEventKey, 0, -1)
+            .switchIfEmpty(Mono.just(""))
+            .collectList()
+            .block()
+            .contains(buildExpectedUpdateEventValue(sku, "H0000101")));
+
+    // 驗證HKTV updateEvent資料
+    Assertions.assertTrue(
+        redisTempl
+            .opsForList()
+            .range(newUpdEventKey, 0, -1)
+            .switchIfEmpty(Mono.just(""))
+            .collectList()
+            .block()
+            .contains(buildExpectedUpdateEventValue(sku, "H0000102")));
+
+    // 驗證LM資料
+    Assertions.assertEquals(
+        buildExpectedLMStockLevel("0", "notSpecified", "0", time),
+        redisLMTempl
+            .<String, String>opsForHash()
+            .entries(uuid)
+            .collectList()
+            .flatMap(
+                entries -> {
+                  Map<String, String> entryMap = new HashMap<>();
+                  for (Map.Entry<String, String> entry : entries) {
+                    if (entry.getKey().equals("updatestocktime")) {
+                      entryMap.put(entry.getKey(), time);
+                    } else {
+                      entryMap.put(entry.getKey(), entry.getValue());
+                    }
+                  }
+                  return Mono.just(entryMap);
+                })
+            .block());
+
+    redisTempl.delete("inventory:" + uuid, uuid).block();
+    redisHKTVTempl.delete(sku, updEventKey, newUpdEventKey).block();
+    redisLMTempl.delete(uuid).block();
   }
 
+  // EditProduct case 22
   @Test
-  void updateProduct_testcase0012() {
+  void updateProduct_testcase0012() throws InterruptedException {
     String time = "20231207134648";
     String uuid = "iids-integration-test-testcase-0016";
     String sku = "iims-integration-test-testcase-0016";
+    String updEventKey = buildExpectedUpdateEventKey(sku, "H0000102");
+    String newUpdEventKey = buildExpectedUpdateEventKey(sku, "H0000101");
 
+    redisTempl.delete("inventory:" + uuid, uuid).block();
+    redisHKTVTempl.delete(sku, updEventKey, newUpdEventKey).block();
+
+    // createProduct
     defaultRabbitTemplate.convertAndSend(
         EXCHANGE, ROUTING_KEY, buildProductInfoDto_testcase0012(uuid, sku));
 
+    // updateProduct
     defaultRabbitTemplate.convertAndSend(
         EXCHANGE, ROUTING_KEY, updateProductInfoDto_testcase0012(uuid, sku));
 
+    Thread.sleep(1000L);
+
+    // 驗證IIDS資料
     Assertions.assertEquals(
         buildExpectedStockLevel_testcase0012(sku, time),
         redisTempl
@@ -617,6 +1330,50 @@ public class UpdateProductInfoTest {
                   return Mono.just(entryMap);
                 })
             .block());
+
+    // 驗證HKTV資料
+    Assertions.assertEquals(
+        buildExpectedHktvStockLevel("H0000101", "0", "notSpecified", "0", uuid, time),
+        redisTempl
+            .<String, String>opsForHash()
+            .entries(sku)
+            .collectList()
+            .flatMap(
+                entries -> {
+                  Map<String, String> entryMap = new HashMap<>();
+                  for (Map.Entry<String, String> entry : entries) {
+                    if (entry.getKey().equals("H0000101_updatestocktime")) {
+                      entryMap.put(entry.getKey(), time);
+                    } else {
+                      entryMap.put(entry.getKey(), entry.getValue());
+                    }
+                  }
+                  return Mono.just(entryMap);
+                })
+            .block());
+
+    // 驗證HKTV updateEvent資料
+    Assertions.assertTrue(
+        redisTempl
+            .opsForList()
+            .range(updEventKey, 0, -1)
+            .switchIfEmpty(Mono.just(""))
+            .collectList()
+            .block()
+            .contains(buildExpectedUpdateEventValue(sku, "H0000102")));
+
+    // 驗證HKTV updateEvent資料
+    Assertions.assertTrue(
+        redisTempl
+            .opsForList()
+            .range(newUpdEventKey, 0, -1)
+            .switchIfEmpty(Mono.just(""))
+            .collectList()
+            .block()
+            .contains(buildExpectedUpdateEventValue(sku, "H0000101")));
+
+    redisTempl.delete("inventory:" + uuid, uuid).block();
+    redisHKTVTempl.delete(sku, updEventKey, newUpdEventKey).block();
   }
 
   private ProductInfoDto buildProductInfoDto_testcase0001(String uuid, String sku) {
@@ -955,7 +1712,7 @@ public class UpdateProductInfoTest {
     return stockLevelMap;
   }
 
-  private ProductInfoDto buildProductInfoDto_testcase0006(String uuid, String sku) {
+  private ProductInfoDto buildProductInfoDto_testcase0006(String uuid) {
     return ProductInfoDto.builder()
         .action("CREATE")
         .products(
@@ -975,7 +1732,7 @@ public class UpdateProductInfoTest {
         .build();
   }
 
-  private ProductInfoDto updateProductInfoDto_testcase0006(String uuid, String sku) {
+  private ProductInfoDto updateProductInfoDto_testcase0006(String uuid) {
     return ProductInfoDto.builder()
         .action("UPDATE")
         .products(
@@ -999,7 +1756,7 @@ public class UpdateProductInfoTest {
         .build();
   }
 
-  private static Map<String, String> buildExpectedStockLevel_testcase0006(String sku, String time) {
+  private static Map<String, String> buildExpectedStockLevel_testcase0006(String time) {
     Map<String, String> stockLevelMap = new HashMap<>();
     stockLevelMap.put("01_mall", "");
     stockLevelMap.put("01_qty", "50");
@@ -1038,7 +1795,7 @@ public class UpdateProductInfoTest {
         .build();
   }
 
-  private ProductInfoDto updateProductInfoDto_testcase0007(String uuid, String sku) {
+  private ProductInfoDto updateProductInfoDto_testcase0007(String uuid) {
     return ProductInfoDto.builder()
         .action("UPDATE")
         .products(
@@ -1408,6 +2165,41 @@ public class UpdateProductInfoTest {
     stockLevelMap.put("hktv_store_code", "H00001");
     stockLevelMap.put("update_time", time);
     stockLevelMap.put("create_time", time);
+    return stockLevelMap;
+  }
+
+  private static Map<String, String> buildExpectedHktvStockLevel(
+      String warehouseId,
+      String available,
+      String instockstatus,
+      String share,
+      String uuid,
+      String time) {
+    Map<String, String> stockLevelMap = new HashMap<>();
+    stockLevelMap.put(warehouseId + "_available", available);
+    stockLevelMap.put(warehouseId + "_instockstatus", instockstatus);
+    stockLevelMap.put(warehouseId + "_updatestocktime", time);
+    stockLevelMap.put("share", share);
+    stockLevelMap.put("uuid", uuid);
+    return stockLevelMap;
+  }
+
+  private static String buildExpectedUpdateEventKey(String sku, String warehouseId) {
+    String updateKey = sku + "|||" + warehouseId;
+    return "evtq_part_stockdata_" + Math.abs(updateKey.hashCode() % 10);
+  }
+
+  private static String buildExpectedUpdateEventValue(String sku, String warehouseId) {
+    return sku + "|||" + warehouseId;
+  }
+
+  private static Map<String, String> buildExpectedLMStockLevel(
+      String quantity, String instockstatus, String share, String time) {
+    Map<String, String> stockLevelMap = new HashMap<>();
+    stockLevelMap.put("quantity", quantity);
+    stockLevelMap.put("instockstatus", instockstatus);
+    stockLevelMap.put("updatestocktime", time);
+    stockLevelMap.put("share", share);
     return stockLevelMap;
   }
 }

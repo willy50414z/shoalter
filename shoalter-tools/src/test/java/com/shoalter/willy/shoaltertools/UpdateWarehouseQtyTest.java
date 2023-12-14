@@ -98,6 +98,8 @@ public class UpdateWarehouseQtyTest {
         .log()
         .all();
 
+     Thread.sleep(1000L);
+
     // 驗證IIDS資料
     Assertions.assertEquals(
         buildExpectedStockLevel_testcase0001(sku, time),

@@ -1376,175 +1376,173 @@ public class UpdateProductInfoTest {
     redisHKTVTempl.delete(sku, updEventKey, newUpdEventKey).block();
   }
 
-   // EditProduct case test move in/out warehouse 98
-   @Test
-   void updateProduct_testcase0013() throws InterruptedException {
-      String time = "20231207134648";
-      String uuid = "iids-integration-test-testcase-0030";
-      String sku = "iims-integration-test-testcase-0030";
-      String updEventKey01 = buildExpectedUpdateEventKey(sku, "H0000101");
-      String updEventKey98 = buildExpectedUpdateEventKey(sku, "H0000198");
+  // EditProduct case test move in/out warehouse 98
+  @Test
+  void updateProduct_testcase0013() throws InterruptedException {
+    String time = "20231207134648";
+    String uuid = "iids-integration-test-testcase-0030";
+    String sku = "iims-integration-test-testcase-0030";
+    String updEventKey01 = buildExpectedUpdateEventKey(sku, "H0000101");
+    String updEventKey98 = buildExpectedUpdateEventKey(sku, "H0000198");
 
-      redisTempl.delete("inventory:" + uuid, uuid).block();
-      redisHKTVTempl.delete(sku, updEventKey01,updEventKey98).block();
+    redisTempl.delete("inventory:" + uuid, uuid).block();
+    redisHKTVTempl.delete(sku, updEventKey01, updEventKey98).block();
 
-      // createProduct
-      defaultRabbitTemplate.convertAndSend(
-            EXCHANGE, ROUTING_KEY, buildProductInfoDto_testcase0013(uuid, sku));
+    // createProduct
+    defaultRabbitTemplate.convertAndSend(
+        EXCHANGE, ROUTING_KEY, buildProductInfoDto_testcase0013(uuid, sku));
 
-      Thread.sleep(1000L);
+    Thread.sleep(1000L);
 
-      // setting init value
-      given()
-            .contentType("application/json")
-            .body(
-                  "[{\"uuid\":\""
-                        + uuid
-                        + "\",\"warehouseQty\":[{\"warehouseSeqNo\":\"01\",\"mode\":\"set\",\"quantity\":20},{\"warehouseSeqNo\":\"98\",\"mode\":\"set\",\"quantity\":10}]}]")
-            .when()
-            .put(BASIC_URL + "/warehouse/quantity")
-            .then()
-            .statusCode(200)
-            .log()
-            .all();
+    // setting init value
+    given()
+        .contentType("application/json")
+        .body(
+            "[{\"uuid\":\""
+                + uuid
+                + "\",\"warehouseQty\":[{\"warehouseSeqNo\":\"01\",\"mode\":\"set\",\"quantity\":20},{\"warehouseSeqNo\":\"98\",\"mode\":\"set\",\"quantity\":10}]}]")
+        .when()
+        .put(BASIC_URL + "/warehouse/quantity")
+        .then()
+        .statusCode(200)
+        .log()
+        .all();
 
-      // setting init value
-      given()
-            .contentType("application/json")
-            .body(
-                  "[{\"uuid\":\""
-                        + uuid
-                        + "\",\"stockLevels\":[{\"mall\":\"hktv\",\"share\":0,\"mode\":\"set\",\"qty\":10}]}]")
-            .when()
-            .put(BASIC_URL + "/mall/stock_levels")
-            .then()
-            .statusCode(200)
-            .log()
-            .all();
+    // setting init value
+    given()
+        .contentType("application/json")
+        .body(
+            "[{\"uuid\":\""
+                + uuid
+                + "\",\"stockLevels\":[{\"mall\":\"hktv\",\"share\":0,\"mode\":\"set\",\"qty\":10}]}]")
+        .when()
+        .put(BASIC_URL + "/mall/stock_levels")
+        .then()
+        .statusCode(200)
+        .log()
+        .all();
 
+    // updateProduct
+    defaultRabbitTemplate.convertAndSend(
+        EXCHANGE, ROUTING_KEY, updateProductInfoDto_testcase0013_moveOut98(uuid, sku));
 
-      // updateProduct
-      defaultRabbitTemplate.convertAndSend(
-            EXCHANGE, ROUTING_KEY, updateProductInfoDto_testcase0013_moveOut98(uuid, sku));
+    Thread.sleep(1000L);
 
-      Thread.sleep(1000L);
+    // 驗證IIDS資料
+    Assertions.assertEquals(
+        buildExpectedStockLevel_testcase0013_moveOut98(sku, time),
+        redisTempl
+            .<String, String>opsForHash()
+            .entries("inventory:" + uuid)
+            .collectList()
+            .flatMap(
+                entries -> {
+                  Map<String, String> entryMap = new HashMap<>();
+                  for (Map.Entry<String, String> entry : entries) {
+                    if (entry.getKey().equals("create_time")
+                        || entry.getKey().equals("update_time")) {
+                      entryMap.put(entry.getKey(), time);
+                    } else {
+                      entryMap.put(entry.getKey(), entry.getValue());
+                    }
+                  }
+                  return Mono.just(entryMap);
+                })
+            .block());
 
-      // 驗證IIDS資料
-      Assertions.assertEquals(
-            buildExpectedStockLevel_testcase0013_moveOut98(sku, time),
-            redisTempl
-                  .<String, String>opsForHash()
-                  .entries("inventory:" + uuid)
-                  .collectList()
-                  .flatMap(
-                        entries -> {
-                           Map<String, String> entryMap = new HashMap<>();
-                           for (Map.Entry<String, String> entry : entries) {
-                              if (entry.getKey().equals("create_time")
-                                    || entry.getKey().equals("update_time")) {
-                                 entryMap.put(entry.getKey(), time);
-                              } else {
-                                 entryMap.put(entry.getKey(), entry.getValue());
-                              }
-                           }
-                           return Mono.just(entryMap);
-                        })
-                  .block());
+    // 驗證HKTV資料
+    Assertions.assertEquals(
+        buildExpectedHktvStockLevel("H0000101", "0", "notSpecified", "0", uuid, time),
+        redisTempl
+            .<String, String>opsForHash()
+            .entries(sku)
+            .collectList()
+            .flatMap(
+                entries -> {
+                  Map<String, String> entryMap = new HashMap<>();
+                  for (Map.Entry<String, String> entry : entries) {
+                    if (entry.getKey().equals("H0000101_updatestocktime")) {
+                      entryMap.put(entry.getKey(), time);
+                    } else {
+                      entryMap.put(entry.getKey(), entry.getValue());
+                    }
+                  }
+                  return Mono.just(entryMap);
+                })
+            .block());
 
-      // 驗證HKTV資料
-      Assertions.assertEquals(
-            buildExpectedHktvStockLevel("H0000101", "0", "notSpecified", "0", uuid, time),
-            redisTempl
-                  .<String, String>opsForHash()
-                  .entries(sku)
-                  .collectList()
-                  .flatMap(
-                        entries -> {
-                           Map<String, String> entryMap = new HashMap<>();
-                           for (Map.Entry<String, String> entry : entries) {
-                              if (entry.getKey().equals("H0000101_updatestocktime")) {
-                                 entryMap.put(entry.getKey(), time);
-                              } else {
-                                 entryMap.put(entry.getKey(), entry.getValue());
-                              }
-                           }
-                           return Mono.just(entryMap);
-                        })
-                  .block());
+    // 驗證HKTV updateEvent資料
+    Assertions.assertTrue(
+        redisTempl
+            .opsForList()
+            .range(updEventKey01, 0, -1)
+            .switchIfEmpty(Mono.just(""))
+            .collectList()
+            .block()
+            .contains(buildExpectedUpdateEventValue(sku, "H0000101")));
 
-      // 驗證HKTV updateEvent資料
-      Assertions.assertTrue(
-            redisTempl
-                  .opsForList()
-                  .range(updEventKey01, 0, -1)
-                  .switchIfEmpty(Mono.just(""))
-                  .collectList()
-                  .block()
-                  .contains(buildExpectedUpdateEventValue(sku, "H0000101")));
+    // updateProduct
+    defaultRabbitTemplate.convertAndSend(
+        EXCHANGE, ROUTING_KEY, updateProductInfoDto_testcase0013_moveIn98(uuid, sku));
 
+    Thread.sleep(1000L);
 
-      // updateProduct
-      defaultRabbitTemplate.convertAndSend(
-            EXCHANGE, ROUTING_KEY, updateProductInfoDto_testcase0013_moveIn98(uuid, sku));
+    // 驗證IIDS資料
+    Assertions.assertEquals(
+        buildExpectedStockLevel_testcase0013_moveIn98(sku, time),
+        redisTempl
+            .<String, String>opsForHash()
+            .entries("inventory:" + uuid)
+            .collectList()
+            .flatMap(
+                entries -> {
+                  Map<String, String> entryMap = new HashMap<>();
+                  for (Map.Entry<String, String> entry : entries) {
+                    if (entry.getKey().equals("create_time")
+                        || entry.getKey().equals("update_time")) {
+                      entryMap.put(entry.getKey(), time);
+                    } else {
+                      entryMap.put(entry.getKey(), entry.getValue());
+                    }
+                  }
+                  return Mono.just(entryMap);
+                })
+            .block());
 
-      Thread.sleep(1000L);
+    // 驗證HKTV資料
+    Assertions.assertEquals(
+        buildExpectedHktvStockLevel("H0000198", "0", "notSpecified", "0", uuid, time),
+        redisTempl
+            .<String, String>opsForHash()
+            .entries(sku)
+            .collectList()
+            .flatMap(
+                entries -> {
+                  Map<String, String> entryMap = new HashMap<>();
+                  for (Map.Entry<String, String> entry : entries) {
+                    if (entry.getKey().equals("H0000198_updatestocktime")) {
+                      entryMap.put(entry.getKey(), time);
+                    } else {
+                      entryMap.put(entry.getKey(), entry.getValue());
+                    }
+                  }
+                  return Mono.just(entryMap);
+                })
+            .block());
 
-      // 驗證IIDS資料
-      Assertions.assertEquals(
-            buildExpectedStockLevel_testcase0013_moveIn98(sku, time),
-            redisTempl
-                  .<String, String>opsForHash()
-                  .entries("inventory:" + uuid)
-                  .collectList()
-                  .flatMap(
-                        entries -> {
-                           Map<String, String> entryMap = new HashMap<>();
-                           for (Map.Entry<String, String> entry : entries) {
-                              if (entry.getKey().equals("create_time")
-                                    || entry.getKey().equals("update_time")) {
-                                 entryMap.put(entry.getKey(), time);
-                              } else {
-                                 entryMap.put(entry.getKey(), entry.getValue());
-                              }
-                           }
-                           return Mono.just(entryMap);
-                        })
-                  .block());
+    // 驗證HKTV updateEvent資料
+    Assertions.assertTrue(
+        redisTempl
+            .opsForList()
+            .range(updEventKey98, 0, -1)
+            .switchIfEmpty(Mono.just(""))
+            .collectList()
+            .block()
+            .contains(buildExpectedUpdateEventValue(sku, "H0000198")));
 
-      // 驗證HKTV資料
-      Assertions.assertEquals(
-            buildExpectedHktvStockLevel("H0000198", "0", "notSpecified", "0", uuid, time),
-            redisTempl
-                  .<String, String>opsForHash()
-                  .entries(sku)
-                  .collectList()
-                  .flatMap(
-                        entries -> {
-                           Map<String, String> entryMap = new HashMap<>();
-                           for (Map.Entry<String, String> entry : entries) {
-                              if (entry.getKey().equals("H0000198_updatestocktime")) {
-                                 entryMap.put(entry.getKey(), time);
-                              } else {
-                                 entryMap.put(entry.getKey(), entry.getValue());
-                              }
-                           }
-                           return Mono.just(entryMap);
-                        })
-                  .block());
-
-      // 驗證HKTV updateEvent資料
-      Assertions.assertTrue(
-            redisTempl
-                  .opsForList()
-                  .range(updEventKey98, 0, -1)
-                  .switchIfEmpty(Mono.just(""))
-                  .collectList()
-                  .block()
-                  .contains(buildExpectedUpdateEventValue(sku, "H0000198")));
-
-      redisTempl.delete("inventory:" + uuid, uuid).block();
-      redisHKTVTempl.delete(sku, updEventKey01,updEventKey98).block();
-   }
+    redisTempl.delete("inventory:" + uuid, uuid).block();
+    redisHKTVTempl.delete(sku, updEventKey01, updEventKey98).block();
+  }
 
   private ProductInfoDto buildProductInfoDto_testcase0001(String uuid, String sku) {
     return ProductInfoDto.builder()
@@ -2373,109 +2371,110 @@ public class UpdateProductInfoTest {
     return stockLevelMap;
   }
 
+  private ProductInfoDto buildProductInfoDto_testcase0013(String uuid, String sku) {
+    return ProductInfoDto.builder()
+        .action("CREATE")
+        .products(
+            List.of(
+                new ProductDto(
+                    uuid,
+                    List.of(
+                        ProductMallDetailDto.builder()
+                            .mall("hktv")
+                            .storefrontStoreCode("H00001")
+                            .storeSkuId(sku)
+                            .build()),
+                    List.of(
+                        ProductWarehouseDetailDto.builder()
+                            .warehouseSeqNo("01")
+                            .mall(List.of())
+                            .build(),
+                        ProductWarehouseDetailDto.builder()
+                            .warehouseSeqNo("98")
+                            .mall(List.of("hktv"))
+                            .build()))))
+        .build();
+  }
 
-   private ProductInfoDto buildProductInfoDto_testcase0013(String uuid, String sku) {
-      return ProductInfoDto.builder()
-            .action("CREATE")
-            .products(
-                  List.of(
-                        new ProductDto(
-                              uuid,
-                              List.of(
-                                    ProductMallDetailDto.builder()
-                                          .mall("hktv")
-                                          .storefrontStoreCode("H00001")
-                                          .storeSkuId(sku)
-                                          .build()),
-                              List.of(
-                                    ProductWarehouseDetailDto.builder()
-                                          .warehouseSeqNo("01")
-                                          .mall(List.of())
-                                          .build(),
-                                    ProductWarehouseDetailDto.builder()
-                                          .warehouseSeqNo("98")
-                                          .mall(List.of("hktv"))
-                                          .build()))))
-            .build();
-   }
+  private ProductInfoDto updateProductInfoDto_testcase0013_moveOut98(String uuid, String sku) {
+    return ProductInfoDto.builder()
+        .action("UPDATE")
+        .products(
+            List.of(
+                new ProductDto(
+                    uuid,
+                    List.of(
+                        ProductMallDetailDto.builder()
+                            .mall("hktv")
+                            .storefrontStoreCode("H00001")
+                            .storeSkuId(sku)
+                            .build()),
+                    List.of(
+                        ProductWarehouseDetailDto.builder()
+                            .warehouseSeqNo("01")
+                            .mall(List.of("hktv"))
+                            .build(),
+                        ProductWarehouseDetailDto.builder()
+                            .warehouseSeqNo("98")
+                            .mall(List.of())
+                            .build()))))
+        .build();
+  }
 
-   private ProductInfoDto updateProductInfoDto_testcase0013_moveOut98(String uuid, String sku) {
-      return ProductInfoDto.builder()
-            .action("UPDATE")
-            .products(
-                  List.of(
-                        new ProductDto(
-                              uuid,
-                              List.of(
-                                    ProductMallDetailDto.builder()
-                                          .mall("hktv")
-                                          .storefrontStoreCode("H00001")
-                                          .storeSkuId(sku)
-                                          .build()),
-                              List.of(
-                                    ProductWarehouseDetailDto.builder()
-                                          .warehouseSeqNo("01")
-                                          .mall(List.of("hktv"))
-                                          .build(),
-                                    ProductWarehouseDetailDto.builder()
-                                          .warehouseSeqNo("98")
-                                          .mall(List.of())
-                                          .build()))))
-            .build();
-   }
+  private ProductInfoDto updateProductInfoDto_testcase0013_moveIn98(String uuid, String sku) {
+    return ProductInfoDto.builder()
+        .action("UPDATE")
+        .products(
+            List.of(
+                new ProductDto(
+                    uuid,
+                    List.of(
+                        ProductMallDetailDto.builder()
+                            .mall("hktv")
+                            .storefrontStoreCode("H00001")
+                            .storeSkuId(sku)
+                            .build()),
+                    List.of(
+                        ProductWarehouseDetailDto.builder()
+                            .warehouseSeqNo("01")
+                            .mall(List.of())
+                            .build(),
+                        ProductWarehouseDetailDto.builder()
+                            .warehouseSeqNo("98")
+                            .mall(List.of("hktv"))
+                            .build()))))
+        .build();
+  }
 
-   private ProductInfoDto updateProductInfoDto_testcase0013_moveIn98(String uuid, String sku) {
-      return ProductInfoDto.builder()
-            .action("UPDATE")
-            .products(
-                  List.of(
-                        new ProductDto(
-                              uuid,
-                              List.of(
-                                    ProductMallDetailDto.builder()
-                                          .mall("hktv")
-                                          .storefrontStoreCode("H00001")
-                                          .storeSkuId(sku)
-                                          .build()),
-                              List.of(
-                                    ProductWarehouseDetailDto.builder()
-                                          .warehouseSeqNo("01")
-                                          .mall(List.of())
-                                          .build(),
-                                    ProductWarehouseDetailDto.builder()
-                                          .warehouseSeqNo("98")
-                                          .mall(List.of("hktv"))
-                                          .build()))))
-            .build();
-   }
+  private static Map<String, String> buildExpectedStockLevel_testcase0013_moveOut98(
+      String sku, String time) {
+    Map<String, String> stockLevelMap = new HashMap<>();
+    stockLevelMap.put("01_mall", "hktv");
+    stockLevelMap.put("01_qty", "20");
+    stockLevelMap.put("98_mall", "");
+    stockLevelMap.put("98_qty", "10");
+    stockLevelMap.put("hktv_instockstatus", "notSpecified");
+    stockLevelMap.put("hktv_share", "0");
+    stockLevelMap.put("hktv_sku", sku);
+    stockLevelMap.put("hktv_store_code", "H00001");
+    stockLevelMap.put("update_time", time);
+    stockLevelMap.put("create_time", time);
+    return stockLevelMap;
+  }
 
-   private static Map<String, String> buildExpectedStockLevel_testcase0013_moveOut98(String sku, String time) {
-      Map<String, String> stockLevelMap = new HashMap<>();
-      stockLevelMap.put("01_mall", "hktv");
-      stockLevelMap.put("01_qty", "20");
-      stockLevelMap.put("98_mall", "");
-      stockLevelMap.put("98_qty", "10");
-      stockLevelMap.put("hktv_instockstatus", "notSpecified");
-      stockLevelMap.put("hktv_share", "0");
-      stockLevelMap.put("hktv_sku", sku);
-      stockLevelMap.put("hktv_store_code", "H00001");
-      stockLevelMap.put("update_time", time);
-      stockLevelMap.put("create_time", time);
-      return stockLevelMap;
-   }
-
-   private static Map<String, String> buildExpectedStockLevel_testcase0013_moveIn98(String sku, String time) {
-      Map<String, String> stockLevelMap = new HashMap<>();
-      stockLevelMap.put("01_mall", "");
-      stockLevelMap.put("01_qty", "20");
-      stockLevelMap.put("98_mall", "hktv");
-      stockLevelMap.put("98_qty", "0");
-      stockLevelMap.put("hktv_instockstatus", "notSpecified");
-      stockLevelMap.put("hktv_share", "0");
-      stockLevelMap.put("hktv_sku", sku);
-      stockLevelMap.put("hktv_store_code", "H00001");
-      stockLevelMap.put("update_time", time);
-      stockLevelMap.put("create_time", time);
-      return stockLevelMap;
-   }
+  private static Map<String, String> buildExpectedStockLevel_testcase0013_moveIn98(
+      String sku, String time) {
+    Map<String, String> stockLevelMap = new HashMap<>();
+    stockLevelMap.put("01_mall", "");
+    stockLevelMap.put("01_qty", "20");
+    stockLevelMap.put("98_mall", "hktv");
+    stockLevelMap.put("98_qty", "0");
+    stockLevelMap.put("hktv_instockstatus", "notSpecified");
+    stockLevelMap.put("hktv_share", "0");
+    stockLevelMap.put("hktv_sku", sku);
+    stockLevelMap.put("hktv_store_code", "H00001");
+    stockLevelMap.put("update_time", time);
+    stockLevelMap.put("create_time", time);
+    return stockLevelMap;
+  }
 }

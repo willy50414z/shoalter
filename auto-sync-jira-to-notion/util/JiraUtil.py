@@ -3,25 +3,27 @@ from jira import JIRA
 
 jiraOptions = {'server': "https://hongkongtv.atlassian.net/"}
 
-jira = JIRA(options=jiraOptions, basic_auth=(
-	"willy.cheng@shoalter.com", "ATATT3xFfGF0F6WZ_ZqRbQkC7sy7QJTKSZlT16e2ZvAM5Bo1DStXlvt5NkXLekBIehiu_bcnoyJlnt322oT1QHyCmQ7vAWzfpCpHHZ8fQ9XZ09NhAmDuPVsa141ZUayYt3mgJCa3EylXEofxXvWK_TzTE0rUuScL12FpeJ0xPAafnRmOJpqpJec=8769464F"))
+class JiraUtil:
+    def __init__(self):
+        self.jiraObj = JIRA(options=jiraOptions, basic_auth=(
+            "willy.cheng@shoalter.com", "ATATT3xFfGF0NOjlDBqH8C5zTPx_WX9cDY940p7NVPjN-XjHcO3REXGMc0L7HlNlbCPc-fSG9eC8Bjg3gD6xqRosbt1fSOv7zUHIfeU-r2sDw_ymcp_BLjzadlv4QwjJpHxFZ8Q9uRy4NXVAnYlkV-poRtALJ4S9iYi2kSh8dJ6HCSHuyNYu15k=33059B12"))
 
-def getIncompletedTask():
-    #assemble filter
-    assignees = ['TW - IT - BE - Willy Cheng', 'TW - IT - BE - Jayce Wu', 'TW - IT - BE - Ainsley Wang', 'TW - IT - BE - JOHN CHANG','TW - IT - BE - Luke Chen']
-    assignee_query = ', '.join([f'"{assignee}"' for assignee in assignees])
-    
-    devPICs = ['TW - IT - BE - Willy Cheng', 'TW - IT - BE - Jayce Wu', 'TW - IT - BE - Ainsley Wang', 'TW - IT - BE - JOHN CHANG','TW - IT - BE - Luke Chen']
-    devPIC_query = ', '.join([f'"{devPIC}"' for devPIC in devPICs])
+    def getIncompletedTask(self):
+        #assemble filter
+        assignees = ['TW - IT - BE - Willy Cheng', 'TW - IT - BE - Jayce Wu', 'TW - IT - BE - Ainsley Wang', 'TW - IT - BE - JOHN CHANG','TW - IT - BE - Luke Chen']
+        assignee_query = ', '.join([f'"{assignee}"' for assignee in assignees])
 
-    statuses = ['Done', 'Cancelled', 'Pending UAT', 'Launch Ready', 'Closed']
-    status_query = ', '.join([f'"{status}"' for status in statuses])
+        devPICs = ['TW - IT - BE - Willy Cheng', 'TW - IT - BE - Jayce Wu', 'TW - IT - BE - Ainsley Wang', 'TW - IT - BE - JOHN CHANG','TW - IT - BE - Luke Chen']
+        devPIC_query = ', '.join([f'"{devPIC}"' for devPIC in devPICs])
 
-    jql_query = f'("Development PIC" IN ({devPIC_query}) OR assignee IN ({assignee_query})) AND status not in ({status_query})'
-    
-    #fetch data
-    issues = jira.search_issues(jql_str=jql_query)
-    return issues
+        statuses = ['Done', 'Cancelled', 'Pending UAT', 'Launch Ready', 'Closed']
+        status_query = ', '.join([f'"{status}"' for status in statuses])
+
+        jql_query = f'("Development PIC" IN ({devPIC_query}) OR assignee IN ({assignee_query})) AND status not in ({status_query})'
+
+        #fetch data
+        issues = self.jiraObj.search_issues(jql_str=jql_query)
+        return issues
 
 #get single ticket
 #singleIssue = jira.issue('SI-18')

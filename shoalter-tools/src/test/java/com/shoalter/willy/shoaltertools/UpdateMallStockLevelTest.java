@@ -2,6 +2,9 @@ package com.shoalter.willy.shoaltertools;
 
 import static io.restassured.RestAssured.given;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.shoalter.willy.shoaltertools.builder.CreateProductInfoBuilder;
 import com.shoalter.willy.shoaltertools.dto.ProductDto;
 import com.shoalter.willy.shoaltertools.dto.ProductInfoDto;
 import com.shoalter.willy.shoaltertools.dto.ProductMallDetailDto;
@@ -10,6 +13,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import lombok.extern.slf4j.Slf4j;
+import org.hamcrest.Matchers;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
@@ -40,6 +44,8 @@ public class UpdateMallStockLevelTest {
   private String ROUTING_KEY = "shoalter-see-product-master.product-info-iids";
 
   private String BASIC_URL = "http://127.0.0.1:8099/s2s/v3";
+
+  private ObjectMapper objMapper = new ObjectMapper();
 
   // UpdateMallStockLevel case 1
   @Test
@@ -621,6 +627,39 @@ public class UpdateMallStockLevelTest {
     redisTempl.delete("inventory:" + uuid, uuid).block();
     redisHKTVTempl.delete(sku, updEventKey).block();
     redisLMTempl.delete(uuid).block();
+  }
+
+  // 扣庫存因為mall庫存不足所以會扣失敗
+  @Test
+  void updateMallStockLevel_testcase0004() throws InterruptedException, JsonProcessingException {
+    String uuid = "iids-integration-test-updatemallstocklevel-0001";
+    String sku = "iims-integration-test-updatemallstocklevel-0001";
+
+    redisTempl.delete("inventory:" + uuid, uuid, sku).block();
+    redisHKTVTempl.delete(sku, sku).block();
+
+    // createProduct
+    defaultRabbitTemplate.convertAndSend(
+        EXCHANGE, ROUTING_KEY, CreateProductInfoBuilder.buildDefaultProductInfoDto(uuid, sku));
+
+    Thread.sleep(1000L);
+
+    // setting init value
+    given()
+        .contentType("application/json")
+        .body(
+            "[{\"uuid\":\""
+                + uuid
+                + "\",\"warehouseQty\":[{\"warehouseSeqNo\":\"01\",\"mode\":\"deduct\",\"quantity\":10}]}]")
+        .when()
+        .put(BASIC_URL + "/warehouse/quantity")
+        .then()
+        .statusCode(200)
+        .body(
+            Matchers.equalTo(
+                "{\"statusCode\":\"IIDS-2001\",\"message\":null,\"data\":{\"success\":[],\"fail\":[{\"uuid\":\"iids-integration-test-updatemallstocklevel-0001\",\"errorCode\":\"IIDS-0029\",\"msg\":\"share and non share quantity not enough to deduct, warehouseSeqNo[01]requestQuantity[10]shareQuantity[0]totalNonShareQuantity[0]\"}]}}"))
+        .log()
+        .all();
   }
 
   private ProductInfoDto buildProductInfoDto_testcase0001(

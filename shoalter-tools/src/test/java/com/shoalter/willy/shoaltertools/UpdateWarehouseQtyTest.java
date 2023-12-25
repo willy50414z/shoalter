@@ -2,6 +2,7 @@ package com.shoalter.willy.shoaltertools;
 
 import static io.restassured.RestAssured.given;
 
+import com.shoalter.willy.shoaltertools.builder.CreateProductInfoBuilder;
 import com.shoalter.willy.shoaltertools.dto.ProductDto;
 import com.shoalter.willy.shoaltertools.dto.ProductInfoDto;
 import com.shoalter.willy.shoaltertools.dto.ProductMallDetailDto;
@@ -10,6 +11,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import lombok.extern.slf4j.Slf4j;
+import org.hamcrest.Matchers;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
@@ -849,6 +851,39 @@ public class UpdateWarehouseQtyTest {
 
     redisTempl.delete("inventory:" + uuid, uuid).block();
     redisHKTVTempl.delete(sku, updEventKey).block();
+  }
+
+  // 扣庫存因為mall庫存不足所以會扣失敗
+  @Test
+  void updateWarehouseQty_testcase0008() throws InterruptedException {
+    String uuid = "iids-integration-test-updateWarehouseQty-0001";
+    String sku = "iims-integration-test-updateWarehouseQty-0001";
+    String updEventKey = buildExpectedUpdateEventKey(sku, "H0000101");
+
+    redisTempl.delete("inventory:" + uuid, uuid).block();
+    redisHKTVTempl.delete(sku, updEventKey).block();
+
+    // createProduct
+    defaultRabbitTemplate.convertAndSend(
+        EXCHANGE, ROUTING_KEY, CreateProductInfoBuilder.buildDefaultProductInfoDto(uuid, sku));
+
+    Thread.sleep(1000L);
+
+    given()
+        .contentType("application/json")
+        .body(
+            "[{\"uuid\":\""
+                + uuid
+                + "\",\"warehouseQty\":[{\"warehouseSeqNo\":\"01\",\"mode\":\"deduct\",\"quantity\":60}]}]")
+        .when()
+        .put(BASIC_URL + "/warehouse/quantity")
+        .then()
+        .statusCode(200)
+        .body(
+            Matchers.equalTo(
+                "{\"statusCode\":\"IIDS-2001\",\"message\":null,\"data\":{\"success\":[],\"fail\":[{\"uuid\":\"iids-integration-test-updateWarehouseQty-0001\",\"errorCode\":\"IIDS-0029\",\"msg\":\"share and non share quantity not enough to deduct, warehouseSeqNo[01]requestQuantity[60]shareQuantity[0]totalNonShareQuantity[0]\"}]}}"))
+        .log()
+        .all();
   }
 
   private ProductInfoDto buildProductInfoDto_testcase0001(String uuid, String sku) {

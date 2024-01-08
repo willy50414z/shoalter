@@ -37,7 +37,7 @@ public class CreateProductInfoTest {
   private String EXCHANGE = "shoalter-see-product-master_topic";
   private String ROUTING_KEY = "shoalter-see-product-master.product-info-iids";
 
-  // EditProduct case 1
+  // 驗證正常create product後redis裡的資料
   @Test
   void createProduct_testcase0001() throws InterruptedException {
     String time = "20231207134648";

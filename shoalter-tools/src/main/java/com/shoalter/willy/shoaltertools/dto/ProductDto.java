@@ -19,4 +19,12 @@ public class ProductDto {
 
   @JsonProperty("warehouse_detail")
   private List<ProductWarehouseDetailDto> warehouseDetail;
+
+  @JsonProperty("bundle_setting")
+  private BundleSettingDto bundleSetting;
+
+    public <E> ProductDto(String uuid, List<ProductMallDetailDto> mallDetail,
+   List<ProductWarehouseDetailDto> warehouseDetail)
+    {
+    }
 }

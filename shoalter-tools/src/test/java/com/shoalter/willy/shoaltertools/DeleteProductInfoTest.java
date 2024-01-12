@@ -4,9 +4,11 @@ import com.shoalter.willy.shoaltertools.dto.ProductDto;
 import com.shoalter.willy.shoaltertools.dto.ProductInfoDto;
 import com.shoalter.willy.shoaltertools.dto.ProductMallDetailDto;
 import com.shoalter.willy.shoaltertools.dto.ProductWarehouseDetailDto;
+
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
@@ -148,30 +150,39 @@ public class DeleteProductInfoTest {
         .action("CREATE")
         .products(
             List.of(
-                new ProductDto(
-                    uuid,
-                    List.of(
-                        ProductMallDetailDto.builder()
-                            .mall("hktv")
-                            .storefrontStoreCode("H00001")
-                            .storeSkuId(sku)
-                            .build(),
-                        ProductMallDetailDto.builder()
-                            .mall("little_mall")
-                            .storefrontStoreCode("H00001")
-                            .build()),
-                    List.of(
-                        ProductWarehouseDetailDto.builder()
-                            .warehouseSeqNo("01")
-                            .mall(List.of("hktv", "little_mall"))
-                            .build()))))
+                ProductDto.builder()
+                    .uuid(uuid)
+                    .mallDetail(
+                        List.of(
+                            ProductMallDetailDto.builder()
+                                .mall("hktv")
+                                .storefrontStoreCode("H00001")
+                                .storeSkuId(sku)
+                                .build(),
+                            ProductMallDetailDto.builder()
+                                .mall("little_mall")
+                                .storefrontStoreCode("H00001")
+                                .build()))
+                    .warehouseDetail(
+                        List.of(
+                            ProductWarehouseDetailDto.builder()
+                                .warehouseSeqNo("01")
+                                .mall(List.of("hktv", "little_mall"))
+                                .build()))
+                    .build()))
         .build();
   }
 
   private ProductInfoDto deleteProductInfoDto_testcase0001(String uuid, String sku) {
     return ProductInfoDto.builder()
         .action("DELETE")
-        .products(List.of(new ProductDto(uuid, List.of(), List.of())))
+        .products(
+            List.of(
+                ProductDto.builder()
+                    .uuid(uuid)
+                    .mallDetail(List.of())
+                    .warehouseDetail(List.of())
+                    .build()))
         .build();
   }
 

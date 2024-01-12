@@ -12,23 +12,25 @@ public class CreateProductInfoBuilder {
         .action("CREATE")
         .products(
             List.of(
-                new ProductDto(
-                    uuid,
-                    List.of(
-                        ProductMallDetailDto.builder()
-                            .mall("hktv")
-                            .storefrontStoreCode("H00001")
-                            .storeSkuId(sku)
-                            .build(),
-                        ProductMallDetailDto.builder()
-                            .mall("little_mall")
-                            .storefrontStoreCode("H00001")
-                            .build()),
-                    List.of(
-                        ProductWarehouseDetailDto.builder()
-                            .warehouseSeqNo("01")
-                            .mall(List.of("hktv", "little_mall"))
-                            .build()))))
+                ProductDto.builder()
+                    .warehouseDetail(
+                        List.of(
+                            ProductWarehouseDetailDto.builder()
+                                .warehouseSeqNo("01")
+                                .mall(List.of("hktv", "little_mall"))
+                                .build()))
+                    .mallDetail(
+                        List.of(
+                            ProductMallDetailDto.builder()
+                                .mall("hktv")
+                                .storefrontStoreCode("H00001")
+                                .storeSkuId(sku)
+                                .build(),
+                            ProductMallDetailDto.builder()
+                                .mall("little_mall")
+                                .storefrontStoreCode("H00001")
+                                .build()))
+                    .build()))
         .build();
   }
 }

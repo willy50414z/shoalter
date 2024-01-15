@@ -23,8 +23,8 @@ public class ProductDto {
   @JsonProperty("bundle_setting")
   private BundleSettingDto bundleSetting;
 
-    public <E> ProductDto(String uuid, List<ProductMallDetailDto> mallDetail,
-   List<ProductWarehouseDetailDto> warehouseDetail)
-    {
-    }
+  public <E> ProductDto(
+      String uuid,
+      List<ProductMallDetailDto> mallDetail,
+      List<ProductWarehouseDetailDto> warehouseDetail) {}
 }

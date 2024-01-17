@@ -2,7 +2,6 @@ package com.shoalter.willy.shoaltertools.dto;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import java.util.List;
-
 import lombok.Builder;
 import lombok.Data;
 

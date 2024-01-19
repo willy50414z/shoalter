@@ -4,7 +4,6 @@ import static io.restassured.RestAssured.given;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.shoalter.willy.shoaltertools.builder.CreateProductInfoBuilder;
 import com.shoalter.willy.shoaltertools.dto.ProductDto;
 import com.shoalter.willy.shoaltertools.dto.ProductInfoDto;
 import com.shoalter.willy.shoaltertools.dto.ProductMallDetailDto;
@@ -64,7 +63,7 @@ public class UpdateMallStockLevelTest {
 
     // createProduct
     defaultRabbitTemplate.convertAndSend(
-        EXCHANGE, ROUTING_KEY, buildProductInfoDto_testcase0001(uuid, sku, uuid_FIS, sku_FIS));
+        EXCHANGE, ROUTING_KEY, buildProductInfoDto(uuid, sku, uuid_FIS, sku_FIS));
 
     Thread.sleep(1000L);
 
@@ -286,7 +285,7 @@ public class UpdateMallStockLevelTest {
 
     // createProduct
     defaultRabbitTemplate.convertAndSend(
-        EXCHANGE, ROUTING_KEY, buildProductInfoDto_testcase0002(uuid, sku, uuid_FIS, sku_FIS));
+        EXCHANGE, ROUTING_KEY, buildProductInfoDto(uuid, sku, uuid_FIS, sku_FIS));
 
     Thread.sleep(1000L);
 
@@ -503,8 +502,7 @@ public class UpdateMallStockLevelTest {
     redisLMTempl.delete(uuid).block();
 
     // createProduct
-    defaultRabbitTemplate.convertAndSend(
-        EXCHANGE, ROUTING_KEY, buildProductInfoDto_testcase0003(uuid, sku));
+    defaultRabbitTemplate.convertAndSend(EXCHANGE, ROUTING_KEY, buildProductInfoDto(uuid, sku));
 
     Thread.sleep(1000L);
 
@@ -639,8 +637,7 @@ public class UpdateMallStockLevelTest {
     redisHKTVTempl.delete(sku, sku).block();
 
     // createProduct
-    defaultRabbitTemplate.convertAndSend(
-        EXCHANGE, ROUTING_KEY, CreateProductInfoBuilder.buildDefaultProductInfoDto(uuid, sku));
+    defaultRabbitTemplate.convertAndSend(EXCHANGE, ROUTING_KEY, buildProductInfoDto(uuid, sku));
 
     Thread.sleep(1000L);
 
@@ -662,50 +659,88 @@ public class UpdateMallStockLevelTest {
         .all();
   }
 
-  private ProductInfoDto buildProductInfoDto_testcase0001(
+  private ProductInfoDto buildProductInfoDto(
       String uuid, String sku, String uuid_FIS, String sku_FIS) {
     return ProductInfoDto.builder()
         .action("CREATE")
         .products(
             List.of(
-                new ProductDto(
-                    uuid,
-                    List.of(
-                        ProductMallDetailDto.builder()
-                            .mall("hktv")
-                            .storefrontStoreCode("H00001")
-                            .storeSkuId(sku)
-                            .build(),
-                        ProductMallDetailDto.builder()
-                            .mall("little_mall")
-                            .storefrontStoreCode("H00001")
-                            .build()),
-                    List.of(
-                        ProductWarehouseDetailDto.builder()
-                            .warehouseSeqNo("01")
-                            .mall(List.of("hktv", "little_mall"))
-                            .build(),
-                        ProductWarehouseDetailDto.builder()
-                            .warehouseSeqNo("02")
-                            .mall(List.of())
-                            .build())),
-                new ProductDto(
-                    uuid_FIS,
-                    List.of(
-                        ProductMallDetailDto.builder()
-                            .mall("hktv")
-                            .storefrontStoreCode("H00001")
-                            .storeSkuId(sku_FIS)
-                            .build(),
-                        ProductMallDetailDto.builder()
-                            .mall("little_mall")
-                            .storefrontStoreCode("H00003")
-                            .build()),
-                    List.of(
-                        ProductWarehouseDetailDto.builder()
-                            .warehouseSeqNo("01")
-                            .mall(List.of("hktv", "little_mall"))
-                            .build()))))
+                ProductDto.builder()
+                    .uuid(uuid)
+                    .mallDetail(
+                        List.of(
+                            ProductMallDetailDto.builder()
+                                .mall("hktv")
+                                .storefrontStoreCode("H00001")
+                                .storeSkuId(sku)
+                                .build(),
+                            ProductMallDetailDto.builder()
+                                .mall("little_mall")
+                                .storefrontStoreCode("H00001")
+                                .build()))
+                    .warehouseDetail(
+                        List.of(
+                            ProductWarehouseDetailDto.builder()
+                                .warehouseSeqNo("01")
+                                .mall(List.of("hktv", "little_mall"))
+                                .build(),
+                            ProductWarehouseDetailDto.builder()
+                                .warehouseSeqNo("02")
+                                .mall(List.of())
+                                .build()))
+                    .build(),
+                ProductDto.builder()
+                    .uuid(uuid_FIS)
+                    .mallDetail(
+                        List.of(
+                            ProductMallDetailDto.builder()
+                                .mall("hktv")
+                                .storefrontStoreCode("H00001")
+                                .storeSkuId(sku_FIS)
+                                .build(),
+                            ProductMallDetailDto.builder()
+                                .mall("little_mall")
+                                .storefrontStoreCode("H00003")
+                                .build()))
+                    .warehouseDetail(
+                        List.of(
+                            ProductWarehouseDetailDto.builder()
+                                .warehouseSeqNo("01")
+                                .mall(List.of("hktv", "little_mall"))
+                                .build()))
+                    .build()))
+        .build();
+  }
+
+  private ProductInfoDto buildProductInfoDto(String uuid, String sku) {
+    return ProductInfoDto.builder()
+        .action("CREATE")
+        .products(
+            List.of(
+                ProductDto.builder()
+                    .uuid(uuid)
+                    .mallDetail(
+                        List.of(
+                            ProductMallDetailDto.builder()
+                                .mall("hktv")
+                                .storefrontStoreCode("H00001")
+                                .storeSkuId(sku)
+                                .build(),
+                            ProductMallDetailDto.builder()
+                                .mall("little_mall")
+                                .storefrontStoreCode("H00001")
+                                .build()))
+                    .warehouseDetail(
+                        List.of(
+                            ProductWarehouseDetailDto.builder()
+                                .warehouseSeqNo("01")
+                                .mall(List.of("hktv", "little_mall"))
+                                .build(),
+                            ProductWarehouseDetailDto.builder()
+                                .warehouseSeqNo("02")
+                                .mall(List.of())
+                                .build()))
+                    .build()))
         .build();
   }
 
@@ -744,53 +779,6 @@ public class UpdateMallStockLevelTest {
     return stockLevelMap;
   }
 
-  private ProductInfoDto buildProductInfoDto_testcase0002(
-      String uuid, String sku, String uuid_FIS, String sku_FIS) {
-    return ProductInfoDto.builder()
-        .action("CREATE")
-        .products(
-            List.of(
-                new ProductDto(
-                    uuid,
-                    List.of(
-                        ProductMallDetailDto.builder()
-                            .mall("hktv")
-                            .storefrontStoreCode("H00001")
-                            .storeSkuId(sku)
-                            .build(),
-                        ProductMallDetailDto.builder()
-                            .mall("little_mall")
-                            .storefrontStoreCode("H00001")
-                            .build()),
-                    List.of(
-                        ProductWarehouseDetailDto.builder()
-                            .warehouseSeqNo("01")
-                            .mall(List.of("hktv", "little_mall"))
-                            .build(),
-                        ProductWarehouseDetailDto.builder()
-                            .warehouseSeqNo("02")
-                            .mall(List.of())
-                            .build())),
-                new ProductDto(
-                    uuid_FIS,
-                    List.of(
-                        ProductMallDetailDto.builder()
-                            .mall("hktv")
-                            .storefrontStoreCode("H00001")
-                            .storeSkuId(sku_FIS)
-                            .build(),
-                        ProductMallDetailDto.builder()
-                            .mall("little_mall")
-                            .storefrontStoreCode("H00003")
-                            .build()),
-                    List.of(
-                        ProductWarehouseDetailDto.builder()
-                            .warehouseSeqNo("01")
-                            .mall(List.of("hktv", "little_mall"))
-                            .build()))))
-        .build();
-  }
-
   private static Map<String, String> buildExpectedStockLevel_testcase0002(String sku, String time) {
     Map<String, String> stockLevelMap = new HashMap<>();
     stockLevelMap.put("01_mall", "hktv,little_mall");
@@ -807,35 +795,6 @@ public class UpdateMallStockLevelTest {
     stockLevelMap.put("update_time", time);
     stockLevelMap.put("create_time", time);
     return stockLevelMap;
-  }
-
-  private ProductInfoDto buildProductInfoDto_testcase0003(String uuid, String sku) {
-    return ProductInfoDto.builder()
-        .action("CREATE")
-        .products(
-            List.of(
-                new ProductDto(
-                    uuid,
-                    List.of(
-                        ProductMallDetailDto.builder()
-                            .mall("hktv")
-                            .storefrontStoreCode("H00001")
-                            .storeSkuId(sku)
-                            .build(),
-                        ProductMallDetailDto.builder()
-                            .mall("little_mall")
-                            .storefrontStoreCode("H00001")
-                            .build()),
-                    List.of(
-                        ProductWarehouseDetailDto.builder()
-                            .warehouseSeqNo("01")
-                            .mall(List.of("hktv", "little_mall"))
-                            .build(),
-                        ProductWarehouseDetailDto.builder()
-                            .warehouseSeqNo("02")
-                            .mall(List.of())
-                            .build()))))
-        .build();
   }
 
   private static Map<String, String> buildExpectedStockLevel_testcase0003(String sku, String time) {

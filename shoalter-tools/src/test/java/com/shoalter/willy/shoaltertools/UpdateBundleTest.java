@@ -660,26 +660,26 @@ public class UpdateBundleTest {
                 })
             .block());
 
-	  // 清除資料
-	  for (int i = 1; i < 7; i++) {
-		  String uuid = "test-BundleParent-000" + i + "-000" + i + "-000" + i;
-		  String skuId = "H0121001_S_P000" + i;
-		  redisTempl.delete(skuId).block();
-		  redisTempl.delete(INVENTORY_REDIS_HKEY_PREFIX + uuid, uuid).block();
-		  redisTempl.delete(INVENTORY_REDIS_KEY_PREFIX_BUNDLE_SETTING + uuid, uuid).block();
-		  redisLMTempl.delete(uuid).block();
-		  redisLMTempl.delete(skuId).block();
-	  }
+    // 清除資料
+    for (int i = 1; i < 7; i++) {
+      String uuid = "test-BundleParent-000" + i + "-000" + i + "-000" + i;
+      String skuId = "H0121001_S_P000" + i;
+      redisTempl.delete(skuId).block();
+      redisTempl.delete(INVENTORY_REDIS_HKEY_PREFIX + uuid, uuid).block();
+      redisTempl.delete(INVENTORY_REDIS_KEY_PREFIX_BUNDLE_SETTING + uuid, uuid).block();
+      redisLMTempl.delete(uuid).block();
+      redisLMTempl.delete(skuId).block();
+    }
 
-	  for (int i = 1; i < 4; i++) {
-		  String uuid = "childUuid-" + i;
-		  String skuId = "childSku-" + i;
-		  String storeSkuId = "child_S_" + skuId;
-		  redisTempl.delete(INVENTORY_REDIS_KEY_PREFIX_BUNDLE_PARENT + uuid, uuid).block();
-		  redisTempl.delete(INVENTORY_REDIS_HKEY_PREFIX + uuid, uuid).block();
-		  redisTempl.delete(uuid).block();
-		  redisTempl.delete(storeSkuId).block();
-	  }
+    for (int i = 1; i < 4; i++) {
+      String uuid = "childUuid-" + i;
+      String skuId = "childSku-" + i;
+      String storeSkuId = "child_S_" + skuId;
+      redisTempl.delete(INVENTORY_REDIS_KEY_PREFIX_BUNDLE_PARENT + uuid, uuid).block();
+      redisTempl.delete(INVENTORY_REDIS_HKEY_PREFIX + uuid, uuid).block();
+      redisTempl.delete(uuid).block();
+      redisTempl.delete(storeSkuId).block();
+    }
   }
 
   private ProductInfoDto buildBundleProductInfoDto_testcase0001() {

@@ -1045,6 +1045,110 @@ public class UpdateWarehouseQtyTest {
         "01", "200", "200", "200", "233", "233", "233", "0", "0", "0", "0", "0", "0");
   }
 
+  // 設置LittleMall 倉庫數量，有NonShareMall，沒有bundle，request > nonShare + share
+  @Test
+  void updWhQty_set_non98Wh_singleNonShareMall_LM_nonBundle_requestQty_bigger_than_whQty()
+      throws InterruptedException {
+    // 預期結果: 不會影響nonShareMall數量，都加到共享庫存
+    this.buildLMProductInfoDto("01");
+    this.setWh01Child123Qty333();
+    this.setChild123Qty233ToLM();
+    // share = 100, mall = 233
+    this.assertion_LM_wh_share_mall_parent("01", "100", "100", "100", "233", "233", "233");
+    this.setWh01Child123Qty433();
+    // child1 share = 200, mall = 233
+    // child2 share = 200, mall = 233
+    // child3 share = 200, mall = 233
+    this.assertion_LM_wh_share_mall_parent("01", "200", "200", "200", "233", "233", "233");
+  }
+
+  // 設置LittleMall 倉庫數量，有NonShareMall，沒有bundle，request > nonShare，request < nonShare + share
+  @Test
+  void
+      updWhQty_set_non98Wh_singleNonShareMall_LM_nonBundle_requestQty_less_than_whQty_but_bigger_than_allNonShareQty()
+          throws InterruptedException {
+    // 預期結果: 不會影響nonShareMall數量，更改共享庫存
+    this.buildLMProductInfoDto("01");
+    this.setWh01Child123Qty333();
+    this.setChild123Qty233ToLM();
+    // share = 100, mall = 233
+    this.assertion_LM_wh_share_mall_parent("01", "100", "100", "100", "233", "233", "233");
+    this.setWh01Child123Qty300();
+    // child1 share = 67, mall = 233
+    // child2 share = 67, mall = 233
+    // child3 share = 67, mall = 233
+    this.assertion_LM_wh_share_mall_parent("01", "67", "67", "67", "233", "233", "233");
+  }
+
+  // 設置LittleMall 倉庫數量，有NonShareMall，沒有bundle，request < nonShare
+  @Test
+  void updWhQty_set_non98Wh_singleNonShareMall_LM_nonBundle_requestQty_less_than_allNonShareQty()
+      throws InterruptedException {
+    // 預期結果: share歸零，nonShareMall數量等於request
+    this.buildLMProductInfoDto("01");
+    this.setWh01Child123Qty333();
+    this.setChild123Qty233ToLM();
+    // share = 100, mall = 233
+    this.assertion_LM_wh_share_mall_parent("01", "100", "100", "100", "233", "233", "233");
+    this.setWh01Child123Qty170();
+    // child1 share = 0, mall = 170
+    // child2 share = 0, mall = 170
+    // child3 share = 0, mall = 170
+    this.assertion_LM_wh_share_mall_parent("01", "0", "0", "0", "170", "170", "170");
+  }
+
+  // 減少LittleMall 倉庫數量，有NonShareMall，沒有bundle，request > share + nonshare，拋錯，數量維持現狀
+  @Test
+  void
+      updWhQty_deduct_non98Wh_singleNonShareMall_LM_nonBundle_requestQty_bigger_than_allNonShareQty_plus_shareQty()
+          throws InterruptedException {
+    // 預期結果: IIDS-2001，不影響倉庫或是nonshare數量
+    this.buildLMProductInfoDto("01");
+    this.setWh01Child123Qty333();
+    this.setChild123Qty233ToLM();
+    // share = 100, mall = 233
+    this.assertion_LM_wh_share_mall_parent("01", "100", "100", "100", "233", "233", "233");
+    this.deductWh01Child123Qty433();
+    // child1 share = 100, mall = 233
+    // child2 share = 100, mall = 233
+    // child3 share = 100, mall = 233
+    this.assertion_LM_wh_share_mall_parent("01", "100", "100", "100", "233", "233", "233");
+  }
+
+  // 減少LittleMall 倉庫數量，有NonShareMall，沒有bundle，request > share，request < share +
+  // nonshare，share歸零nonshare扣差額
+  @Test
+  void
+      updWhQty_deduct_non98Wh_singleNonShareMall_LM_nonBundle_requestQty_bigger_than_shareQty_but_less_than_nonShareQty()
+          throws InterruptedException {
+    this.buildLMProductInfoDto("01");
+    this.setWh01Child123Qty333();
+    this.setChild123Qty233ToLM();
+    // share = 100, mall = 233
+    this.assertion_LM_wh_share_mall_parent("01", "100", "100", "100", "233", "233", "233");
+    this.deductWh01Child123Qty170();
+    // child1 share = 0, mall = 163
+    // child2 share = 0, mall = 163
+    // child3 share = 0, mall = 163
+    this.assertion_LM_wh_share_mall_parent("01", "0", "0", "0", "163", "163", "163");
+  }
+
+  // 減少LittleMall 倉庫數量，有NonShareMall，沒有bundle，request < share，只扣share不影響nonshare數量
+  @Test
+  void updWhQty_deduct_non98Wh_singleNonShareMall_LM_nonBundle_requestQty_less_than_shareQty()
+      throws InterruptedException {
+    this.buildLMProductInfoDto("01");
+    this.setWh01Child123Qty333();
+    this.setChild123Qty233ToLM();
+    // share = 100, mall = 233
+    this.assertion_LM_wh_share_mall_parent("01", "100", "100", "100", "233", "233", "233");
+    this.deductWh01Child123Qty70();
+    // child1 share = 30, mall = 233
+    // child2 share = 30, mall = 233
+    // child3 share = 30, mall = 233
+    this.assertion_LM_wh_share_mall_parent("01", "30", "30", "30", "233", "233", "233");
+  }
+
   // 設置98倉庫數量，有NonShareMall，沒有bundle，request set > nonshare 總數，增加的數量加進Mall單賣的數量
   @Test
   void updWhQty_set_98Wh_singleNonShareMall_HKTV_nonBundle_requestQty_bigger_than_allNonShareQty()
@@ -1474,10 +1578,10 @@ public class UpdateWarehouseQtyTest {
     // parent2 = 10
     // parent3 = 10
     // parent4 = 9
-    // parent5 = 9
-    // parent6 = 8
+    // parent5 = 8
+    // parent6 = 9
     this.assertion_wh_share_mall_parent(
-        "98", "0", "0", "0", "110", "1", "70", "10", "10", "10", "9", "9", "8");
+        "98", "0", "0", "0", "110", "1", "70", "10", "10", "10", "9", "8", "9");
   }
 
   // 減少98倉庫數量，有NonShareMall，有bundle，request > (bundle + nonBundle)，IIDS-2001，不影響倉庫或是nonshare數量
@@ -2232,7 +2336,7 @@ public class UpdateWarehouseQtyTest {
         .all();
   }
 
-  private void setAllBundleQtyTo10() {
+  private void setAllBundleQtyTo10() throws InterruptedException {
     // 建立每個 parentBundle qty=10
     given()
         .contentType("application/json")
@@ -2247,8 +2351,22 @@ public class UpdateWarehouseQtyTest {
                 + "        \"mode\": \"set\"\n"
                 + "      }\n"
                 + "    ]\n"
-                + "  },\n"
-                + "    {\n"
+                + "  }\n"
+                + "]")
+        .when()
+        .put(BASIC_URL + "/mall/bundle/quantity")
+        .then()
+        .statusCode(200)
+        .log()
+        .all();
+
+    Thread.sleep(1000L);
+
+    given()
+        .contentType("application/json")
+        .body(
+            "[\n"
+                + "  {\n"
                 + "    \"uuid\":\"test-BundleParent-0002-0002-0002\",\n"
                 + "    \"mallQty\":[\n"
                 + "      {\n"
@@ -2257,8 +2375,22 @@ public class UpdateWarehouseQtyTest {
                 + "        \"mode\": \"set\"\n"
                 + "      }\n"
                 + "    ]\n"
-                + "  },\n"
-                + "    {\n"
+                + "  }\n"
+                + "]")
+        .when()
+        .put(BASIC_URL + "/mall/bundle/quantity")
+        .then()
+        .statusCode(200)
+        .log()
+        .all();
+
+    Thread.sleep(1000L);
+
+    given()
+        .contentType("application/json")
+        .body(
+            "[\n"
+                + "  {\n"
                 + "    \"uuid\":\"test-BundleParent-0003-0003-0003\",\n"
                 + "    \"mallQty\":[\n"
                 + "      {\n"
@@ -2267,8 +2399,22 @@ public class UpdateWarehouseQtyTest {
                 + "        \"mode\": \"set\"\n"
                 + "      }\n"
                 + "    ]\n"
-                + "  },\n"
-                + "    {\n"
+                + "  }\n"
+                + "]")
+        .when()
+        .put(BASIC_URL + "/mall/bundle/quantity")
+        .then()
+        .statusCode(200)
+        .log()
+        .all();
+
+    Thread.sleep(1000L);
+
+    given()
+        .contentType("application/json")
+        .body(
+            "[\n"
+                + "  {\n"
                 + "    \"uuid\":\"test-BundleParent-0004-0004-0004\",\n"
                 + "    \"mallQty\":[\n"
                 + "      {\n"
@@ -2277,8 +2423,22 @@ public class UpdateWarehouseQtyTest {
                 + "        \"mode\": \"set\"\n"
                 + "      }\n"
                 + "    ]\n"
-                + "  },\n"
-                + "    {\n"
+                + "  }\n"
+                + "]")
+        .when()
+        .put(BASIC_URL + "/mall/bundle/quantity")
+        .then()
+        .statusCode(200)
+        .log()
+        .all();
+
+    Thread.sleep(1000L);
+
+    given()
+        .contentType("application/json")
+        .body(
+            "[\n"
+                + "  {\n"
                 + "    \"uuid\":\"test-BundleParent-0005-0005-0005\",\n"
                 + "    \"mallQty\":[\n"
                 + "      {\n"
@@ -2287,8 +2447,22 @@ public class UpdateWarehouseQtyTest {
                 + "        \"mode\": \"set\"\n"
                 + "      }\n"
                 + "    ]\n"
-                + "  },\n"
-                + "    {\n"
+                + "  }\n"
+                + "]")
+        .when()
+        .put(BASIC_URL + "/mall/bundle/quantity")
+        .then()
+        .statusCode(200)
+        .log()
+        .all();
+
+    Thread.sleep(1000L);
+
+    given()
+        .contentType("application/json")
+        .body(
+            "[\n"
+                + "  {\n"
                 + "    \"uuid\":\"test-BundleParent-0006-0006-0006\",\n"
                 + "    \"mallQty\":[\n"
                 + "      {\n"
@@ -2430,6 +2604,51 @@ public class UpdateWarehouseQtyTest {
                 + "        \"warehouseSeqNo\": \"01\",\n"
                 + "        \"mode\": \"set\",\n"
                 + "        \"quantity\": 433\n"
+                + "      }\n"
+                + "    ]\n"
+                + "  }\n"
+                + "]")
+        .when()
+        .put(BASIC_URL + "/warehouse/quantity")
+        .then()
+        .statusCode(200)
+        .log()
+        .all();
+  }
+
+  private void setWh01Child123Qty300() {
+    // set childUuid1/2/3 qty=233 to share
+    given()
+        .contentType("application/json")
+        .body(
+            "[\n"
+                + "  {\n"
+                + "    \"uuid\": \"childUuid-1\",\n"
+                + "    \"warehouseQty\": [\n"
+                + "      {\n"
+                + "        \"warehouseSeqNo\": \"01\",\n"
+                + "        \"mode\": \"set\",\n"
+                + "        \"quantity\": 300\n"
+                + "      }\n"
+                + "    ]\n"
+                + "  },\n"
+                + "  {\n"
+                + "    \"uuid\": \"childUuid-2\",\n"
+                + "    \"warehouseQty\": [\n"
+                + "      {\n"
+                + "        \"warehouseSeqNo\": \"01\",\n"
+                + "        \"mode\": \"set\",\n"
+                + "        \"quantity\": 300\n"
+                + "      }\n"
+                + "    ]\n"
+                + "  },\n"
+                + "  {\n"
+                + "    \"uuid\": \"childUuid-3\",\n"
+                + "    \"warehouseQty\": [\n"
+                + "      {\n"
+                + "        \"warehouseSeqNo\": \"01\",\n"
+                + "        \"mode\": \"set\",\n"
+                + "        \"quantity\": 300\n"
                 + "      }\n"
                 + "    ]\n"
                 + "  }\n"
@@ -2947,18 +3166,21 @@ public class UpdateWarehouseQtyTest {
         .all();
   }
 
+  // 驗證拆bundle後的順序是依照child比例，愈小的愈先補，比例一樣是updatetime愈大的先補
   @Test
-  void updWhQty_set_98Wh_qty_to_3_singleNonShareMall_HKTV_hasBundle_With_SAME_TIME_REQUEST()
-      throws InterruptedException {
+  void updWhQty_set_98Wh_qty_to_3_singleNonShareMall_HKTV_hasBundle() throws InterruptedException {
     // 預期結果: 數量完全歸零，拆掉的bundle要把其他的child還回單賣的數量
     this.buildHKTVProductInfoDto("98");
     this.setWh98Child123Qty333();
     // share = 0, mall = 333
     this.setAllBundleQtyTo10();
-    // child1 share = 100, nonBundle = 193, inBundle = 40
-    // child2 share = 100, nonBundle = 73, inBundle = 160
-    // child3 share = 100, nonBundle = 153, inBundle = 80
+    // child1 share = 0, mall = 293
+    // child2 share = 0, mall = 173
+    // child3 share = 0, mall = 253
     // parent123456 = 10
+    // 40 160 80 在 parent
+    this.assertion_wh_share_mall_parent(
+        "98", "0", "0", "0", "293", "173", "253", "10", "10", "10", "10", "10", "10");
 
     Thread t1 =
         new Thread(
@@ -3088,13 +3310,16 @@ public class UpdateWarehouseQtyTest {
 
     t1.start();
     Thread.sleep(500L);
+    this.assertion_wh_share_mall_parent(
+        "98", "0", "0", "0", "1", "220", "293", "0", "1", "10", "10", "10", "10");
     t3.start();
     Thread.sleep(500L);
+    this.assertion_wh_share_mall_parent(
+        "98", "0", "0", "0", "1", "250", "3", "0", "1", "0", "10", "10", "10");
     t2.start();
     Thread.sleep(500L);
-
     this.assertion_wh_share_mall_parent(
-        "98", "0", "0", "0", "3", "1", "3", "0", "0", "0", "1", "0", "0");
+        "98", "0", "0", "0", "1", "0", "3", "0", "1", "0", "0", "0", "0");
   }
 
   private void assertion_wh_share_mall_parent(
@@ -3115,16 +3340,40 @@ public class UpdateWarehouseQtyTest {
         share1,
         redisTempl.<String, String>opsForHash().get("inventory:childUuid-1", sq + "_qty").block());
     Assertions.assertEquals(
+        "notSpecified",
+        redisTempl
+            .<String, String>opsForHash()
+            .get("inventory:childUuid-1", "hktv_instockstatus")
+            .block());
+    Assertions.assertEquals(
         share2,
         redisTempl.<String, String>opsForHash().get("inventory:childUuid-2", sq + "_qty").block());
     Assertions.assertEquals(
+        "notSpecified",
+        redisTempl
+            .<String, String>opsForHash()
+            .get("inventory:childUuid-2", "hktv_instockstatus")
+            .block());
+    Assertions.assertEquals(
         share3,
         redisTempl.<String, String>opsForHash().get("inventory:childUuid-3", sq + "_qty").block());
+    Assertions.assertEquals(
+        "notSpecified",
+        redisTempl
+            .<String, String>opsForHash()
+            .get("inventory:childUuid-3", "hktv_instockstatus")
+            .block());
     Assertions.assertEquals(
         mall1,
         redisTempl
             .<String, String>opsForHash()
             .get("child_S_childSku-1", "child" + sq + "_available")
+            .block());
+    Assertions.assertEquals(
+        "notSpecified",
+        redisTempl
+            .<String, String>opsForHash()
+            .get("child_S_childSku-1", "child" + sq + "_instockstatus")
             .block());
     Assertions.assertEquals(
         mall2,
@@ -3133,10 +3382,22 @@ public class UpdateWarehouseQtyTest {
             .get("child_S_childSku-2", "child" + sq + "_available")
             .block());
     Assertions.assertEquals(
+        "notSpecified",
+        redisTempl
+            .<String, String>opsForHash()
+            .get("child_S_childSku-2", "child" + sq + "_instockstatus")
+            .block());
+    Assertions.assertEquals(
         mall3,
         redisTempl
             .<String, String>opsForHash()
             .get("child_S_childSku-3", "child" + sq + "_available")
+            .block());
+    Assertions.assertEquals(
+        "notSpecified",
+        redisTempl
+            .<String, String>opsForHash()
+            .get("child_S_childSku-3", "child" + sq + "_instockstatus")
             .block());
     Assertions.assertEquals(
         parent1,
@@ -3145,10 +3406,22 @@ public class UpdateWarehouseQtyTest {
             .get("H0121001_S_P0001", "H0121001" + sq + "_available")
             .block());
     Assertions.assertEquals(
+        "notSpecified",
+        redisTempl
+            .<String, String>opsForHash()
+            .get("H0121001_S_P0001", "H0121001" + sq + "_instockstatus")
+            .block());
+    Assertions.assertEquals(
         parent2,
         redisTempl
             .<String, String>opsForHash()
             .get("H0121001_S_P0002", "H0121001" + sq + "_available")
+            .block());
+    Assertions.assertEquals(
+        "notSpecified",
+        redisTempl
+            .<String, String>opsForHash()
+            .get("H0121001_S_P0002", "H0121001" + sq + "_instockstatus")
             .block());
     Assertions.assertEquals(
         parent3,
@@ -3157,10 +3430,22 @@ public class UpdateWarehouseQtyTest {
             .get("H0121001_S_P0003", "H0121001" + sq + "_available")
             .block());
     Assertions.assertEquals(
+        "notSpecified",
+        redisTempl
+            .<String, String>opsForHash()
+            .get("H0121001_S_P0003", "H0121001" + sq + "_instockstatus")
+            .block());
+    Assertions.assertEquals(
         parent4,
         redisTempl
             .<String, String>opsForHash()
             .get("H0121001_S_P0004", "H0121001" + sq + "_available")
+            .block());
+    Assertions.assertEquals(
+        "notSpecified",
+        redisTempl
+            .<String, String>opsForHash()
+            .get("H0121001_S_P0004", "H0121001" + sq + "_instockstatus")
             .block());
     Assertions.assertEquals(
         parent5,
@@ -3169,10 +3454,378 @@ public class UpdateWarehouseQtyTest {
             .get("H0121001_S_P0005", "H0121001" + sq + "_available")
             .block());
     Assertions.assertEquals(
+        "notSpecified",
+        redisTempl
+            .<String, String>opsForHash()
+            .get("H0121001_S_P0005", "H0121001" + sq + "_instockstatus")
+            .block());
+    Assertions.assertEquals(
         parent6,
         redisTempl
             .<String, String>opsForHash()
             .get("H0121001_S_P0006", "H0121001" + sq + "_available")
             .block());
+    Assertions.assertEquals(
+        "notSpecified",
+        redisTempl
+            .<String, String>opsForHash()
+            .get("H0121001_S_P0006", "H0121001" + sq + "_instockstatus")
+            .block());
+  }
+
+  private void buildLMProductInfoDto(String warehouseSeqNo) throws InterruptedException {
+    // 清除資料
+    this.deleteProductInfoDto();
+    defaultRabbitTemplate.convertAndSend(
+        EXCHANGE, ROUTING_KEY, buildBundleProductInfoDto_testcaseLM(warehouseSeqNo));
+    Thread.sleep(2000L);
+  }
+
+  private ProductInfoDto buildBundleProductInfoDto_testcaseLM(String warehouseSeqNo) {
+    return ProductInfoDto.builder()
+        .action("CREATE")
+        .products(
+            List.of(
+                ProductDto.builder()
+                    .uuid(childUuid1)
+                    .warehouseDetail(
+                        List.of(
+                            ProductWarehouseDetailDto.builder()
+                                .warehouseSeqNo(warehouseSeqNo)
+                                .mall(List.of("little_mall"))
+                                .build()))
+                    .mallDetail(
+                        List.of(
+                            ProductMallDetailDto.builder()
+                                .mall("little_mall")
+                                .storefrontStoreCode("child")
+                                .build()))
+                    .build(),
+                ProductDto.builder()
+                    .uuid(childUuid2)
+                    .warehouseDetail(
+                        List.of(
+                            ProductWarehouseDetailDto.builder()
+                                .warehouseSeqNo(warehouseSeqNo)
+                                .mall(List.of("little_mall"))
+                                .build()))
+                    .mallDetail(
+                        List.of(
+                            ProductMallDetailDto.builder()
+                                .mall("little_mall")
+                                .storefrontStoreCode("child")
+                                .build()))
+                    .build(),
+                ProductDto.builder()
+                    .uuid(childUuid3)
+                    .warehouseDetail(
+                        List.of(
+                            ProductWarehouseDetailDto.builder()
+                                .warehouseSeqNo(warehouseSeqNo)
+                                .mall(List.of("little_mall"))
+                                .build()))
+                    .mallDetail(
+                        List.of(
+                            ProductMallDetailDto.builder()
+                                .mall("little_mall")
+                                .storefrontStoreCode("child")
+                                .build()))
+                    .build()))
+        .build();
+  }
+
+  private void setChild123Qty233ToLM() {
+    // set childUuid1/2/3 qty=20 to mall
+    given()
+        .contentType("application/json")
+        .body(
+            "[\n"
+                + "  {\n"
+                + "    \"uuid\": \"childUuid-1\",\n"
+                + "    \"stockLevels\": [\n"
+                + "      {\n"
+                + "        \"mall\": \"little_mall\",\n"
+                + "        \"qty\": 233,\n"
+                + "        \"mode\": \"set\"\n"
+                + "      }\n"
+                + "    ]\n"
+                + "  },\n"
+                + "  {\n"
+                + "    \"uuid\": \"childUuid-2\",\n"
+                + "    \"stockLevels\": [\n"
+                + "      {\n"
+                + "        \"mall\": \"little_mall\",\n"
+                + "        \"qty\": 233,\n"
+                + "        \"mode\": \"set\"\n"
+                + "      }\n"
+                + "    ]\n"
+                + "  },\n"
+                + "  {\n"
+                + "    \"uuid\": \"childUuid-3\",\n"
+                + "    \"stockLevels\": [\n"
+                + "      {\n"
+                + "        \"mall\": \"little_mall\",\n"
+                + "        \"qty\": 233,\n"
+                + "        \"mode\": \"set\"\n"
+                + "      }\n"
+                + "    ]\n"
+                + "  }\n"
+                + "]")
+        .when()
+        .put(BASIC_URL + "/mall/stock_levels")
+        .then()
+        .statusCode(200)
+        .log()
+        .all();
+  }
+
+  private void deductWh01Child123Qty70() {
+    // set childUuid1/2/3 qty=233 to share
+    given()
+        .contentType("application/json")
+        .body(
+            "[\n"
+                + "  {\n"
+                + "    \"uuid\": \"childUuid-1\",\n"
+                + "    \"warehouseQty\": [\n"
+                + "      {\n"
+                + "        \"warehouseSeqNo\": \"01\",\n"
+                + "        \"mode\": \"deduct\",\n"
+                + "        \"quantity\": 70\n"
+                + "      }\n"
+                + "    ]\n"
+                + "  },\n"
+                + "  {\n"
+                + "    \"uuid\": \"childUuid-2\",\n"
+                + "    \"warehouseQty\": [\n"
+                + "      {\n"
+                + "        \"warehouseSeqNo\": \"01\",\n"
+                + "        \"mode\": \"deduct\",\n"
+                + "        \"quantity\": 70\n"
+                + "      }\n"
+                + "    ]\n"
+                + "  },\n"
+                + "  {\n"
+                + "    \"uuid\": \"childUuid-3\",\n"
+                + "    \"warehouseQty\": [\n"
+                + "      {\n"
+                + "        \"warehouseSeqNo\": \"01\",\n"
+                + "        \"mode\": \"deduct\",\n"
+                + "        \"quantity\": 70\n"
+                + "      }\n"
+                + "    ]\n"
+                + "  }\n"
+                + "]")
+        .when()
+        .put(BASIC_URL + "/warehouse/quantity")
+        .then()
+        .statusCode(200)
+        .log()
+        .all();
+  }
+
+  private void assertion_LM_wh_share_mall_parent(
+      String sq,
+      String share1,
+      String share2,
+      String share3,
+      String mall1,
+      String mall2,
+      String mall3) {
+    Assertions.assertEquals(
+        share1,
+        redisTempl.<String, String>opsForHash().get("inventory:childUuid-1", sq + "_qty").block());
+    Assertions.assertEquals(
+        "notSpecified",
+        redisTempl
+            .<String, String>opsForHash()
+            .get("inventory:childUuid-1", "little_mall_instockstatus")
+            .block());
+    Assertions.assertEquals(
+        share2,
+        redisTempl.<String, String>opsForHash().get("inventory:childUuid-2", sq + "_qty").block());
+    Assertions.assertEquals(
+        "notSpecified",
+        redisTempl
+            .<String, String>opsForHash()
+            .get("inventory:childUuid-2", "little_mall_instockstatus")
+            .block());
+    Assertions.assertEquals(
+        share3,
+        redisTempl.<String, String>opsForHash().get("inventory:childUuid-3", sq + "_qty").block());
+    Assertions.assertEquals(
+        "notSpecified",
+        redisTempl
+            .<String, String>opsForHash()
+            .get("inventory:childUuid-3", "little_mall_instockstatus")
+            .block());
+    Assertions.assertEquals(
+        mall1, redisLMTempl.<String, String>opsForHash().get("childUuid-1", "quantity").block());
+    Assertions.assertEquals(
+        "notSpecified",
+        redisLMTempl.<String, String>opsForHash().get("childUuid-1", "instockstatus").block());
+    Assertions.assertEquals(
+        mall2, redisLMTempl.<String, String>opsForHash().get("childUuid-2", "quantity").block());
+    Assertions.assertEquals(
+        "notSpecified",
+        redisLMTempl.<String, String>opsForHash().get("childUuid-2", "instockstatus").block());
+    Assertions.assertEquals(
+        mall3, redisLMTempl.<String, String>opsForHash().get("childUuid-3", "quantity").block());
+    Assertions.assertEquals(
+        "notSpecified",
+        redisLMTempl.<String, String>opsForHash().get("childUuid-3", "instockstatus").block());
+  }
+
+  @Test
+  void updWhQty_set_98Wh_qty_to_1_singleNonShareMall_HKTV_hasBundle_With_SAME_TIME_REQUEST()
+      throws InterruptedException {
+    // 預期結果: 數量完全歸零，拆掉的bundle要把其他的child還回單賣的數量
+    this.buildHKTVProductInfoDto("98");
+    this.setWh98Child123Qty333();
+    // share = 0, mall = 333
+    this.setAllBundleQtyTo10();
+    // child1 share = 0, mall = 293, inBundle = 40
+    // child2 share = 0, mall = 173, inBundle = 160
+    // child3 share = 0, mall = 253, inBundle = 80
+    // parent123456 = 10
+    // 40 160 80 在 parent
+    this.assertion_wh_share_mall_parent(
+        "98", "0", "0", "0", "293", "173", "253", "10", "10", "10", "10", "10", "10");
+
+    Thread t1 =
+        new Thread(
+            () -> {
+              try {
+                URL url = new URL(BASIC_URL + "/warehouse/quantity");
+                HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+                connection.setRequestMethod("PUT");
+                connection.setRequestProperty("Content-Type", "application/json");
+                connection.setDoOutput(true);
+                String payload =
+                    "[\n"
+                        + "  {\n"
+                        + "    \"uuid\": \"childUuid-1\",\n"
+                        + "    \"warehouseQty\": [\n"
+                        + "      {\n"
+                        + "        \"warehouseSeqNo\": \"98\",\n"
+                        + "        \"mode\": \"set\",\n"
+                        + "        \"quantity\": 1\n"
+                        + "      }\n"
+                        + "    ]\n"
+                        + "  }\n"
+                        + "]";
+                try (OutputStream os = connection.getOutputStream()) {
+                  byte[] input = payload.getBytes("utf-8");
+                  os.write(input, 0, input.length);
+                }
+                try (BufferedReader reader =
+                    new BufferedReader(new InputStreamReader(connection.getInputStream()))) {
+                  StringBuilder response = new StringBuilder();
+                  String line;
+                  while ((line = reader.readLine()) != null) {
+                    response.append(line);
+                  }
+                  System.out.println("Response: " + response.toString());
+                }
+                connection.disconnect();
+              } catch (Exception e) {
+                e.printStackTrace();
+              }
+            });
+
+    Thread t2 =
+        new Thread(
+            () -> {
+              try {
+                URL url = new URL(BASIC_URL + "/warehouse/quantity");
+                HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+                connection.setRequestMethod("PUT");
+                connection.setRequestProperty("Content-Type", "application/json");
+                connection.setDoOutput(true);
+                String payload =
+                    "[\n"
+                        + "  {\n"
+                        + "    \"uuid\": \"childUuid-2\",\n"
+                        + "    \"warehouseQty\": [\n"
+                        + "      {\n"
+                        + "        \"warehouseSeqNo\": \"98\",\n"
+                        + "        \"mode\": \"set\",\n"
+                        + "        \"quantity\": 1\n"
+                        + "      }\n"
+                        + "    ]\n"
+                        + "  }\n"
+                        + "]";
+
+                try (OutputStream os = connection.getOutputStream()) {
+                  byte[] input = payload.getBytes("utf-8");
+                  os.write(input, 0, input.length);
+                }
+                try (BufferedReader reader =
+                    new BufferedReader(new InputStreamReader(connection.getInputStream()))) {
+                  StringBuilder response = new StringBuilder();
+                  String line;
+                  while ((line = reader.readLine()) != null) {
+                    response.append(line);
+                  }
+                  System.out.println("Response: " + response.toString());
+                }
+                connection.disconnect();
+              } catch (Exception e) {
+                e.printStackTrace();
+              }
+            });
+
+    Thread t3 =
+        new Thread(
+            () -> {
+              try {
+                // Specify the URL for the PUT request
+                URL url = new URL(BASIC_URL + "/warehouse/quantity");
+                HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+                connection.setRequestMethod("PUT");
+                connection.setRequestProperty("Content-Type", "application/json");
+                connection.setDoOutput(true);
+                String payload =
+                    "[\n"
+                        + "  {\n"
+                        + "    \"uuid\": \"childUuid-3\",\n"
+                        + "    \"warehouseQty\": [\n"
+                        + "      {\n"
+                        + "        \"warehouseSeqNo\": \"98\",\n"
+                        + "        \"mode\": \"set\",\n"
+                        + "        \"quantity\": 1\n"
+                        + "      }\n"
+                        + "    ]\n"
+                        + "  }\n"
+                        + "]";
+
+                try (OutputStream os = connection.getOutputStream()) {
+                  byte[] input = payload.getBytes("utf-8");
+                  os.write(input, 0, input.length);
+                }
+                try (BufferedReader reader =
+                    new BufferedReader(new InputStreamReader(connection.getInputStream()))) {
+                  StringBuilder response = new StringBuilder();
+                  String line;
+                  while ((line = reader.readLine()) != null) {
+                    response.append(line);
+                  }
+                  System.out.println("Response: " + response.toString());
+                }
+                connection.disconnect();
+              } catch (Exception e) {
+                e.printStackTrace();
+              }
+            });
+
+    t1.start();
+    t3.start();
+    t2.start();
+
+    Thread.sleep(5000L);
+
+    this.assertion_wh_share_mall_parent(
+        "98", "0", "0", "0", "1", "1", "1", "0", "0", "0", "0", "0", "0");
+  }
   }
 }

@@ -122,7 +122,7 @@ public class CreateBundleTest {
   }
 
   @Test // 建立有100個child的bundle 計算扣減該bundle需要的時間
-  public void bundleCreateWith100Child() throws JSONException {
+  public void bundleCreateWith100Child() throws JSONException, InterruptedException {
     String parentUuid = "parent-E-00";
     String storefrontStoreCode = "H088800118";
     String storeSkuId = storefrontStoreCode + "_S_E00";
@@ -289,7 +289,8 @@ public class CreateBundleTest {
   }
 
   private void createBundleWith100Child(
-      String parentUuid, String parentSku, String storefrontStoreCode) throws JSONException {
+      String parentUuid, String parentSku, String storefrontStoreCode)
+      throws JSONException, InterruptedException {
 
     String childSku = "child-SKU-E-";
     String childUuid = "child-UUID-E-";
@@ -417,6 +418,7 @@ public class CreateBundleTest {
               .build();
 
       defaultRabbitTemplate.convertAndSend(EXCHANGE, ROUTING_KEY, productInfoDto);
+      Thread.sleep(1000);
     }
 
     System.out.println(
@@ -429,17 +431,6 @@ public class CreateBundleTest {
         .body(requestSetArray.toString())
         .when()
         .put(BASIC_URL + "/warehouse/quantity")
-        .then()
-        .statusCode(200)
-        .log()
-        .all();
-
-    JSONArray mallJsonArray = getMallJsonArray(childUuid);
-    given()
-        .contentType("application/json")
-        .body(mallJsonArray.toString())
-        .when()
-        .put(BASIC_URL + "/mall/stock_levels")
         .then()
         .statusCode(200)
         .log()

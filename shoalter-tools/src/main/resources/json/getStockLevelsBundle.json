@@ -1,0 +1,45 @@
+{
+  "statusCode": "IIDS-2001",
+  "message": null,
+  "data": {
+    "success": [
+      {
+        "uuid": "test-bundle-child-0001",
+        "warehouseDetail": [
+          {
+            "warehouseSeqNo": "02",
+            "qty": 0,
+            "bundleChildQty": null,
+            "stockLevels": null
+          },
+          {
+            "warehouseSeqNo": "01",
+            "qty": 33,
+            "bundleChildQty": 300,
+            "stockLevels": [
+              {
+                "mall": "hktv",
+                "sku": "H0121001_S_CHILD01",
+                "instockstatus": "notSpecified",
+                "qty": 0,
+                "share": 0,
+                "bundleChildQty": 300,
+                "updateStockTime": "20240206151723",
+                "sellingQty": null,
+                "settingQty": null,
+                "storefrontStoreCode": "H012100101"
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "fail": [
+      {
+        "uuid": "test-0001-uuid-noExist",
+        "errorCode": "IIDS-0001",
+        "msg": "Can't found this UUID, UUID[test-0001-uuid-noExist]"
+      }
+    ]
+  }
+}

@@ -6,6 +6,10 @@ import com.shoalter.willy.shoaltertools.dto.ProductDto;
 import com.shoalter.willy.shoaltertools.dto.ProductInfoDto;
 import com.shoalter.willy.shoaltertools.dto.ProductMallDetailDto;
 import com.shoalter.willy.shoaltertools.dto.ProductWarehouseDetailDto;
+import com.shoalter.willy.shoaltertools.testtool.RabbitMqUtil;
+import com.shoalter.willy.shoaltertools.testtool.RedisUtil;
+import com.shoalter.willy.shoaltertools.testtool.updateproductinfo.UpdateProductInfoTestTool;
+import com.shoalter.willy.shoaltertools.testtool.updateproductinfo.VerifyUpdateProductInfoTestCase;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -35,6 +39,10 @@ public class UpdateProductInfoTest {
   ReactiveRedisTemplate<String, String> redisHKTVTempl;
 
   @Autowired private RabbitTemplate defaultRabbitTemplate;
+  @Autowired private RedisUtil redisUtil;
+  @Autowired private RabbitMqUtil rabbitMqUtil;
+  @Autowired private UpdateProductInfoTestTool updProdInfoTestTool;
+  @Autowired private VerifyUpdateProductInfoTestCase verifyUpdProdInfo;
 
   private String EXCHANGE = "shoalter-see-product-master_topic";
   private String ROUTING_KEY = "shoalter-see-product-master.product-info-iids";
@@ -2079,5 +2087,782 @@ public class UpdateProductInfoTest {
     stockLevelMap.put("update_time", time);
     stockLevelMap.put("create_time", time);
     return stockLevelMap;
+  }
+
+  private ProductInfoDto move_HKTV_to_wh(String seqNo, String uuid, String sku) {
+    return updProdInfoTestTool.moveHktvToWh(seqNo, uuid, sku);
+  }
+
+  @Test
+  void putProductInfo_moveHktvFromMerchantTo3PLInventory() {
+    String sku = "H088800118_S_child-SKU-E-1";
+    String uuid = "child-UUID-E-1";
+
+    // delete data
+    redisUtil.deleteInventoryUuid(uuid);
+    redisUtil.deleteSku(sku);
+
+    // insert default data
+    redisUtil.insertIidsAndSkuIimsDataInRedis(uuid, sku, "01");
+
+    // testing
+    rabbitMqUtil.sendMsgToIidsQueue(move_HKTV_to_wh("98", uuid, sku));
+
+    // verify
+    verifyUpdProdInfo.moveHktvFromMerchantTo3PLInventory();
+
+    // delete data
+    redisUtil.deleteInventoryUuid(uuid);
+    redisUtil.deleteSku(sku);
+  }
+
+  @Test
+  void putProductInfo_moveHktvFrom3PLToMerchantInventory() {
+    String sku = "H088800118_S_child-SKU-E-1";
+    String uuid = "child-UUID-E-1";
+
+    // delete data
+    redisUtil.deleteInventoryUuid(uuid);
+    redisUtil.deleteSku(sku);
+
+    // insert default data
+    redisUtil.insertIidsAndSkuIimsDataInRedis(uuid, sku, "98");
+    redisTempl.opsForHash().put("inventory:" + uuid, "01_qty", "2400").block();
+
+    // testing
+    rabbitMqUtil.sendMsgToIidsQueue(move_HKTV_to_wh("02", uuid, sku));
+
+    // verify
+    verifyUpdProdInfo.moveHktvFrom3PLToMerchantInventory();
+
+    // delete data
+    redisUtil.deleteInventoryUuid(uuid);
+    redisUtil.deleteSku(sku);
+  }
+
+  @Test
+  void putProductInfo_moveHktvFromMerchantToMerchantInventory() {
+    String sku = "H088800118_S_child-SKU-E-1";
+    String uuid = "child-UUID-E-1";
+
+    // delete data
+    redisUtil.deleteInventoryUuid(uuid);
+    redisUtil.deleteSku(sku);
+
+    // insert default data
+    redisUtil.insertIidsAndSkuIimsDataInRedis(uuid, sku, "01");
+
+    // testing
+    rabbitMqUtil.sendMsgToIidsQueue(move_HKTV_to_wh("02", uuid, sku));
+
+    // verify
+    verifyUpdProdInfo.moveHktvFromMerchantToMerchantInventory();
+
+    // delete data
+    redisUtil.deleteInventoryUuid(uuid);
+    redisUtil.deleteSku(sku);
+  }
+
+  @Test
+  void putProductInfo_moveHktvFromMerchantToMerchantInventory_iimsIsOtherMerchantInventory() {
+    String sku = "H088800118_S_child-SKU-E-1";
+    String uuid = "child-UUID-E-1";
+
+    // delete data
+    redisUtil.deleteInventoryUuid(uuid);
+    redisUtil.deleteSku(sku);
+
+    // insert default data
+    redisUtil.insertIidsAndSkuIimsDataInRedis(uuid, sku, "03");
+    redisTempl.opsForHash().put("inventory:" + uuid, "01_mall", "hktv").block();
+    redisTempl.opsForHash().put("inventory:" + uuid, "03_mall", "").block();
+
+    // testing
+    rabbitMqUtil.sendMsgToIidsQueue(move_HKTV_to_wh("02", uuid, sku));
+
+    // verify
+    verifyUpdProdInfo.moveHktvFromMerchantToMerchantInventory_iimsIsOtherMerchantInventory();
+
+    // delete data
+    redisUtil.deleteInventoryUuid(uuid);
+    redisUtil.deleteSku(sku);
+  }
+
+  @Test
+  void putProductInfo_moveHktvFromMerchantToMerchantInventory_iimsIsConsignmentInventory() {
+    String sku = "H088800118_S_child-SKU-E-1";
+    String uuid = "child-UUID-E-1";
+
+    // delete data
+    redisUtil.deleteInventoryUuid(uuid);
+    redisUtil.deleteSku(sku);
+
+    // insert default data
+    redisUtil.insertIidsAndSkuIimsDataInRedis(uuid, sku, "15");
+    redisTempl.opsForHash().put("inventory:" + uuid, "01_mall", "hktv").block();
+    redisTempl.opsForHash().put("inventory:" + uuid, "15_mall", "").block();
+
+    // testing
+    rabbitMqUtil.sendMsgToIidsQueue(move_HKTV_to_wh("02", uuid, sku));
+
+    // verify
+    verifyUpdProdInfo.moveHktvFromMerchantToMerchantInventory_iimsIsConsignmentInventory();
+
+    // delete data
+    redisUtil.deleteInventoryUuid(uuid);
+    redisUtil.deleteSku(sku);
+  }
+
+  @Test
+  void putProductInfo_moveHktvFromMerchantToMerchantInventory_iimsIs3PLInventory() {
+    String sku = "H088800118_S_child-SKU-E-1";
+    String uuid = "child-UUID-E-1";
+
+    // delete data
+    redisUtil.deleteInventoryUuid(uuid);
+    redisUtil.deleteSku(sku);
+
+    // insert default data
+    redisUtil.insertIidsAndSkuIimsDataInRedis(uuid, sku, "98");
+    redisTempl.opsForHash().put("inventory:" + uuid, "01_mall", "hktv").block();
+    redisTempl.opsForHash().put("inventory:" + uuid, "98_mall", "").block();
+
+    // testing
+    rabbitMqUtil.sendMsgToIidsQueue(move_HKTV_to_wh("02", uuid, sku));
+
+    // verify
+    verifyUpdProdInfo.moveHktvFromMerchantToMerchantInventory_iimsIs3PLInventory();
+
+    // delete data
+    redisUtil.deleteInventoryUuid(uuid);
+    redisUtil.deleteSku(sku);
+  }
+
+  @Test
+  void putProductInfo_moveHktvFromMerchantTo3PLInventory_iimsIsMerchantInventory() {
+    String sku = "H088800118_S_child-SKU-E-1";
+    String uuid = "child-UUID-E-1";
+
+    // delete data
+    redisUtil.deleteInventoryUuid(uuid);
+    redisUtil.deleteSku(sku);
+
+    // insert default data
+    redisUtil.insertIidsAndSkuIimsDataInRedis(uuid, sku, "03");
+    redisTempl.opsForHash().put("inventory:" + uuid, "01_mall", "hktv").block();
+    redisTempl.opsForHash().put("inventory:" + uuid, "03_mall", "").block();
+
+    // testing
+    rabbitMqUtil.sendMsgToIidsQueue(move_HKTV_to_wh("98", uuid, sku));
+
+    // verify
+    verifyUpdProdInfo.moveHktvFromMerchantTo3PLInventory_iimsIsMerchantInventory();
+
+    // delete data
+    redisUtil.deleteInventoryUuid(uuid);
+    redisUtil.deleteSku(sku);
+  }
+
+  @Test
+  void putProductInfo_moveHktvFromMerchantTo3PLInventory_iimsIsConsignmentInventory() {
+    String sku = "H088800118_S_child-SKU-E-1";
+    String uuid = "child-UUID-E-1";
+
+    // delete data
+    redisUtil.deleteInventoryUuid(uuid);
+    redisUtil.deleteSku(sku);
+
+    // insert default data
+    redisUtil.insertIidsAndSkuIimsDataInRedis(uuid, sku, "15");
+    redisTempl.opsForHash().put("inventory:" + uuid, "01_mall", "hktv").block();
+    redisTempl.opsForHash().put("inventory:" + uuid, "15_mall", "").block();
+
+    // testing
+    rabbitMqUtil.sendMsgToIidsQueue(move_HKTV_to_wh("98", uuid, sku));
+
+    // verify
+    verifyUpdProdInfo.moveHktvFromMerchantTo3PLInventory_iimsIsConsignmentInventory();
+
+    // delete data
+    redisUtil.deleteInventoryUuid(uuid);
+    redisUtil.deleteSku(sku);
+  }
+
+  @Test
+  void putProductInfo_moveHktvFromMerchantToConsignmentInventory_iimsIsMerchantInventory() {
+    String sku = "H088800118_S_child-SKU-E-1";
+    String uuid = "child-UUID-E-1";
+
+    // delete data
+    redisUtil.deleteInventoryUuid(uuid);
+    redisUtil.deleteSku(sku);
+
+    // insert default data
+    redisUtil.insertIidsAndSkuIimsDataInRedis(uuid, sku, "03");
+    redisTempl.opsForHash().put("inventory:" + uuid, "01_mall", "hktv").block();
+    redisTempl.opsForHash().put("inventory:" + uuid, "03_mall", "").block();
+
+    // testing
+    rabbitMqUtil.sendMsgToIidsQueue(move_HKTV_to_wh("15", uuid, sku));
+
+    // verify
+    verifyUpdProdInfo.moveHktvFromMerchantToConsignmentInventory_iimsIsMerchantInventory();
+
+    // delete data
+    redisUtil.deleteInventoryUuid(uuid);
+    redisUtil.deleteSku(sku);
+  }
+
+  @Test
+  void putProductInfo_moveHktvFromMerchantToConsignmentInventory_iimsIs3PLInventory() {
+    String sku = "H088800118_S_child-SKU-E-1";
+    String uuid = "child-UUID-E-1";
+
+    // delete data
+    redisUtil.deleteInventoryUuid(uuid);
+    redisUtil.deleteSku(sku);
+
+    // insert default data
+    redisUtil.insertIidsAndSkuIimsDataInRedis(uuid, sku, "98");
+    redisTempl.opsForHash().put("inventory:" + uuid, "01_mall", "hktv").block();
+    redisTempl.opsForHash().put("inventory:" + uuid, "98_mall", "").block();
+
+    // testing
+    rabbitMqUtil.sendMsgToIidsQueue(move_HKTV_to_wh("15", uuid, sku));
+
+    // verify
+    verifyUpdProdInfo.moveHktvFromMerchantToConsignmentInventory_iimsIs3PLInventory();
+
+    // delete data
+    redisUtil.deleteInventoryUuid(uuid);
+    redisUtil.deleteSku(sku);
+  }
+
+  @Test
+  void putProductInfo_moveHktvFromMerchantToConsignmentInventory_iimsIsOtherConsignmentInventory() {
+    String sku = "H088800118_S_child-SKU-E-1";
+    String uuid = "child-UUID-E-1";
+
+    // delete data
+    redisUtil.deleteInventoryUuid(uuid);
+    redisUtil.deleteSku(sku);
+
+    // insert default data
+    redisUtil.insertIidsAndSkuIimsDataInRedis(uuid, sku, "16");
+    redisTempl.opsForHash().put("inventory:" + uuid, "01_mall", "hktv").block();
+    redisTempl.opsForHash().put("inventory:" + uuid, "16_mall", "").block();
+
+    // testing
+    rabbitMqUtil.sendMsgToIidsQueue(move_HKTV_to_wh("15", uuid, sku));
+
+    // verify
+    verifyUpdProdInfo.moveHktvFromMerchantToConsignmentInventory_iimsIsOtherConsignmentInventory();
+
+    // delete data
+    redisUtil.deleteInventoryUuid(uuid);
+    redisUtil.deleteSku(sku);
+  }
+
+  @Test
+  void putProductInfo_moveHktvFromConsignmentToMerchantInventory_iimsIsOtherMerchantInventory() {
+    String sku = "H088800118_S_child-SKU-E-1";
+    String uuid = "child-UUID-E-1";
+
+    // delete data
+    redisUtil.deleteInventoryUuid(uuid);
+    redisUtil.deleteSku(sku);
+
+    // insert default data
+    redisUtil.insertIidsAndSkuIimsDataInRedis(uuid, sku, "03");
+    redisTempl.opsForHash().put("inventory:" + uuid, "15_mall", "hktv").block();
+    redisTempl.opsForHash().put("inventory:" + uuid, "03_mall", "").block();
+
+    // testing
+    rabbitMqUtil.sendMsgToIidsQueue(move_HKTV_to_wh("02", uuid, sku));
+
+    // verify
+    verifyUpdProdInfo.moveHktvFromConsignmentToMerchantInventory_iimsIsOtherMerchantInventory();
+
+    // delete data
+    redisUtil.deleteInventoryUuid(uuid);
+    redisUtil.deleteSku(sku);
+  }
+
+  @Test
+  void putProductInfo_moveHktvFromConsignmentToMerchantInventory_iimsIsOtherConsignmentInventory() {
+    String sku = "H088800118_S_child-SKU-E-1";
+    String uuid = "child-UUID-E-1";
+
+    // delete data
+    redisUtil.deleteInventoryUuid(uuid);
+    redisUtil.deleteSku(sku);
+
+    // insert default data
+    redisUtil.insertIidsAndSkuIimsDataInRedis(uuid, sku, "16");
+    redisTempl.opsForHash().put("inventory:" + uuid, "15_mall", "hktv").block();
+    redisTempl.opsForHash().put("inventory:" + uuid, "16_mall", "").block();
+
+    // testing
+    rabbitMqUtil.sendMsgToIidsQueue(move_HKTV_to_wh("02", uuid, sku));
+
+    // verify
+    verifyUpdProdInfo.moveHktvFromConsignmentToMerchantInventory_iimsIsOtherConsignmentInventory();
+
+    // delete data
+    redisUtil.deleteInventoryUuid(uuid);
+    redisUtil.deleteSku(sku);
+  }
+
+  @Test
+  void putProductInfo_moveHktvFromConsignmentToMerchantInventory_iimsIs3PLInventory() {
+    String sku = "H088800118_S_child-SKU-E-1";
+    String uuid = "child-UUID-E-1";
+
+    // delete data
+    redisUtil.deleteInventoryUuid(uuid);
+    redisUtil.deleteSku(sku);
+
+    // insert default data
+    redisUtil.insertIidsAndSkuIimsDataInRedis(uuid, sku, "98");
+    redisTempl.opsForHash().put("inventory:" + uuid, "15_mall", "hktv").block();
+    redisTempl.opsForHash().put("inventory:" + uuid, "98_mall", "").block();
+
+    // testing
+    rabbitMqUtil.sendMsgToIidsQueue(move_HKTV_to_wh("02", uuid, sku));
+
+    // verify
+    verifyUpdProdInfo.moveHktvFromConsignmentToMerchantInventory_iimsIs3PLInventory();
+
+    // delete data
+    redisUtil.deleteInventoryUuid(uuid);
+    redisUtil.deleteSku(sku);
+  }
+
+  @Test
+  void putProductInfo_moveHktvFromConsignmentToConsignmentInventory_iimsIsMerchantInventory() {
+    String sku = "H088800118_S_child-SKU-E-1";
+    String uuid = "child-UUID-E-1";
+
+    // delete data
+    redisUtil.deleteInventoryUuid(uuid);
+    redisUtil.deleteSku(sku);
+
+    // insert default data
+    redisUtil.insertIidsAndSkuIimsDataInRedis(uuid, sku, "03");
+    redisTempl.opsForHash().put("inventory:" + uuid, "15_mall", "hktv").block();
+    redisTempl.opsForHash().put("inventory:" + uuid, "03_mall", "").block();
+
+    // testing
+    rabbitMqUtil.sendMsgToIidsQueue(move_HKTV_to_wh("16", uuid, sku));
+
+    // verify
+    verifyUpdProdInfo.moveHktvFromConsignmentToConsignmentInventory_iimsIsMerchantInventory();
+
+    // delete data
+    redisUtil.deleteInventoryUuid(uuid);
+    redisUtil.deleteSku(sku);
+  }
+
+  @Test
+  void putProductInfo_moveHktvFromConsignmentToConsignmentInventory_iimsIs3PLInventory() {
+    String sku = "H088800118_S_child-SKU-E-1";
+    String uuid = "child-UUID-E-1";
+
+    // delete data
+    redisUtil.deleteInventoryUuid(uuid);
+    redisUtil.deleteSku(sku);
+
+    // insert default data
+    redisUtil.insertIidsAndSkuIimsDataInRedis(uuid, sku, "98");
+    redisTempl.opsForHash().put("inventory:" + uuid, "15_mall", "hktv").block();
+    redisTempl.opsForHash().put("inventory:" + uuid, "98_mall", "").block();
+
+    // testing
+    rabbitMqUtil.sendMsgToIidsQueue(move_HKTV_to_wh("16", uuid, sku));
+
+    // verify
+    verifyUpdProdInfo.moveHktvFromConsignmentToConsignmentInventory_iimsIs3PLInventory();
+
+    // delete data
+    redisUtil.deleteInventoryUuid(uuid);
+    redisUtil.deleteSku(sku);
+  }
+
+  @Test
+  void
+      putProductInfo_moveHktvFromConsignmentToConsignmentInventory_iimsIsOtherConsignmentInventory() {
+    String sku = "H088800118_S_child-SKU-E-1";
+    String uuid = "child-UUID-E-1";
+
+    // delete data
+    redisUtil.deleteInventoryUuid(uuid);
+    redisUtil.deleteSku(sku);
+
+    // insert default data
+    redisUtil.insertIidsAndSkuIimsDataInRedis(uuid, sku, "16");
+    redisTempl.opsForHash().put("inventory:" + uuid, "15_mall", "hktv").block();
+    redisTempl.opsForHash().put("inventory:" + uuid, "16_mall", "").block();
+
+    // testing
+    rabbitMqUtil.sendMsgToIidsQueue(move_HKTV_to_wh("17", uuid, sku));
+
+    // verify
+    verifyUpdProdInfo
+        .moveHktvFromConsignmentToConsignmentInventory_iimsIsOtherConsignmentInventory();
+
+    // delete data
+    redisUtil.deleteInventoryUuid(uuid);
+    redisUtil.deleteSku(sku);
+  }
+
+  @Test
+  void putProductInfo_moveHktvFromConsignmentTo3PLInventory_iimsIsMerchantInventory() {
+    String sku = "H088800118_S_child-SKU-E-1";
+    String uuid = "child-UUID-E-1";
+
+    // delete data
+    redisUtil.deleteInventoryUuid(uuid);
+    redisUtil.deleteSku(sku);
+
+    // insert default data
+    redisUtil.insertIidsAndSkuIimsDataInRedis(uuid, sku, "03");
+    redisTempl.opsForHash().put("inventory:" + uuid, "15_mall", "hktv").block();
+    redisTempl.opsForHash().put("inventory:" + uuid, "03_mall", "").block();
+
+    // testing
+    rabbitMqUtil.sendMsgToIidsQueue(move_HKTV_to_wh("98", uuid, sku));
+
+    // verify
+    verifyUpdProdInfo.moveHktvFromConsignmentTo3PLInventory_iimsIsMerchantInventory();
+
+    // delete data
+    redisUtil.deleteInventoryUuid(uuid);
+    redisUtil.deleteSku(sku);
+  }
+
+  @Test
+  void putProductInfo_moveHktvFromConsignmentTo3PLInventory_iimsIsOtherConsignmentInventory() {
+    String sku = "H088800118_S_child-SKU-E-1";
+    String uuid = "child-UUID-E-1";
+
+    // delete data
+    redisUtil.deleteInventoryUuid(uuid);
+    redisUtil.deleteSku(sku);
+
+    // insert default data
+    redisUtil.insertIidsAndSkuIimsDataInRedis(uuid, sku, "16");
+    redisTempl.opsForHash().put("inventory:" + uuid, "15_mall", "hktv").block();
+    redisTempl.opsForHash().put("inventory:" + uuid, "16_mall", "").block();
+
+    // testing
+    rabbitMqUtil.sendMsgToIidsQueue(move_HKTV_to_wh("98", uuid, sku));
+
+    // verify
+    verifyUpdProdInfo.moveHktvFromConsignmentTo3PLInventory_iimsIsOtherConsignmentInventory();
+
+    // delete data
+    redisUtil.deleteInventoryUuid(uuid);
+    redisUtil.deleteSku(sku);
+  }
+
+  @Test
+  void putProductInfo_moveHktvFrom3PLToMerchantInventory_iimsIsOtherMerchantInventory() {
+    String sku = "H088800118_S_child-SKU-E-1";
+    String uuid = "child-UUID-E-1";
+
+    // delete data
+    redisUtil.deleteInventoryUuid(uuid);
+    redisUtil.deleteSku(sku);
+
+    // insert default data
+    redisUtil.insertIidsAndSkuIimsDataInRedis(uuid, sku, "01");
+    redisTempl.opsForHash().put("inventory:" + uuid, "98_mall", "hktv").block();
+    redisTempl.opsForHash().put("inventory:" + uuid, "01_mall", "").block();
+
+    // testing
+    rabbitMqUtil.sendMsgToIidsQueue(move_HKTV_to_wh("03", uuid, sku));
+
+    // verify
+    verifyUpdProdInfo.moveHktvFrom3PLToMerchantInventory_iimsIsOtherMerchantInventory();
+
+    // delete data
+    redisUtil.deleteInventoryUuid(uuid);
+    redisUtil.deleteSku(sku);
+  }
+
+  @Test
+  void putProductInfo_moveHktvFrom3PLToMerchantInventory_iimsIsConsignmentInventory() {
+    String sku = "H088800118_S_child-SKU-E-1";
+    String uuid = "child-UUID-E-1";
+
+    // delete data
+    redisUtil.deleteInventoryUuid(uuid);
+    redisUtil.deleteSku(sku);
+
+    // insert default data
+    redisUtil.insertIidsAndSkuIimsDataInRedis(uuid, sku, "15");
+    redisTempl.opsForHash().put("inventory:" + uuid, "98_mall", "hktv").block();
+    redisTempl.opsForHash().put("inventory:" + uuid, "15_mall", "").block();
+
+    // testing
+    rabbitMqUtil.sendMsgToIidsQueue(move_HKTV_to_wh("03", uuid, sku));
+
+    // verify
+    verifyUpdProdInfo.moveHktvFrom3PLToMerchantInventory_iimsIsConsignmentInventory();
+
+    // delete data
+    redisUtil.deleteInventoryUuid(uuid);
+    redisUtil.deleteSku(sku);
+  }
+
+  @Test
+  void putProductInfo_moveHktvFrom3PLToConsignmentInventory_iimsIsMerchantInventory() {
+    String sku = "H088800118_S_child-SKU-E-1";
+    String uuid = "child-UUID-E-1";
+
+    // delete data
+    redisUtil.deleteInventoryUuid(uuid);
+    redisUtil.deleteSku(sku);
+
+    // insert default data
+    redisUtil.insertIidsAndSkuIimsDataInRedis(uuid, sku, "01");
+    redisTempl.opsForHash().put("inventory:" + uuid, "98_mall", "hktv").block();
+    redisTempl.opsForHash().put("inventory:" + uuid, "01_mall", "").block();
+
+    // testing
+    rabbitMqUtil.sendMsgToIidsQueue(move_HKTV_to_wh("15", uuid, sku));
+
+    // verify
+    verifyUpdProdInfo.moveHktvFrom3PLToConsignmentInventory_iimsIsMerchantInventory();
+
+    // delete data
+    redisUtil.deleteInventoryUuid(uuid);
+    redisUtil.deleteSku(sku);
+  }
+
+  @Test
+  void putProductInfo_moveHktvFrom3PLToConsignmentInventory_iimsIsOtherConsignmentInventory() {
+    String sku = "H088800118_S_child-SKU-E-1";
+    String uuid = "child-UUID-E-1";
+
+    // delete data
+    redisUtil.deleteInventoryUuid(uuid);
+    redisUtil.deleteSku(sku);
+
+    // insert default data
+    redisUtil.insertIidsAndSkuIimsDataInRedis(uuid, sku, "16");
+    redisTempl.opsForHash().put("inventory:" + uuid, "98_mall", "hktv").block();
+    redisTempl.opsForHash().put("inventory:" + uuid, "16_mall", "").block();
+
+    // testing
+    rabbitMqUtil.sendMsgToIidsQueue(move_HKTV_to_wh("15", uuid, sku));
+
+    // verify
+    verifyUpdProdInfo.moveHktvFrom3PLToConsignmentInventory_iimsIsOtherConsignmentInventory();
+
+    // delete data
+    redisUtil.deleteInventoryUuid(uuid);
+    redisUtil.deleteSku(sku);
+  }
+
+  @Test
+  void putProductInfo_hktv_wh01_to_wh02_but_iims_already_in_wh02() {
+    String sku = "H088800118_S_child-SKU-E-1";
+    String uuid = "child-UUID-E-1";
+
+    // delete data
+    redisUtil.deleteInventoryUuid(uuid);
+    redisUtil.deleteSku(sku);
+
+    // insert default data
+    redisUtil.insertIidsAndSkuIimsDataInRedis(uuid, sku, "02");
+    redisTempl.opsForHash().put("inventory:" + uuid, "01_mall", "hktv").block();
+    redisTempl.opsForHash().put("inventory:" + uuid, "02_mall", "").block();
+    redisTempl.opsForHash().put("inventory:" + uuid, "01_qty", "2400").block();
+
+    // testing
+    rabbitMqUtil.sendMsgToIidsQueue(move_HKTV_to_wh("02", uuid, sku));
+
+    // verify
+    verifyUpdProdInfo.hktv_wh01_to_wh02_but_iims_already_in_wh02();
+
+    // delete data
+    redisUtil.deleteInventoryUuid(uuid);
+    redisUtil.deleteSku(sku);
+  }
+
+  @Test
+  void putProductInfo_hktv_wh01_to_wh15_but_iims_already_in_wh15() {
+    String sku = "H088800118_S_child-SKU-E-1";
+    String uuid = "child-UUID-E-1";
+
+    // delete data
+    redisUtil.deleteInventoryUuid(uuid);
+    redisUtil.deleteSku(sku);
+
+    // insert default data
+    redisUtil.insertIidsAndSkuIimsDataInRedis(uuid, sku, "15");
+    redisTempl.opsForHash().put("inventory:" + uuid, "01_mall", "hktv").block();
+    redisTempl.opsForHash().put("inventory:" + uuid, "15_mall", "").block();
+
+    // testing
+    rabbitMqUtil.sendMsgToIidsQueue(move_HKTV_to_wh("15", uuid, sku));
+
+    // verify
+    verifyUpdProdInfo.hktv_wh01_to_wh15_but_iims_already_in_wh15();
+
+    // delete data
+    redisUtil.deleteInventoryUuid(uuid);
+    redisUtil.deleteSku(sku);
+  }
+
+  @Test
+  void putProductInfo_hktv_wh01_to_wh98_but_iims_already_in_wh98() {
+    String sku = "H088800118_S_child-SKU-E-1";
+    String uuid = "child-UUID-E-1";
+
+    // delete data
+    redisUtil.deleteInventoryUuid(uuid);
+    redisUtil.deleteSku(sku);
+
+    // insert default data
+    redisUtil.insertIidsAndSkuIimsDataInRedis(uuid, sku, "98");
+    redisTempl.opsForHash().put("inventory:" + uuid, "01_mall", "hktv").block();
+    redisTempl.opsForHash().put("inventory:" + uuid, "98_mall", "").block();
+
+    // testing
+    rabbitMqUtil.sendMsgToIidsQueue(move_HKTV_to_wh("98", uuid, sku));
+
+    // verify
+    verifyUpdProdInfo.hktv_wh01_to_wh98_but_iims_already_in_wh98();
+
+    // delete data
+    redisUtil.deleteInventoryUuid(uuid);
+    redisUtil.deleteSku(sku);
+  }
+
+  @Test
+  void putProductInfo_hktv_wh15_to_wh01_but_iims_already_in_wh01() {
+    String sku = "H088800118_S_child-SKU-E-1";
+    String uuid = "child-UUID-E-1";
+
+    // delete data
+    redisUtil.deleteInventoryUuid(uuid);
+    redisUtil.deleteSku(sku);
+
+    // insert default data
+    redisUtil.insertIidsAndSkuIimsDataInRedis(uuid, sku, "01");
+    redisTempl.opsForHash().put("inventory:" + uuid, "15_mall", "hktv").block();
+    redisTempl.opsForHash().put("inventory:" + uuid, "01_mall", "").block();
+
+    // testing
+    rabbitMqUtil.sendMsgToIidsQueue(move_HKTV_to_wh("01", uuid, sku));
+
+    // verify
+    verifyUpdProdInfo.hktv_wh15_to_wh01_but_iims_already_in_wh01();
+
+    // delete data
+    redisUtil.deleteInventoryUuid(uuid);
+    redisUtil.deleteSku(sku);
+  }
+
+  @Test
+  void putProductInfo_hktv_wh15_to_wh16_but_iims_already_in_wh16() {
+    String sku = "H088800118_S_child-SKU-E-1";
+    String uuid = "child-UUID-E-1";
+
+    // delete data
+    redisUtil.deleteInventoryUuid(uuid);
+    redisUtil.deleteSku(sku);
+
+    // insert default data
+    redisUtil.insertIidsAndSkuIimsDataInRedis(uuid, sku, "16");
+    redisTempl.opsForHash().put("inventory:" + uuid, "15_mall", "hktv").block();
+    redisTempl.opsForHash().put("inventory:" + uuid, "16_mall", "").block();
+
+    // testing
+    rabbitMqUtil.sendMsgToIidsQueue(move_HKTV_to_wh("16", uuid, sku));
+
+    // verify
+    verifyUpdProdInfo.hktv_wh15_to_wh16_but_iims_already_in_wh16();
+
+    // delete data
+    redisUtil.deleteInventoryUuid(uuid);
+    redisUtil.deleteSku(sku);
+  }
+
+  @Test
+  void putProductInfo_hktv_wh15_to_wh98_but_iims_already_in_wh98() {
+    String sku = "H088800118_S_child-SKU-E-1";
+    String uuid = "child-UUID-E-1";
+
+    // delete data
+    redisUtil.deleteInventoryUuid(uuid);
+    redisUtil.deleteSku(sku);
+
+    // insert default data
+    redisUtil.insertIidsAndSkuIimsDataInRedis(uuid, sku, "98");
+    redisTempl.opsForHash().put("inventory:" + uuid, "15_mall", "hktv").block();
+    redisTempl.opsForHash().put("inventory:" + uuid, "98_mall", "").block();
+
+    // testing
+    rabbitMqUtil.sendMsgToIidsQueue(move_HKTV_to_wh("98", uuid, sku));
+
+    // verify
+    verifyUpdProdInfo.hktv_wh15_to_wh98_but_iims_already_in_wh98();
+
+    // delete data
+    redisUtil.deleteInventoryUuid(uuid);
+    redisUtil.deleteSku(sku);
+  }
+
+  @Test
+  void putProductInfo_hktv_wh98_to_wh01_but_iims_already_in_wh01() {
+    String sku = "H088800118_S_child-SKU-E-1";
+    String uuid = "child-UUID-E-1";
+
+    // delete data
+    redisUtil.deleteInventoryUuid(uuid);
+    redisUtil.deleteSku(sku);
+
+    // insert default data
+    redisUtil.insertIidsAndSkuIimsDataInRedis(uuid, sku, "01");
+    redisTempl.opsForHash().put("inventory:" + uuid, "98_mall", "hktv").block();
+    redisTempl.opsForHash().put("inventory:" + uuid, "01_mall", "").block();
+
+    // testing
+    rabbitMqUtil.sendMsgToIidsQueue(move_HKTV_to_wh("01", uuid, sku));
+
+    // verify
+    verifyUpdProdInfo.hktv_wh98_to_wh01_but_iims_already_in_wh01();
+
+    // delete data
+    redisUtil.deleteInventoryUuid(uuid);
+    redisUtil.deleteSku(sku);
+  }
+
+  @Test
+  void putProductInfo_hktv_wh98_to_wh15_but_iims_already_in_wh15() {
+    String sku = "H088800118_S_child-SKU-E-1";
+    String uuid = "child-UUID-E-1";
+
+    // delete data
+    redisUtil.deleteInventoryUuid(uuid);
+    redisUtil.deleteSku(sku);
+
+    // insert default data
+    redisUtil.insertIidsAndSkuIimsDataInRedis(uuid, sku, "15");
+    redisTempl.opsForHash().put("inventory:" + uuid, "98_mall", "hktv").block();
+    redisTempl.opsForHash().put("inventory:" + uuid, "15_mall", "").block();
+
+    // testing
+    rabbitMqUtil.sendMsgToIidsQueue(move_HKTV_to_wh("15", uuid, sku));
+
+    // verify
+    verifyUpdProdInfo.hktv_wh98_to_wh15_but_iims_already_in_wh15();
+
+    // delete data
+    redisUtil.deleteInventoryUuid(uuid);
+    redisUtil.deleteSku(sku);
   }
 }

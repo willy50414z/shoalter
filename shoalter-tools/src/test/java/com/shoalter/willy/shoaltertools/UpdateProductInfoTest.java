@@ -69,7 +69,7 @@ public class UpdateProductInfoTest {
     defaultRabbitTemplate.convertAndSend(
         EXCHANGE, ROUTING_KEY, updateProductInfoDto_testcase0001(uuid, sku));
 
-    Thread.sleep(1000L);
+    Thread.sleep(2000L);
 
     // 驗證IIDS資料
     Assertions.assertEquals(
@@ -199,7 +199,7 @@ public class UpdateProductInfoTest {
     defaultRabbitTemplate.convertAndSend(
         EXCHANGE, ROUTING_KEY, updateProductInfoDto_testcase0004(uuid, sku));
 
-    Thread.sleep(1000L);
+    Thread.sleep(2000L);
 
     // 驗證IIDS資料
     Assertions.assertEquals(
@@ -311,7 +311,7 @@ public class UpdateProductInfoTest {
     defaultRabbitTemplate.convertAndSend(
         EXCHANGE, ROUTING_KEY, updateProductInfoDto_testcase0005(uuid, sku));
 
-    Thread.sleep(1000L);
+    Thread.sleep(2000L);
 
     // 驗證IIDS資料
     Assertions.assertEquals(
@@ -660,7 +660,7 @@ public class UpdateProductInfoTest {
     defaultRabbitTemplate.convertAndSend(
         EXCHANGE, ROUTING_KEY, updateProductInfoDto_testcase0009(uuid, sku));
 
-    Thread.sleep(1000L);
+    Thread.sleep(2000L);
 
     // 驗證IIDS資料
     Assertions.assertEquals(
@@ -773,7 +773,7 @@ public class UpdateProductInfoTest {
     defaultRabbitTemplate.convertAndSend(
         EXCHANGE, ROUTING_KEY, updateProductInfoDto_testcase0010(uuid, sku));
 
-    Thread.sleep(1000L);
+    Thread.sleep(2000L);
 
     // 驗證IIDS資料
     Assertions.assertEquals(
@@ -905,7 +905,7 @@ public class UpdateProductInfoTest {
     defaultRabbitTemplate.convertAndSend(
         EXCHANGE, ROUTING_KEY, updateProductInfoDto_testcase0011(uuid, sku));
 
-    Thread.sleep(1000L);
+    Thread.sleep(2000L);
 
     // 驗證IIDS資料
     Assertions.assertEquals(
@@ -2103,7 +2103,7 @@ public class UpdateProductInfoTest {
     redisUtil.deleteSku(sku);
 
     // insert default data
-    redisUtil.insertIidsAndSkuIimsDataInRedis(uuid, sku, "01");
+    redisUtil.insertIidsAndSkuIimsData(uuid, sku, "01");
 
     // testing
     rabbitMqUtil.sendMsgToIidsQueue(move_HKTV_to_wh("98", uuid, sku));
@@ -2126,7 +2126,7 @@ public class UpdateProductInfoTest {
     redisUtil.deleteSku(sku);
 
     // insert default data
-    redisUtil.insertIidsAndSkuIimsDataInRedis(uuid, sku, "98");
+    redisUtil.insertIidsAndSkuIimsData(uuid, sku, "98");
     redisTempl.opsForHash().put("inventory:" + uuid, "01_qty", "2400").block();
 
     // testing
@@ -2150,7 +2150,7 @@ public class UpdateProductInfoTest {
     redisUtil.deleteSku(sku);
 
     // insert default data
-    redisUtil.insertIidsAndSkuIimsDataInRedis(uuid, sku, "01");
+    redisUtil.insertIidsAndSkuIimsData(uuid, sku, "01");
 
     // testing
     rabbitMqUtil.sendMsgToIidsQueue(move_HKTV_to_wh("02", uuid, sku));
@@ -2173,7 +2173,7 @@ public class UpdateProductInfoTest {
     redisUtil.deleteSku(sku);
 
     // insert default data
-    redisUtil.insertIidsAndSkuIimsDataInRedis(uuid, sku, "03");
+    redisUtil.insertIidsAndSkuIimsData(uuid, sku, "03");
     redisTempl.opsForHash().put("inventory:" + uuid, "01_mall", "hktv").block();
     redisTempl.opsForHash().put("inventory:" + uuid, "03_mall", "").block();
 
@@ -2198,7 +2198,7 @@ public class UpdateProductInfoTest {
     redisUtil.deleteSku(sku);
 
     // insert default data
-    redisUtil.insertIidsAndSkuIimsDataInRedis(uuid, sku, "15");
+    redisUtil.insertIidsAndSkuIimsData(uuid, sku, "15");
     redisTempl.opsForHash().put("inventory:" + uuid, "01_mall", "hktv").block();
     redisTempl.opsForHash().put("inventory:" + uuid, "15_mall", "").block();
 
@@ -2223,7 +2223,7 @@ public class UpdateProductInfoTest {
     redisUtil.deleteSku(sku);
 
     // insert default data
-    redisUtil.insertIidsAndSkuIimsDataInRedis(uuid, sku, "98");
+    redisUtil.insertIidsAndSkuIimsData(uuid, sku, "98");
     redisTempl.opsForHash().put("inventory:" + uuid, "01_mall", "hktv").block();
     redisTempl.opsForHash().put("inventory:" + uuid, "98_mall", "").block();
 
@@ -2248,7 +2248,7 @@ public class UpdateProductInfoTest {
     redisUtil.deleteSku(sku);
 
     // insert default data
-    redisUtil.insertIidsAndSkuIimsDataInRedis(uuid, sku, "03");
+    redisUtil.insertIidsAndSkuIimsData(uuid, sku, "03");
     redisTempl.opsForHash().put("inventory:" + uuid, "01_mall", "hktv").block();
     redisTempl.opsForHash().put("inventory:" + uuid, "03_mall", "").block();
 
@@ -2273,7 +2273,7 @@ public class UpdateProductInfoTest {
     redisUtil.deleteSku(sku);
 
     // insert default data
-    redisUtil.insertIidsAndSkuIimsDataInRedis(uuid, sku, "15");
+    redisUtil.insertIidsAndSkuIimsData(uuid, sku, "15");
     redisTempl.opsForHash().put("inventory:" + uuid, "01_mall", "hktv").block();
     redisTempl.opsForHash().put("inventory:" + uuid, "15_mall", "").block();
 
@@ -2298,7 +2298,7 @@ public class UpdateProductInfoTest {
     redisUtil.deleteSku(sku);
 
     // insert default data
-    redisUtil.insertIidsAndSkuIimsDataInRedis(uuid, sku, "03");
+    redisUtil.insertIidsAndSkuIimsData(uuid, sku, "03");
     redisTempl.opsForHash().put("inventory:" + uuid, "01_mall", "hktv").block();
     redisTempl.opsForHash().put("inventory:" + uuid, "03_mall", "").block();
 
@@ -2323,7 +2323,7 @@ public class UpdateProductInfoTest {
     redisUtil.deleteSku(sku);
 
     // insert default data
-    redisUtil.insertIidsAndSkuIimsDataInRedis(uuid, sku, "98");
+    redisUtil.insertIidsAndSkuIimsData(uuid, sku, "98");
     redisTempl.opsForHash().put("inventory:" + uuid, "01_mall", "hktv").block();
     redisTempl.opsForHash().put("inventory:" + uuid, "98_mall", "").block();
 
@@ -2348,7 +2348,7 @@ public class UpdateProductInfoTest {
     redisUtil.deleteSku(sku);
 
     // insert default data
-    redisUtil.insertIidsAndSkuIimsDataInRedis(uuid, sku, "16");
+    redisUtil.insertIidsAndSkuIimsData(uuid, sku, "16");
     redisTempl.opsForHash().put("inventory:" + uuid, "01_mall", "hktv").block();
     redisTempl.opsForHash().put("inventory:" + uuid, "16_mall", "").block();
 
@@ -2373,7 +2373,7 @@ public class UpdateProductInfoTest {
     redisUtil.deleteSku(sku);
 
     // insert default data
-    redisUtil.insertIidsAndSkuIimsDataInRedis(uuid, sku, "03");
+    redisUtil.insertIidsAndSkuIimsData(uuid, sku, "03");
     redisTempl.opsForHash().put("inventory:" + uuid, "15_mall", "hktv").block();
     redisTempl.opsForHash().put("inventory:" + uuid, "03_mall", "").block();
 
@@ -2398,7 +2398,7 @@ public class UpdateProductInfoTest {
     redisUtil.deleteSku(sku);
 
     // insert default data
-    redisUtil.insertIidsAndSkuIimsDataInRedis(uuid, sku, "16");
+    redisUtil.insertIidsAndSkuIimsData(uuid, sku, "16");
     redisTempl.opsForHash().put("inventory:" + uuid, "15_mall", "hktv").block();
     redisTempl.opsForHash().put("inventory:" + uuid, "16_mall", "").block();
 
@@ -2423,7 +2423,7 @@ public class UpdateProductInfoTest {
     redisUtil.deleteSku(sku);
 
     // insert default data
-    redisUtil.insertIidsAndSkuIimsDataInRedis(uuid, sku, "98");
+    redisUtil.insertIidsAndSkuIimsData(uuid, sku, "98");
     redisTempl.opsForHash().put("inventory:" + uuid, "15_mall", "hktv").block();
     redisTempl.opsForHash().put("inventory:" + uuid, "98_mall", "").block();
 
@@ -2448,7 +2448,7 @@ public class UpdateProductInfoTest {
     redisUtil.deleteSku(sku);
 
     // insert default data
-    redisUtil.insertIidsAndSkuIimsDataInRedis(uuid, sku, "03");
+    redisUtil.insertIidsAndSkuIimsData(uuid, sku, "03");
     redisTempl.opsForHash().put("inventory:" + uuid, "15_mall", "hktv").block();
     redisTempl.opsForHash().put("inventory:" + uuid, "03_mall", "").block();
 
@@ -2473,7 +2473,7 @@ public class UpdateProductInfoTest {
     redisUtil.deleteSku(sku);
 
     // insert default data
-    redisUtil.insertIidsAndSkuIimsDataInRedis(uuid, sku, "98");
+    redisUtil.insertIidsAndSkuIimsData(uuid, sku, "98");
     redisTempl.opsForHash().put("inventory:" + uuid, "15_mall", "hktv").block();
     redisTempl.opsForHash().put("inventory:" + uuid, "98_mall", "").block();
 
@@ -2499,7 +2499,7 @@ public class UpdateProductInfoTest {
     redisUtil.deleteSku(sku);
 
     // insert default data
-    redisUtil.insertIidsAndSkuIimsDataInRedis(uuid, sku, "16");
+    redisUtil.insertIidsAndSkuIimsData(uuid, sku, "16");
     redisTempl.opsForHash().put("inventory:" + uuid, "15_mall", "hktv").block();
     redisTempl.opsForHash().put("inventory:" + uuid, "16_mall", "").block();
 
@@ -2525,7 +2525,7 @@ public class UpdateProductInfoTest {
     redisUtil.deleteSku(sku);
 
     // insert default data
-    redisUtil.insertIidsAndSkuIimsDataInRedis(uuid, sku, "03");
+    redisUtil.insertIidsAndSkuIimsData(uuid, sku, "03");
     redisTempl.opsForHash().put("inventory:" + uuid, "15_mall", "hktv").block();
     redisTempl.opsForHash().put("inventory:" + uuid, "03_mall", "").block();
 
@@ -2550,7 +2550,7 @@ public class UpdateProductInfoTest {
     redisUtil.deleteSku(sku);
 
     // insert default data
-    redisUtil.insertIidsAndSkuIimsDataInRedis(uuid, sku, "16");
+    redisUtil.insertIidsAndSkuIimsData(uuid, sku, "16");
     redisTempl.opsForHash().put("inventory:" + uuid, "15_mall", "hktv").block();
     redisTempl.opsForHash().put("inventory:" + uuid, "16_mall", "").block();
 
@@ -2575,7 +2575,7 @@ public class UpdateProductInfoTest {
     redisUtil.deleteSku(sku);
 
     // insert default data
-    redisUtil.insertIidsAndSkuIimsDataInRedis(uuid, sku, "01");
+    redisUtil.insertIidsAndSkuIimsData(uuid, sku, "01");
     redisTempl.opsForHash().put("inventory:" + uuid, "98_mall", "hktv").block();
     redisTempl.opsForHash().put("inventory:" + uuid, "01_mall", "").block();
 
@@ -2600,7 +2600,7 @@ public class UpdateProductInfoTest {
     redisUtil.deleteSku(sku);
 
     // insert default data
-    redisUtil.insertIidsAndSkuIimsDataInRedis(uuid, sku, "15");
+    redisUtil.insertIidsAndSkuIimsData(uuid, sku, "15");
     redisTempl.opsForHash().put("inventory:" + uuid, "98_mall", "hktv").block();
     redisTempl.opsForHash().put("inventory:" + uuid, "15_mall", "").block();
 
@@ -2625,7 +2625,7 @@ public class UpdateProductInfoTest {
     redisUtil.deleteSku(sku);
 
     // insert default data
-    redisUtil.insertIidsAndSkuIimsDataInRedis(uuid, sku, "01");
+    redisUtil.insertIidsAndSkuIimsData(uuid, sku, "01");
     redisTempl.opsForHash().put("inventory:" + uuid, "98_mall", "hktv").block();
     redisTempl.opsForHash().put("inventory:" + uuid, "01_mall", "").block();
 
@@ -2650,7 +2650,7 @@ public class UpdateProductInfoTest {
     redisUtil.deleteSku(sku);
 
     // insert default data
-    redisUtil.insertIidsAndSkuIimsDataInRedis(uuid, sku, "16");
+    redisUtil.insertIidsAndSkuIimsData(uuid, sku, "16");
     redisTempl.opsForHash().put("inventory:" + uuid, "98_mall", "hktv").block();
     redisTempl.opsForHash().put("inventory:" + uuid, "16_mall", "").block();
 
@@ -2675,7 +2675,7 @@ public class UpdateProductInfoTest {
     redisUtil.deleteSku(sku);
 
     // insert default data
-    redisUtil.insertIidsAndSkuIimsDataInRedis(uuid, sku, "02");
+    redisUtil.insertIidsAndSkuIimsData(uuid, sku, "02");
     redisTempl.opsForHash().put("inventory:" + uuid, "01_mall", "hktv").block();
     redisTempl.opsForHash().put("inventory:" + uuid, "02_mall", "").block();
     redisTempl.opsForHash().put("inventory:" + uuid, "01_qty", "2400").block();
@@ -2701,7 +2701,7 @@ public class UpdateProductInfoTest {
     redisUtil.deleteSku(sku);
 
     // insert default data
-    redisUtil.insertIidsAndSkuIimsDataInRedis(uuid, sku, "15");
+    redisUtil.insertIidsAndSkuIimsData(uuid, sku, "15");
     redisTempl.opsForHash().put("inventory:" + uuid, "01_mall", "hktv").block();
     redisTempl.opsForHash().put("inventory:" + uuid, "15_mall", "").block();
 
@@ -2726,7 +2726,7 @@ public class UpdateProductInfoTest {
     redisUtil.deleteSku(sku);
 
     // insert default data
-    redisUtil.insertIidsAndSkuIimsDataInRedis(uuid, sku, "98");
+    redisUtil.insertIidsAndSkuIimsData(uuid, sku, "98");
     redisTempl.opsForHash().put("inventory:" + uuid, "01_mall", "hktv").block();
     redisTempl.opsForHash().put("inventory:" + uuid, "98_mall", "").block();
 
@@ -2751,7 +2751,7 @@ public class UpdateProductInfoTest {
     redisUtil.deleteSku(sku);
 
     // insert default data
-    redisUtil.insertIidsAndSkuIimsDataInRedis(uuid, sku, "01");
+    redisUtil.insertIidsAndSkuIimsData(uuid, sku, "01");
     redisTempl.opsForHash().put("inventory:" + uuid, "15_mall", "hktv").block();
     redisTempl.opsForHash().put("inventory:" + uuid, "01_mall", "").block();
 
@@ -2776,7 +2776,7 @@ public class UpdateProductInfoTest {
     redisUtil.deleteSku(sku);
 
     // insert default data
-    redisUtil.insertIidsAndSkuIimsDataInRedis(uuid, sku, "16");
+    redisUtil.insertIidsAndSkuIimsData(uuid, sku, "16");
     redisTempl.opsForHash().put("inventory:" + uuid, "15_mall", "hktv").block();
     redisTempl.opsForHash().put("inventory:" + uuid, "16_mall", "").block();
 
@@ -2801,7 +2801,7 @@ public class UpdateProductInfoTest {
     redisUtil.deleteSku(sku);
 
     // insert default data
-    redisUtil.insertIidsAndSkuIimsDataInRedis(uuid, sku, "98");
+    redisUtil.insertIidsAndSkuIimsData(uuid, sku, "98");
     redisTempl.opsForHash().put("inventory:" + uuid, "15_mall", "hktv").block();
     redisTempl.opsForHash().put("inventory:" + uuid, "98_mall", "").block();
 
@@ -2826,7 +2826,7 @@ public class UpdateProductInfoTest {
     redisUtil.deleteSku(sku);
 
     // insert default data
-    redisUtil.insertIidsAndSkuIimsDataInRedis(uuid, sku, "01");
+    redisUtil.insertIidsAndSkuIimsData(uuid, sku, "01");
     redisTempl.opsForHash().put("inventory:" + uuid, "98_mall", "hktv").block();
     redisTempl.opsForHash().put("inventory:" + uuid, "01_mall", "").block();
 
@@ -2851,7 +2851,7 @@ public class UpdateProductInfoTest {
     redisUtil.deleteSku(sku);
 
     // insert default data
-    redisUtil.insertIidsAndSkuIimsDataInRedis(uuid, sku, "15");
+    redisUtil.insertIidsAndSkuIimsData(uuid, sku, "15");
     redisTempl.opsForHash().put("inventory:" + uuid, "98_mall", "hktv").block();
     redisTempl.opsForHash().put("inventory:" + uuid, "15_mall", "").block();
 

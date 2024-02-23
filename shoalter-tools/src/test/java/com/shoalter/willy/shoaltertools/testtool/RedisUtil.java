@@ -87,4 +87,8 @@ public class RedisUtil {
             LocalDateTime.now().plusSeconds(sec).format(dtf))
         .block();
   }
+
+  public void insertSkusInSpecifyRedisNode(String key, String... skus) {
+    redisTempl.opsForSet().add(key, skus).block();
+  }
 }

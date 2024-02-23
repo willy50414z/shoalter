@@ -14,6 +14,10 @@ public class ApiUtil {
     return getLocalIidsUrl() + "/s2s/v3/warehouse/quantity";
   }
 
+  private String getLocalUpdBundleQtyUrl() {
+    return getLocalIidsUrl() + "/s2s/v3/mall/bundle/quantity";
+  }
+
   public void callDeductWh4700QtyApi(String childUuid) {
     given()
         .contentType("application/json")
@@ -34,6 +38,58 @@ public class ApiUtil {
                 + "]")
         .when()
         .put(getLocalUpdWhQtyUrl())
+        .then()
+        .statusCode(200)
+        .log()
+        .all();
+  }
+
+  public void callDeductBundle10QtyApi(String bundleUuid) {
+    given()
+        .contentType("application/json")
+        .body(
+            "[\n"
+                + "  {\n"
+                + "    \"uuid\": \""
+                + bundleUuid
+                + "\",\n"
+                + "    \"mallQty\": [\n"
+                + "      {\n"
+                + "        \"mall\": \"hktv\",\n"
+                + "        \"mode\": \"deduct\",\n"
+                + "        \"qty\": 100\n"
+                + "      }\n"
+                + "    ]\n"
+                + "  }\n"
+                + "]")
+        .when()
+        .put(getLocalUpdBundleQtyUrl())
+        .then()
+        .statusCode(200)
+        .log()
+        .all();
+  }
+
+  public void callAddBundle2400QtyApi(String bundleUuid) {
+    given()
+        .contentType("application/json")
+        .body(
+            "[\n"
+                + "  {\n"
+                + "    \"uuid\": \""
+                + bundleUuid
+                + "\",\n"
+                + "    \"mallQty\": [\n"
+                + "      {\n"
+                + "        \"mall\": \"hktv\",\n"
+                + "        \"mode\": \"add\",\n"
+                + "        \"qty\": 2400\n"
+                + "      }\n"
+                + "    ]\n"
+                + "  }\n"
+                + "]")
+        .when()
+        .put(getLocalUpdBundleQtyUrl())
         .then()
         .statusCode(200)
         .log()

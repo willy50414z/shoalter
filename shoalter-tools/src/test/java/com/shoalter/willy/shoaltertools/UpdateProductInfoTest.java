@@ -1251,6 +1251,7 @@ public class UpdateProductInfoTest {
         .products(
             List.of(
                 ProductDto.builder()
+                    .uuid(uuid)
                     .warehouseDetail(
                         List.of(
                             ProductWarehouseDetailDto.builder()
@@ -1278,6 +1279,7 @@ public class UpdateProductInfoTest {
         .products(
             List.of(
                 ProductDto.builder()
+                    .uuid(uuid)
                     .warehouseDetail(
                         List.of(
                             ProductWarehouseDetailDto.builder()
@@ -1326,27 +1328,30 @@ public class UpdateProductInfoTest {
         .action("CREATE")
         .products(
             List.of(
-                new ProductDto(
-                    uuid,
-                    List.of(
-                        ProductMallDetailDto.builder()
-                            .mall("hktv")
-                            .storefrontStoreCode("H00001")
-                            .storeSkuId(sku)
-                            .build(),
-                        ProductMallDetailDto.builder()
-                            .mall("little_mall")
-                            .storefrontStoreCode("H00001")
-                            .build()),
-                    List.of(
-                        ProductWarehouseDetailDto.builder()
-                            .warehouseSeqNo("01")
-                            .mall(List.of("hktv"))
-                            .build(),
-                        ProductWarehouseDetailDto.builder()
-                            .warehouseSeqNo("02")
-                            .mall(List.of("little_mall"))
-                            .build()))))
+                ProductDto.builder()
+                    .uuid(uuid)
+                    .mallDetail(
+                        List.of(
+                            ProductMallDetailDto.builder()
+                                .mall("hktv")
+                                .storefrontStoreCode("H00001")
+                                .storeSkuId(sku)
+                                .build(),
+                            ProductMallDetailDto.builder()
+                                .mall("little_mall")
+                                .storefrontStoreCode("H00001")
+                                .build()))
+                    .warehouseDetail(
+                        List.of(
+                            ProductWarehouseDetailDto.builder()
+                                .warehouseSeqNo("01")
+                                .mall(List.of("hktv"))
+                                .build(),
+                            ProductWarehouseDetailDto.builder()
+                                .warehouseSeqNo("02")
+                                .mall(List.of("little_mall"))
+                                .build()))
+                    .build()))
         .build();
   }
 
@@ -1355,27 +1360,30 @@ public class UpdateProductInfoTest {
         .action("UPDATE")
         .products(
             List.of(
-                new ProductDto(
-                    uuid,
-                    List.of(
-                        ProductMallDetailDto.builder()
-                            .mall("hktv")
-                            .storefrontStoreCode("H00001")
-                            .storeSkuId(sku)
-                            .build(),
-                        ProductMallDetailDto.builder()
-                            .mall("little_mall")
-                            .storefrontStoreCode("H00001")
-                            .build()),
-                    List.of(
-                        ProductWarehouseDetailDto.builder()
-                            .warehouseSeqNo("01")
-                            .mall(List.of())
-                            .build(),
-                        ProductWarehouseDetailDto.builder()
-                            .warehouseSeqNo("02")
-                            .mall(List.of("hktv", "little_mall"))
-                            .build()))))
+                ProductDto.builder()
+                    .uuid(uuid)
+                    .mallDetail(
+                        List.of(
+                            ProductMallDetailDto.builder()
+                                .mall("hktv")
+                                .storefrontStoreCode("H00001")
+                                .storeSkuId(sku)
+                                .build(),
+                            ProductMallDetailDto.builder()
+                                .mall("little_mall")
+                                .storefrontStoreCode("H00001")
+                                .build()))
+                    .warehouseDetail(
+                        List.of(
+                            ProductWarehouseDetailDto.builder()
+                                .warehouseSeqNo("01")
+                                .mall(List.of())
+                                .build(),
+                            ProductWarehouseDetailDto.builder()
+                                .warehouseSeqNo("02")
+                                .mall(List.of("hktv", "little_mall"))
+                                .build()))
+                    .build()))
         .build();
   }
 
@@ -1402,23 +1410,26 @@ public class UpdateProductInfoTest {
         .action("CREATE")
         .products(
             List.of(
-                new ProductDto(
-                    uuid,
-                    List.of(
-                        ProductMallDetailDto.builder()
-                            .mall("hktv")
-                            .storefrontStoreCode("H00001")
-                            .storeSkuId(sku)
-                            .build(),
-                        ProductMallDetailDto.builder()
-                            .mall("little_mall")
-                            .storefrontStoreCode("H00001")
-                            .build()),
-                    List.of(
-                        ProductWarehouseDetailDto.builder()
-                            .warehouseSeqNo("01")
-                            .mall(List.of("hktv", "little_mall"))
-                            .build()))))
+                ProductDto.builder()
+                    .uuid(uuid)
+                    .mallDetail(
+                        List.of(
+                            ProductMallDetailDto.builder()
+                                .mall("hktv")
+                                .storefrontStoreCode("H00001")
+                                .storeSkuId(sku)
+                                .build(),
+                            ProductMallDetailDto.builder()
+                                .mall("little_mall")
+                                .storefrontStoreCode("H00001")
+                                .build()))
+                    .warehouseDetail(
+                        List.of(
+                            ProductWarehouseDetailDto.builder()
+                                .warehouseSeqNo("01")
+                                .mall(List.of("hktv", "little_mall"))
+                                .build()))
+                    .build()))
         .build();
   }
 
@@ -1427,27 +1438,30 @@ public class UpdateProductInfoTest {
         .action("UPDATE")
         .products(
             List.of(
-                new ProductDto(
-                    uuid,
-                    List.of(
-                        ProductMallDetailDto.builder()
-                            .mall("hktv")
-                            .storefrontStoreCode("H00001")
-                            .storeSkuId(sku)
-                            .build(),
-                        ProductMallDetailDto.builder()
-                            .mall("little_mall")
-                            .storefrontStoreCode("H00001")
-                            .build()),
-                    List.of(
-                        ProductWarehouseDetailDto.builder()
-                            .warehouseSeqNo("01")
-                            .mall(List.of())
-                            .build(),
-                        ProductWarehouseDetailDto.builder()
-                            .warehouseSeqNo("02")
-                            .mall(List.of("hktv", "little_mall"))
-                            .build()))))
+                ProductDto.builder()
+                    .uuid(uuid)
+                    .mallDetail(
+                        List.of(
+                            ProductMallDetailDto.builder()
+                                .mall("hktv")
+                                .storefrontStoreCode("H00001")
+                                .storeSkuId(sku)
+                                .build(),
+                            ProductMallDetailDto.builder()
+                                .mall("little_mall")
+                                .storefrontStoreCode("H00001")
+                                .build()))
+                    .warehouseDetail(
+                        List.of(
+                            ProductWarehouseDetailDto.builder()
+                                .warehouseSeqNo("01")
+                                .mall(List.of())
+                                .build(),
+                            ProductWarehouseDetailDto.builder()
+                                .warehouseSeqNo("02")
+                                .mall(List.of("hktv", "little_mall"))
+                                .build()))
+                    .build()))
         .build();
   }
 
@@ -1474,18 +1488,21 @@ public class UpdateProductInfoTest {
         .action("CREATE")
         .products(
             List.of(
-                new ProductDto(
-                    uuid,
-                    List.of(
-                        ProductMallDetailDto.builder()
-                            .mall("little_mall")
-                            .storefrontStoreCode("H00001")
-                            .build()),
-                    List.of(
-                        ProductWarehouseDetailDto.builder()
-                            .warehouseSeqNo("01")
-                            .mall(List.of("little_mall"))
-                            .build()))))
+                ProductDto.builder()
+                    .uuid(uuid)
+                    .mallDetail(
+                        List.of(
+                            ProductMallDetailDto.builder()
+                                .mall("little_mall")
+                                .storefrontStoreCode("H00001")
+                                .build()))
+                    .warehouseDetail(
+                        List.of(
+                            ProductWarehouseDetailDto.builder()
+                                .warehouseSeqNo("01")
+                                .mall(List.of("little_mall"))
+                                .build()))
+                    .build()))
         .build();
   }
 
@@ -1494,22 +1511,25 @@ public class UpdateProductInfoTest {
         .action("UPDATE")
         .products(
             List.of(
-                new ProductDto(
-                    uuid,
-                    List.of(
-                        ProductMallDetailDto.builder()
-                            .mall("little_mall")
-                            .storefrontStoreCode("H00001")
-                            .build()),
-                    List.of(
-                        ProductWarehouseDetailDto.builder()
-                            .warehouseSeqNo("01")
-                            .mall(List.of())
-                            .build(),
-                        ProductWarehouseDetailDto.builder()
-                            .warehouseSeqNo("02")
-                            .mall(List.of("little_mall"))
-                            .build()))))
+                ProductDto.builder()
+                    .uuid(uuid)
+                    .mallDetail(
+                        List.of(
+                            ProductMallDetailDto.builder()
+                                .mall("little_mall")
+                                .storefrontStoreCode("H00001")
+                                .build()))
+                    .warehouseDetail(
+                        List.of(
+                            ProductWarehouseDetailDto.builder()
+                                .warehouseSeqNo("01")
+                                .mall(List.of())
+                                .build(),
+                            ProductWarehouseDetailDto.builder()
+                                .warehouseSeqNo("02")
+                                .mall(List.of("little_mall"))
+                                .build()))
+                    .build()))
         .build();
   }
 
@@ -1544,23 +1564,26 @@ public class UpdateProductInfoTest {
         .action("CREATE")
         .products(
             List.of(
-                new ProductDto(
-                    uuid,
-                    List.of(
-                        ProductMallDetailDto.builder()
-                            .mall("hktv")
-                            .storefrontStoreCode("H00001")
-                            .storeSkuId(sku)
-                            .build()),
-                    List.of(
-                        ProductWarehouseDetailDto.builder()
-                            .warehouseSeqNo("01")
-                            .mall(List.of("hktv"))
-                            .build(),
-                        ProductWarehouseDetailDto.builder()
-                            .warehouseSeqNo("02")
-                            .mall(List.of())
-                            .build()))))
+                ProductDto.builder()
+                    .uuid(uuid)
+                    .mallDetail(
+                        List.of(
+                            ProductMallDetailDto.builder()
+                                .mall("hktv")
+                                .storefrontStoreCode("H00001")
+                                .storeSkuId(sku)
+                                .build()))
+                    .warehouseDetail(
+                        List.of(
+                            ProductWarehouseDetailDto.builder()
+                                .warehouseSeqNo("01")
+                                .mall(List.of("hktv"))
+                                .build(),
+                            ProductWarehouseDetailDto.builder()
+                                .warehouseSeqNo("02")
+                                .mall(List.of())
+                                .build()))
+                    .build()))
         .build();
   }
 
@@ -1569,23 +1592,26 @@ public class UpdateProductInfoTest {
         .action("UPDATE")
         .products(
             List.of(
-                new ProductDto(
-                    uuid,
-                    List.of(
-                        ProductMallDetailDto.builder()
-                            .mall("hktv")
-                            .storefrontStoreCode("H00001")
-                            .storeSkuId(sku)
-                            .build()),
-                    List.of(
-                        ProductWarehouseDetailDto.builder()
-                            .warehouseSeqNo("01")
-                            .mall(List.of())
-                            .build(),
-                        ProductWarehouseDetailDto.builder()
-                            .warehouseSeqNo("02")
-                            .mall(List.of("hktv"))
-                            .build()))))
+                ProductDto.builder()
+                    .uuid(uuid)
+                    .mallDetail(
+                        List.of(
+                            ProductMallDetailDto.builder()
+                                .mall("hktv")
+                                .storefrontStoreCode("H00001")
+                                .storeSkuId(sku)
+                                .build()))
+                    .warehouseDetail(
+                        List.of(
+                            ProductWarehouseDetailDto.builder()
+                                .warehouseSeqNo("01")
+                                .mall(List.of())
+                                .build(),
+                            ProductWarehouseDetailDto.builder()
+                                .warehouseSeqNo("02")
+                                .mall(List.of("hktv"))
+                                .build()))
+                    .build()))
         .build();
   }
 
@@ -1609,23 +1635,26 @@ public class UpdateProductInfoTest {
         .action("CREATE")
         .products(
             List.of(
-                new ProductDto(
-                    uuid,
-                    List.of(
-                        ProductMallDetailDto.builder()
-                            .mall("hktv")
-                            .storefrontStoreCode("H00001")
-                            .storeSkuId(sku)
-                            .build(),
-                        ProductMallDetailDto.builder()
-                            .mall("little_mall")
-                            .storefrontStoreCode("H00001")
-                            .build()),
-                    List.of(
-                        ProductWarehouseDetailDto.builder()
-                            .warehouseSeqNo("01")
-                            .mall(List.of("hktv", "little_mall"))
-                            .build()))))
+                ProductDto.builder()
+                    .uuid(uuid)
+                    .mallDetail(
+                        List.of(
+                            ProductMallDetailDto.builder()
+                                .mall("hktv")
+                                .storefrontStoreCode("H00001")
+                                .storeSkuId(sku)
+                                .build(),
+                            ProductMallDetailDto.builder()
+                                .mall("little_mall")
+                                .storefrontStoreCode("H00001")
+                                .build()))
+                    .warehouseDetail(
+                        List.of(
+                            ProductWarehouseDetailDto.builder()
+                                .warehouseSeqNo("01")
+                                .mall(List.of("hktv", "little_mall"))
+                                .build()))
+                    .build()))
         .build();
   }
 
@@ -1634,19 +1663,22 @@ public class UpdateProductInfoTest {
         .action("UPDATE")
         .products(
             List.of(
-                new ProductDto(
-                    uuid,
-                    List.of(
-                        ProductMallDetailDto.builder()
-                            .mall("hktv")
-                            .storefrontStoreCode("H00001")
-                            .storeSkuId(sku)
-                            .build()),
-                    List.of(
-                        ProductWarehouseDetailDto.builder()
-                            .warehouseSeqNo("01")
-                            .mall(List.of("hktv"))
-                            .build()))))
+                ProductDto.builder()
+                    .uuid(uuid)
+                    .mallDetail(
+                        List.of(
+                            ProductMallDetailDto.builder()
+                                .mall("hktv")
+                                .storefrontStoreCode("H00001")
+                                .storeSkuId(sku)
+                                .build()))
+                    .warehouseDetail(
+                        List.of(
+                            ProductWarehouseDetailDto.builder()
+                                .warehouseSeqNo("01")
+                                .mall(List.of("hktv"))
+                                .build()))
+                    .build()))
         .build();
   }
 
@@ -1668,27 +1700,30 @@ public class UpdateProductInfoTest {
         .action("CREATE")
         .products(
             List.of(
-                new ProductDto(
-                    uuid,
-                    List.of(
-                        ProductMallDetailDto.builder()
-                            .mall("hktv")
-                            .storefrontStoreCode("H00001")
-                            .storeSkuId(sku)
-                            .build(),
-                        ProductMallDetailDto.builder()
-                            .mall("little_mall")
-                            .storefrontStoreCode("H00001")
-                            .build()),
-                    List.of(
-                        ProductWarehouseDetailDto.builder()
-                            .warehouseSeqNo("01")
-                            .mall(List.of("hktv", "little_mall"))
-                            .build(),
-                        ProductWarehouseDetailDto.builder()
-                            .warehouseSeqNo("02")
-                            .mall(List.of())
-                            .build()))))
+                ProductDto.builder()
+                    .uuid(uuid)
+                    .mallDetail(
+                        List.of(
+                            ProductMallDetailDto.builder()
+                                .mall("hktv")
+                                .storefrontStoreCode("H00001")
+                                .storeSkuId(sku)
+                                .build(),
+                            ProductMallDetailDto.builder()
+                                .mall("little_mall")
+                                .storefrontStoreCode("H00001")
+                                .build()))
+                    .warehouseDetail(
+                        List.of(
+                            ProductWarehouseDetailDto.builder()
+                                .warehouseSeqNo("01")
+                                .mall(List.of("hktv", "little_mall"))
+                                .build(),
+                            ProductWarehouseDetailDto.builder()
+                                .warehouseSeqNo("02")
+                                .mall(List.of())
+                                .build()))
+                    .build()))
         .build();
   }
 
@@ -1697,27 +1732,30 @@ public class UpdateProductInfoTest {
         .action("UPDATE")
         .products(
             List.of(
-                new ProductDto(
-                    uuid,
-                    List.of(
-                        ProductMallDetailDto.builder()
-                            .mall("hktv")
-                            .storefrontStoreCode("H00001")
-                            .storeSkuId(sku)
-                            .build(),
-                        ProductMallDetailDto.builder()
-                            .mall("little_mall")
-                            .storefrontStoreCode("H00001")
-                            .build()),
-                    List.of(
-                        ProductWarehouseDetailDto.builder()
-                            .warehouseSeqNo("01")
-                            .mall(List.of("hktv"))
-                            .build(),
-                        ProductWarehouseDetailDto.builder()
-                            .warehouseSeqNo("02")
-                            .mall(List.of("little_mall"))
-                            .build()))))
+                ProductDto.builder()
+                    .uuid(uuid)
+                    .mallDetail(
+                        List.of(
+                            ProductMallDetailDto.builder()
+                                .mall("hktv")
+                                .storefrontStoreCode("H00001")
+                                .storeSkuId(sku)
+                                .build(),
+                            ProductMallDetailDto.builder()
+                                .mall("little_mall")
+                                .storefrontStoreCode("H00001")
+                                .build()))
+                    .warehouseDetail(
+                        List.of(
+                            ProductWarehouseDetailDto.builder()
+                                .warehouseSeqNo("01")
+                                .mall(List.of("hktv"))
+                                .build(),
+                            ProductWarehouseDetailDto.builder()
+                                .warehouseSeqNo("02")
+                                .mall(List.of("little_mall"))
+                                .build()))
+                    .build()))
         .build();
   }
 
@@ -1744,27 +1782,30 @@ public class UpdateProductInfoTest {
         .action("CREATE")
         .products(
             List.of(
-                new ProductDto(
-                    uuid,
-                    List.of(
-                        ProductMallDetailDto.builder()
-                            .mall("hktv")
-                            .storefrontStoreCode("H00001")
-                            .storeSkuId(sku)
-                            .build(),
-                        ProductMallDetailDto.builder()
-                            .mall("little_mall")
-                            .storefrontStoreCode("H00001")
-                            .build()),
-                    List.of(
-                        ProductWarehouseDetailDto.builder()
-                            .warehouseSeqNo("01")
-                            .mall(List.of("hktv"))
-                            .build(),
-                        ProductWarehouseDetailDto.builder()
-                            .warehouseSeqNo("02")
-                            .mall(List.of("little_mall"))
-                            .build()))))
+                ProductDto.builder()
+                    .uuid(uuid)
+                    .mallDetail(
+                        List.of(
+                            ProductMallDetailDto.builder()
+                                .mall("hktv")
+                                .storefrontStoreCode("H00001")
+                                .storeSkuId(sku)
+                                .build(),
+                            ProductMallDetailDto.builder()
+                                .mall("little_mall")
+                                .storefrontStoreCode("H00001")
+                                .build()))
+                    .warehouseDetail(
+                        List.of(
+                            ProductWarehouseDetailDto.builder()
+                                .warehouseSeqNo("01")
+                                .mall(List.of("hktv"))
+                                .build(),
+                            ProductWarehouseDetailDto.builder()
+                                .warehouseSeqNo("02")
+                                .mall(List.of("little_mall"))
+                                .build()))
+                    .build()))
         .build();
   }
 
@@ -1773,27 +1814,30 @@ public class UpdateProductInfoTest {
         .action("UPDATE")
         .products(
             List.of(
-                new ProductDto(
-                    uuid,
-                    List.of(
-                        ProductMallDetailDto.builder()
-                            .mall("hktv")
-                            .storefrontStoreCode("H00001")
-                            .storeSkuId(sku)
-                            .build(),
-                        ProductMallDetailDto.builder()
-                            .mall("little_mall")
-                            .storefrontStoreCode("H00001")
-                            .build()),
-                    List.of(
-                        ProductWarehouseDetailDto.builder()
-                            .warehouseSeqNo("01")
-                            .mall(List.of("little_mall"))
-                            .build(),
-                        ProductWarehouseDetailDto.builder()
-                            .warehouseSeqNo("02")
-                            .mall(List.of("hktv"))
-                            .build()))))
+                ProductDto.builder()
+                    .uuid(uuid)
+                    .mallDetail(
+                        List.of(
+                            ProductMallDetailDto.builder()
+                                .mall("hktv")
+                                .storefrontStoreCode("H00001")
+                                .storeSkuId(sku)
+                                .build(),
+                            ProductMallDetailDto.builder()
+                                .mall("little_mall")
+                                .storefrontStoreCode("H00001")
+                                .build()))
+                    .warehouseDetail(
+                        List.of(
+                            ProductWarehouseDetailDto.builder()
+                                .warehouseSeqNo("01")
+                                .mall(List.of("little_mall"))
+                                .build(),
+                            ProductWarehouseDetailDto.builder()
+                                .warehouseSeqNo("02")
+                                .mall(List.of("hktv"))
+                                .build()))
+                    .build()))
         .build();
   }
 
@@ -1820,23 +1864,26 @@ public class UpdateProductInfoTest {
         .action("CREATE")
         .products(
             List.of(
-                new ProductDto(
-                    uuid,
-                    List.of(
-                        ProductMallDetailDto.builder()
-                            .mall("hktv")
-                            .storefrontStoreCode("H00001")
-                            .storeSkuId(sku)
-                            .build()),
-                    List.of(
-                        ProductWarehouseDetailDto.builder()
-                            .warehouseSeqNo("01")
-                            .mall(List.of())
-                            .build(),
-                        ProductWarehouseDetailDto.builder()
-                            .warehouseSeqNo("02")
-                            .mall(List.of("hktv"))
-                            .build()))))
+                ProductDto.builder()
+                    .uuid(uuid)
+                    .mallDetail(
+                        List.of(
+                            ProductMallDetailDto.builder()
+                                .mall("hktv")
+                                .storefrontStoreCode("H00001")
+                                .storeSkuId(sku)
+                                .build()))
+                    .warehouseDetail(
+                        List.of(
+                            ProductWarehouseDetailDto.builder()
+                                .warehouseSeqNo("01")
+                                .mall(List.of())
+                                .build(),
+                            ProductWarehouseDetailDto.builder()
+                                .warehouseSeqNo("02")
+                                .mall(List.of("hktv"))
+                                .build()))
+                    .build()))
         .build();
   }
 
@@ -1845,23 +1892,26 @@ public class UpdateProductInfoTest {
         .action("UPDATE")
         .products(
             List.of(
-                new ProductDto(
-                    uuid,
-                    List.of(
-                        ProductMallDetailDto.builder()
-                            .mall("hktv")
-                            .storefrontStoreCode("H00001")
-                            .storeSkuId(sku)
-                            .build()),
-                    List.of(
-                        ProductWarehouseDetailDto.builder()
-                            .warehouseSeqNo("01")
-                            .mall(List.of("hktv"))
-                            .build(),
-                        ProductWarehouseDetailDto.builder()
-                            .warehouseSeqNo("02")
-                            .mall(List.of())
-                            .build()))))
+                ProductDto.builder()
+                    .uuid(uuid)
+                    .mallDetail(
+                        List.of(
+                            ProductMallDetailDto.builder()
+                                .mall("hktv")
+                                .storefrontStoreCode("H00001")
+                                .storeSkuId(sku)
+                                .build()))
+                    .warehouseDetail(
+                        List.of(
+                            ProductWarehouseDetailDto.builder()
+                                .warehouseSeqNo("01")
+                                .mall(List.of("hktv"))
+                                .build(),
+                            ProductWarehouseDetailDto.builder()
+                                .warehouseSeqNo("02")
+                                .mall(List.of())
+                                .build()))
+                    .build()))
         .build();
   }
 
@@ -1920,23 +1970,26 @@ public class UpdateProductInfoTest {
         .action("CREATE")
         .products(
             List.of(
-                new ProductDto(
-                    uuid,
-                    List.of(
-                        ProductMallDetailDto.builder()
-                            .mall("hktv")
-                            .storefrontStoreCode("H00001")
-                            .storeSkuId(sku)
-                            .build()),
-                    List.of(
-                        ProductWarehouseDetailDto.builder()
-                            .warehouseSeqNo("01")
-                            .mall(List.of())
-                            .build(),
-                        ProductWarehouseDetailDto.builder()
-                            .warehouseSeqNo("98")
-                            .mall(List.of("hktv"))
-                            .build()))))
+                ProductDto.builder()
+                    .uuid(uuid)
+                    .mallDetail(
+                        List.of(
+                            ProductMallDetailDto.builder()
+                                .mall("hktv")
+                                .storefrontStoreCode("H00001")
+                                .storeSkuId(sku)
+                                .build()))
+                    .warehouseDetail(
+                        List.of(
+                            ProductWarehouseDetailDto.builder()
+                                .warehouseSeqNo("01")
+                                .mall(List.of())
+                                .build(),
+                            ProductWarehouseDetailDto.builder()
+                                .warehouseSeqNo("98")
+                                .mall(List.of("hktv"))
+                                .build()))
+                    .build()))
         .build();
   }
 
@@ -1945,23 +1998,26 @@ public class UpdateProductInfoTest {
         .action("UPDATE")
         .products(
             List.of(
-                new ProductDto(
-                    uuid,
-                    List.of(
-                        ProductMallDetailDto.builder()
-                            .mall("hktv")
-                            .storefrontStoreCode("H00001")
-                            .storeSkuId(sku)
-                            .build()),
-                    List.of(
-                        ProductWarehouseDetailDto.builder()
-                            .warehouseSeqNo("01")
-                            .mall(List.of("hktv"))
-                            .build(),
-                        ProductWarehouseDetailDto.builder()
-                            .warehouseSeqNo("98")
-                            .mall(List.of())
-                            .build()))))
+                ProductDto.builder()
+                    .uuid(uuid)
+                    .mallDetail(
+                        List.of(
+                            ProductMallDetailDto.builder()
+                                .mall("hktv")
+                                .storefrontStoreCode("H00001")
+                                .storeSkuId(sku)
+                                .build()))
+                    .warehouseDetail(
+                        List.of(
+                            ProductWarehouseDetailDto.builder()
+                                .warehouseSeqNo("01")
+                                .mall(List.of("hktv"))
+                                .build(),
+                            ProductWarehouseDetailDto.builder()
+                                .warehouseSeqNo("98")
+                                .mall(List.of())
+                                .build()))
+                    .build()))
         .build();
   }
 
@@ -1970,23 +2026,26 @@ public class UpdateProductInfoTest {
         .action("UPDATE")
         .products(
             List.of(
-                new ProductDto(
-                    uuid,
-                    List.of(
-                        ProductMallDetailDto.builder()
-                            .mall("hktv")
-                            .storefrontStoreCode("H00001")
-                            .storeSkuId(sku)
-                            .build()),
-                    List.of(
-                        ProductWarehouseDetailDto.builder()
-                            .warehouseSeqNo("01")
-                            .mall(List.of())
-                            .build(),
-                        ProductWarehouseDetailDto.builder()
-                            .warehouseSeqNo("98")
-                            .mall(List.of("hktv"))
-                            .build()))))
+                ProductDto.builder()
+                    .uuid(uuid)
+                    .mallDetail(
+                        List.of(
+                            ProductMallDetailDto.builder()
+                                .mall("hktv")
+                                .storefrontStoreCode("H00001")
+                                .storeSkuId(sku)
+                                .build()))
+                    .warehouseDetail(
+                        List.of(
+                            ProductWarehouseDetailDto.builder()
+                                .warehouseSeqNo("01")
+                                .mall(List.of())
+                                .build(),
+                            ProductWarehouseDetailDto.builder()
+                                .warehouseSeqNo("98")
+                                .mall(List.of("hktv"))
+                                .build()))
+                    .build()))
         .build();
   }
 

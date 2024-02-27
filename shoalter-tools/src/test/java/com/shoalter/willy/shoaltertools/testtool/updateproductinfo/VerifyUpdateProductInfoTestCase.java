@@ -66,6 +66,126 @@ public class VerifyUpdateProductInfoTestCase {
             .block());
   }
 
+  public void moveHktvFromMerchantToConsignmentInventory() {
+    AssertUtil.wait_2_sec();
+
+    Assertions.assertEquals(
+        "2400", redisTempl.opsForHash().get("inventory:child-UUID-E-1", "01_qty").block());
+    Assertions.assertEquals(
+        "0", redisTempl.opsForHash().get("inventory:child-UUID-E-1", "15_qty").block());
+    Assertions.assertEquals(
+        "", redisTempl.opsForHash().get("inventory:child-UUID-E-1", "01_mall").block());
+    Assertions.assertEquals(
+        "hktv", redisTempl.opsForHash().get("inventory:child-UUID-E-1", "15_mall").block());
+    Assertions.assertNull(
+        redisTempl
+            .opsForHash()
+            .get("H088800118_S_child-SKU-E-1", "H08880011801_available")
+            .block());
+    Assertions.assertEquals(
+        "0",
+        redisTempl
+            .opsForHash()
+            .get("H088800118_S_child-SKU-E-1", "H08880011815_available")
+            .block());
+  }
+
+  public void moveHktvFromConsignmentToMerchantInventory() {
+    AssertUtil.wait_2_sec();
+
+    Assertions.assertEquals(
+        "2400", redisTempl.opsForHash().get("inventory:child-UUID-E-1", "15_qty").block());
+    Assertions.assertEquals(
+        "0", redisTempl.opsForHash().get("inventory:child-UUID-E-1", "02_qty").block());
+    Assertions.assertEquals(
+        "", redisTempl.opsForHash().get("inventory:child-UUID-E-1", "15_mall").block());
+    Assertions.assertEquals(
+        "hktv", redisTempl.opsForHash().get("inventory:child-UUID-E-1", "02_mall").block());
+    Assertions.assertNull(
+        redisTempl
+            .opsForHash()
+            .get("H088800118_S_child-SKU-E-1", "H08880011815_available")
+            .block());
+    Assertions.assertEquals(
+        "0",
+        redisTempl
+            .opsForHash()
+            .get("H088800118_S_child-SKU-E-1", "H08880011802_available")
+            .block());
+  }
+
+  public void moveHktvFrom3PLToConsignmentInventory() {
+    AssertUtil.wait_2_sec();
+
+    Assertions.assertEquals(
+        "2400", redisTempl.opsForHash().get("inventory:child-UUID-E-1", "98_qty").block());
+    Assertions.assertEquals(
+        "0", redisTempl.opsForHash().get("inventory:child-UUID-E-1", "15_qty").block());
+    Assertions.assertEquals(
+        "", redisTempl.opsForHash().get("inventory:child-UUID-E-1", "98_mall").block());
+    Assertions.assertEquals(
+        "hktv", redisTempl.opsForHash().get("inventory:child-UUID-E-1", "15_mall").block());
+    Assertions.assertNull(
+        redisTempl
+            .opsForHash()
+            .get("H088800118_S_child-SKU-E-1", "H08880011898_available")
+            .block());
+    Assertions.assertEquals(
+        "0",
+        redisTempl
+            .opsForHash()
+            .get("H088800118_S_child-SKU-E-1", "H08880011815_available")
+            .block());
+  }
+
+  public void moveHktvFromConsignmentTo3PLInventory() {
+    AssertUtil.wait_2_sec();
+
+    Assertions.assertEquals(
+        "2400", redisTempl.opsForHash().get("inventory:child-UUID-E-1", "15_qty").block());
+    Assertions.assertEquals(
+        "0", redisTempl.opsForHash().get("inventory:child-UUID-E-1", "98_qty").block());
+    Assertions.assertEquals(
+        "", redisTempl.opsForHash().get("inventory:child-UUID-E-1", "15_mall").block());
+    Assertions.assertEquals(
+        "hktv", redisTempl.opsForHash().get("inventory:child-UUID-E-1", "98_mall").block());
+    Assertions.assertNull(
+        redisTempl
+            .opsForHash()
+            .get("H088800118_S_child-SKU-E-1", "H08880011815_available")
+            .block());
+    Assertions.assertEquals(
+        "0",
+        redisTempl
+            .opsForHash()
+            .get("H088800118_S_child-SKU-E-1", "H08880011898_available")
+            .block());
+  }
+
+  public void moveHktvFromConsignmentToConsignmentInventory() {
+    AssertUtil.wait_2_sec();
+
+    Assertions.assertEquals(
+        "2400", redisTempl.opsForHash().get("inventory:child-UUID-E-1", "15_qty").block());
+    Assertions.assertEquals(
+        "0", redisTempl.opsForHash().get("inventory:child-UUID-E-1", "16_qty").block());
+    Assertions.assertEquals(
+        "", redisTempl.opsForHash().get("inventory:child-UUID-E-1", "15_mall").block());
+    Assertions.assertEquals(
+        "hktv", redisTempl.opsForHash().get("inventory:child-UUID-E-1", "16_mall").block());
+    Assertions.assertNull(
+        redisTempl
+            .opsForHash()
+            .get("H088800118_S_child-SKU-E-1", "H08880011815_available")
+            .block());
+    Assertions.assertEquals(
+        "0",
+        redisTempl
+            .opsForHash()
+            .get("H088800118_S_child-SKU-E-1", "H08880011816_available")
+            .block());
+  }
+
   public void moveHktvFromMerchantToMerchantInventory() {
     // verify_putProductInfo_hktv_wh01_To_wh02_qty_will_move
     AssertUtil.wait_2_sec();

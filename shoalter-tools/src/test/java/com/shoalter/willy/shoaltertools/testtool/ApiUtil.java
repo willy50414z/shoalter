@@ -10,12 +10,16 @@ public class ApiUtil {
     return "http://127.0.0.1:8099";
   }
 
-  private String getLocalUpdWhQtyUrl() {
+  public String getLocalUpdWhQtyUrl() {
     return getLocalIidsUrl() + "/s2s/v3/warehouse/quantity";
   }
 
-  private String getLocalUpdBundleQtyUrl() {
+  public String getLocalUpdBundleQtyUrl() {
     return getLocalIidsUrl() + "/s2s/v3/mall/bundle/quantity";
+  }
+
+  public String getLocalUpdMallStockLevelUrl() {
+    return getLocalIidsUrl() + "/s2s/v3/mall/stock_levels";
   }
 
   public void callDeductWh4700QtyApi(String childUuid) {

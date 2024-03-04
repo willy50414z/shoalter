@@ -14,9 +14,30 @@ public class VerifyUpdateBundleQtyTestCase {
   ReactiveRedisTemplate<String, String> redisTempl;
 
   public void resetNodeListWhenCrossNode() {
-    for (String nodeKey : SystemConstants.getRedisNodeKeys()) {
-      Assertions.assertEquals(Boolean.FALSE, redisTempl.hasKey(nodeKey).block());
-    }
+    redisTempl
+        .opsForSet()
+        .members(SystemConstants.getRedisNodeKeys().get(0))
+        .collectList()
+        .doOnNext(
+            skus ->
+                Assertions.assertFalse(
+                    skus.contains("H088800118_S_child-SKU-E-1")
+                        && skus.contains("H088800118_S_child-SKU-E-2")))
+        .block();
+    Assertions.assertEquals(
+        "1200",
+        redisTempl
+            .opsForHash()
+            .get("H088800118_S_child-SKU-E-1", "H08880011898_available")
+            .block());
+    Assertions.assertEquals(
+        "0",
+        redisTempl
+            .opsForHash()
+            .get("H088800118_S_child-SKU-E-2", "H08880011898_available")
+            .block());
+    Assertions.assertEquals(
+        "3600", redisTempl.opsForHash().get("SKU-E001", "H08880011898_available").block());
   }
 
   public void replenishChildQtyNotCrash() {

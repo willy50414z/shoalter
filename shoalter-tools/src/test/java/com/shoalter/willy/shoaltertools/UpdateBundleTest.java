@@ -1083,7 +1083,7 @@ public class UpdateBundleTest {
     String child2Uuid = "child-UUID-E-2";
     String parentUuid = "parent-E-001";
     String parentSetting =
-        "{\"is_reserved\":true,\"is_active\":false,\"priority\":0,\"bundle_mall_info\":[{\"mall\":\"hktv\",\"alert_qty\":100,\"ceiling_qty\":100}],\"bundle_child_info\":[{\"uuid\":\"child-UUID-E-1\",\"sku_id\":\"child-SKU-E-1\",\"storefront_store_code\":\"H088800118\",\"sku_qty\":2,\"ceiling_qty\":0,\"is_loop\":false},{\"uuid\":\"child-UUID-E-2\",\"sku_id\":\"child-SKU-E-2\",\"storefront_store_code\":\"H088800118\",\"sku_qty\":2,\"ceiling_qty\":0,\"is_loop\":false}]}";
+        "{\"is_reserved\":true,\"is_active\":false,\"priority\":0,\"bundle_mall_info\":[{\"mall\":\"hktv\",\"alert_qty\":100,\"ceiling_qty\":100}],\"bundle_child_info\":[{\"uuid\":\"child-UUID-E-1\",\"sku_id\":\"child-SKU-E-1\",\"storefront_store_code\":\"H088800118\",\"sku_qty\":1,\"ceiling_qty\":0,\"is_loop\":false},{\"uuid\":\"child-UUID-E-2\",\"sku_id\":\"child-SKU-E-2\",\"storefront_store_code\":\"H088800118\",\"sku_qty\":2,\"ceiling_qty\":0,\"is_loop\":false}]}";
 
     // delete data
     redisUtil.deleteRedisNodeKey();
@@ -1103,9 +1103,9 @@ public class UpdateBundleTest {
     redisUtil.insertBundleSettingKey(parentUuid, parentSetting);
 
     // testing api
-    apiUtil.callDeductBundle10QtyApi(parentUuid);
+    apiUtil.callAddBundle2400QtyApi(parentUuid);
 
-    // verify redis node is remove
+    // verify node has reallocated
     verifyUpdBundleQtyTestCase.resetNodeListWhenCrossNode();
 
     // delete data
@@ -1168,6 +1168,29 @@ public class UpdateBundleTest {
 
     // delete data
     redisUtil.deleteRedisNodeKey();
+    redisUtil.deleteBundleParentKey(child1Uuid, child2Uuid, child3Uuid);
+    redisUtil.deleteBundleSettingKey(parentUuid);
+    redisUtil.deleteInventoryUuid(child1Uuid, child2Uuid, child3Uuid, parentUuid);
+    redisUtil.deleteSku(child1Sku, child2Sku, child3Sku, parentSku);
+
+    // insert default data
+    redisUtil.insertIidsAndSkuIimsData(child1Uuid, child1Sku, "98");
+    redisUtil.insertIidsAndSkuIimsData(child2Uuid, child2Sku, "98");
+    redisUtil.insertIidsAndSkuIimsData(child3Uuid, child3Sku, "98");
+    redisUtil.insertIidsAndSkuIimsParentData(parentUuid, parentSku, "98");
+    redisUtil.insertBundleParentKey(child1Uuid, parentUuid);
+    redisUtil.insertBundleParentKey(child2Uuid, parentUuid);
+    redisUtil.insertBundleParentKey(child3Uuid, parentUuid);
+    redisUtil.insertBundleSettingKey(parentUuid, parentSetting);
+
+    // testing api
+    apiUtil.callAddBundle2400QtyApi(parentUuid);
+
+    // verify qty
+    verifyUpdBundleQtyTestCase.replenishChildQtyNotCrash();
+
+    // test has redis node situation
+    // delete data
     redisUtil.deleteBundleParentKey(child1Uuid, child2Uuid, child3Uuid);
     redisUtil.deleteBundleSettingKey(parentUuid);
     redisUtil.deleteInventoryUuid(child1Uuid, child2Uuid, child3Uuid, parentUuid);

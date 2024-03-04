@@ -1076,14 +1076,15 @@ public class UpdateBundleTest {
   }
 
   @Test
-  public void updBundleQty_resetNodeListWhenCrossNode() {
+  public void updBundleQty_resetNodeListWhenUpdBundleChildQtyCrossNode() {
     String child1Sku = "H088800118_S_child-SKU-E-1";
     String child2Sku = "H088800118_S_child-SKU-E-2";
     String parentSku = "SKU-E001";
     String child1Uuid = "child-UUID-E-1";
     String child2Uuid = "child-UUID-E-2";
     String parentUuid = "parent-E-001";
-    String parentSetting = UpdateBundleQtyTestTool.getResetNodeListWhenCrossNodeParentSetting();
+    String parentSetting =
+        UpdateBundleQtyTestTool.getResetNodeListWhenUpdBundleChildQtyCrossNodeParentSetting();
 
     // delete data
     redisUtil.deleteRedisNodeKey();
@@ -1106,7 +1107,7 @@ public class UpdateBundleTest {
     apiUtil.callAddBundle2400QtyApi(parentUuid);
 
     // verify node has reallocated
-    verifyUpdBundleQtyTestCase.resetNodeListWhenCrossNode();
+    verifyUpdBundleQtyTestCase.resetNodeListWhenUpdBundleChildQtyCrossNode();
 
     // delete data
     redisUtil.deleteRedisNodeKey();
@@ -1215,5 +1216,60 @@ public class UpdateBundleTest {
     redisUtil.deleteBundleSettingKey(parentUuid);
     redisUtil.deleteInventoryUuid(childUuid, parentUuid);
     redisUtil.deleteSku(childSku, parentSku);
+  }
+
+  @Test
+  public void updBundleQty_resetNodeListWhenReplenishQtyCrossNode() {
+    // need to change code let replenishChildQty putBundleChildStockLevelByLuaScript skusInSameNode
+    // throw cross node error
+    String child1Sku = "H088800118_S_child-SKU-E-1";
+    String child2Sku = "H088800118_S_child-SKU-E-2";
+    String child3Sku = "H088800118_S_child-SKU-E-3";
+    String child4Sku = "H088800118_S_child-SKU-E-4";
+    String child5Sku = "H088800118_S_child-SKU-E-5";
+    String parentSku = "SKU-E001-1";
+    String child1Uuid = "child-UUID-E-1";
+    String child2Uuid = "child-UUID-E-2";
+    String child3Uuid = "child-UUID-E-3";
+    String child4Uuid = "child-UUID-E-4";
+    String child5Uuid = "child-UUID-E-5";
+    String parentUuid = "parent-E-001-1";
+    String parentSetting =
+        UpdateBundleQtyTestTool.getResetNodeListWhenReplenishQtyCrossNodeParentSetting();
+
+    // delete data
+    redisUtil.deleteBundleParentKey(child1Uuid, child2Uuid, child3Uuid, child4Uuid, child5Uuid);
+    redisUtil.deleteBundleSettingKey(parentUuid);
+    redisUtil.deleteInventoryUuid(
+        child1Uuid, child2Uuid, child3Uuid, child4Uuid, child5Uuid, parentUuid);
+    redisUtil.deleteSku(child1Sku, child2Sku, child3Sku, child4Sku, child5Sku, parentSku);
+
+    // insert default data
+    redisUtil.insertIidsAndSkuIimsData(child1Uuid, child1Sku, "98");
+    redisUtil.insertIidsAndSkuIimsData(child2Uuid, child2Sku, "98");
+    redisUtil.insertIidsAndSkuIimsData(child3Uuid, child3Sku, "98");
+    redisUtil.insertIidsAndSkuIimsData(child4Uuid, child4Sku, "98");
+    redisUtil.insertIidsAndSkuIimsData(child5Uuid, child5Sku, "98");
+    redisUtil.insertIidsAndSkuIimsParentData(parentUuid, parentSku, "98");
+    redisUtil.insertBundleParentKey(child1Uuid, parentUuid);
+    redisUtil.insertBundleParentKey(child2Uuid, parentUuid);
+    redisUtil.insertBundleParentKey(child3Uuid, parentUuid);
+    redisUtil.insertBundleParentKey(child4Uuid, parentUuid);
+    redisUtil.insertBundleParentKey(child5Uuid, parentUuid);
+    redisUtil.insertBundleSettingKey(parentUuid, parentSetting);
+
+    // testing api
+    apiUtil.callAddBundle2400QtyApi(parentUuid);
+
+    // verify qty
+    verifyUpdBundleQtyTestCase.resetNodeListWhenReplenishQtyCrossNode();
+
+    // delete data
+    redisUtil.deleteRedisNodeKey();
+    redisUtil.deleteBundleParentKey(child1Uuid, child2Uuid, child3Uuid, child4Uuid, child5Uuid);
+    redisUtil.deleteBundleSettingKey(parentUuid);
+    redisUtil.deleteInventoryUuid(
+        child1Uuid, child2Uuid, child3Uuid, child4Uuid, child5Uuid, parentUuid);
+    redisUtil.deleteSku(child1Sku, child2Sku, child3Sku, child4Sku, child5Sku, parentSku);
   }
 }

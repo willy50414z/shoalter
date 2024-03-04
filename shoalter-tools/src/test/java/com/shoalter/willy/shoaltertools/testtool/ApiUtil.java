@@ -48,7 +48,7 @@ public class ApiUtil {
         .all();
   }
 
-  public void callDeductBundle10QtyApi(String bundleUuid) {
+  public void callDeductBundle2500QtyApi(String bundleUuid) {
     given()
         .contentType("application/json")
         .body(
@@ -61,7 +61,7 @@ public class ApiUtil {
                 + "      {\n"
                 + "        \"mall\": \"hktv\",\n"
                 + "        \"mode\": \"deduct\",\n"
-                + "        \"qty\": 100\n"
+                + "        \"qty\": 2500\n"
                 + "      }\n"
                 + "    ]\n"
                 + "  }\n"
@@ -100,7 +100,7 @@ public class ApiUtil {
         .all();
   }
 
-  public void callSetWhQty4900Api(String childUuid) {
+  public void callSetWh4900QtyApi(String childUuid) {
     given()
         .contentType("application/json")
         .body(

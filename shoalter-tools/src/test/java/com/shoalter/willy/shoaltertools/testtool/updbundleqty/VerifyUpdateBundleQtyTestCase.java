@@ -1,5 +1,6 @@
 package com.shoalter.willy.shoaltertools.testtool.updbundleqty;
 
+import com.shoalter.willy.shoaltertools.testtool.AssertUtil;
 import com.shoalter.willy.shoaltertools.testtool.SystemConstants;
 import org.junit.jupiter.api.Assertions;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -61,5 +62,18 @@ public class VerifyUpdateBundleQtyTestCase {
             .block());
     Assertions.assertEquals(
         "3600", redisTempl.opsForHash().get("SKU-E001-1", "H08880011898_available").block());
+  }
+
+  public void parentQtyNotEnoughToDeduct() {
+    AssertUtil.wait_2_sec();
+
+    Assertions.assertEquals(
+        "2400",
+        redisTempl
+            .opsForHash()
+            .get("H088800118_S_child-SKU-E-1-1", "H08880011898_available")
+            .block());
+    Assertions.assertEquals(
+        "2400", redisTempl.opsForHash().get("SKU-E001-1", "H08880011898_available").block());
   }
 }

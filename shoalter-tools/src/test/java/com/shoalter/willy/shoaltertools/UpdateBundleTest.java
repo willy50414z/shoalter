@@ -13,6 +13,7 @@ import com.shoalter.willy.shoaltertools.dto.ProductWarehouseDetailDto;
 import com.shoalter.willy.shoaltertools.testtool.ApiUtil;
 import com.shoalter.willy.shoaltertools.testtool.RedisUtil;
 import com.shoalter.willy.shoaltertools.testtool.SystemConstants;
+import com.shoalter.willy.shoaltertools.testtool.updbundleqty.UpdateBundleQtyTestTool;
 import com.shoalter.willy.shoaltertools.testtool.updbundleqty.VerifyUpdateBundleQtyTestCase;
 import java.util.HashMap;
 import java.util.List;
@@ -1082,8 +1083,7 @@ public class UpdateBundleTest {
     String child1Uuid = "child-UUID-E-1";
     String child2Uuid = "child-UUID-E-2";
     String parentUuid = "parent-E-001";
-    String parentSetting =
-        "{\"is_reserved\":true,\"is_active\":false,\"priority\":0,\"bundle_mall_info\":[{\"mall\":\"hktv\",\"alert_qty\":100,\"ceiling_qty\":100}],\"bundle_child_info\":[{\"uuid\":\"child-UUID-E-1\",\"sku_id\":\"child-SKU-E-1\",\"storefront_store_code\":\"H088800118\",\"sku_qty\":1,\"ceiling_qty\":0,\"is_loop\":false},{\"uuid\":\"child-UUID-E-2\",\"sku_id\":\"child-SKU-E-2\",\"storefront_store_code\":\"H088800118\",\"sku_qty\":2,\"ceiling_qty\":0,\"is_loop\":false}]}";
+    String parentSetting = UpdateBundleQtyTestTool.getResetNodeListWhenCrossNodeParentSetting();
 
     // delete data
     redisUtil.deleteRedisNodeKey();
@@ -1126,45 +1126,7 @@ public class UpdateBundleTest {
     String child2Uuid = "child-UUID-E-2-2";
     String child3Uuid = "child-UUID-E-4-4";
     String parentUuid = "parent-E-001-1";
-    String parentSetting =
-        "{\n"
-            + "    \"is_reserved\": true,\n"
-            + "    \"is_active\": false,\n"
-            + "    \"priority\": 0,\n"
-            + "    \"bundle_mall_info\": [\n"
-            + "        {\n"
-            + "            \"mall\": \"hktv\",\n"
-            + "            \"alert_qty\": 100,\n"
-            + "            \"ceiling_qty\": 100\n"
-            + "        }\n"
-            + "    ],\n"
-            + "    \"bundle_child_info\": [\n"
-            + "        {\n"
-            + "            \"uuid\": \"child-UUID-E-1-1\",\n"
-            + "            \"sku_id\": \"child-SKU-E-1-1\",\n"
-            + "            \"storefront_store_code\": \"H088800118\",\n"
-            + "            \"sku_qty\": 1,\n"
-            + "            \"ceiling_qty\": 0,\n"
-            + "            \"is_loop\": false\n"
-            + "        },\n"
-            + "        {\n"
-            + "            \"uuid\": \"child-UUID-E-2-2\",\n"
-            + "            \"sku_id\": \"child-SKU-E-2-2\",\n"
-            + "            \"storefront_store_code\": \"H088800118\",\n"
-            + "            \"sku_qty\": 2,\n"
-            + "            \"ceiling_qty\": 0,\n"
-            + "            \"is_loop\": false\n"
-            + "        },\n"
-            + "        {\n"
-            + "            \"uuid\": \"child-UUID-E-4-4\",\n"
-            + "            \"sku_id\": \"child-SKU-E-4-4\",\n"
-            + "            \"storefront_store_code\": \"H088800118\",\n"
-            + "            \"sku_qty\": 2,\n"
-            + "            \"ceiling_qty\": 0,\n"
-            + "            \"is_loop\": false\n"
-            + "        }\n"
-            + "    ]\n"
-            + "}";
+    String parentSetting = UpdateBundleQtyTestTool.getReplenishChildQtyNotCrashParentSetting();
 
     // delete data
     redisUtil.deleteRedisNodeKey();
@@ -1218,5 +1180,40 @@ public class UpdateBundleTest {
     redisUtil.deleteBundleSettingKey(parentUuid);
     redisUtil.deleteInventoryUuid(child1Uuid, child2Uuid, child3Uuid, parentUuid);
     redisUtil.deleteSku(child1Sku, child2Sku, child3Sku, parentSku);
+  }
+
+  @Test
+  public void updBundleQty_parentQtyNotEnoughToDeduct() {
+    String childSku = "H088800118_S_child-SKU-E-1-1";
+    String parentSku = "SKU-E001-1";
+    String childUuid = "child-UUID-E-1-1";
+    String parentUuid = "parent-E-001-1";
+    String parentSetting = UpdateBundleQtyTestTool.getParentQtyNotEnoughToDeductParentSetting();
+
+    // delete data
+    redisUtil.deleteRedisNodeKey();
+    redisUtil.deleteBundleParentKey(childUuid);
+    redisUtil.deleteBundleSettingKey(parentUuid);
+    redisUtil.deleteInventoryUuid(childUuid, parentUuid);
+    redisUtil.deleteSku(childSku, parentSku);
+
+    // insert default data
+    redisUtil.insertIidsAndSkuIimsData(childUuid, childSku, "98");
+    redisUtil.insertIidsAndSkuIimsParentData(parentUuid, parentSku, "98");
+    redisUtil.insertBundleParentKey(childUuid, parentUuid);
+    redisUtil.insertBundleSettingKey(parentUuid, parentSetting);
+
+    // testing api
+    apiUtil.callDeductBundle2500QtyApi(parentUuid);
+
+    // verify qty
+    verifyUpdBundleQtyTestCase.parentQtyNotEnoughToDeduct();
+
+    // delete data
+    redisUtil.deleteRedisNodeKey();
+    redisUtil.deleteBundleParentKey(childUuid);
+    redisUtil.deleteBundleSettingKey(parentUuid);
+    redisUtil.deleteInventoryUuid(childUuid, parentUuid);
+    redisUtil.deleteSku(childSku, parentSku);
   }
 }

@@ -3905,7 +3905,7 @@ public class UpdateWarehouseQtyTest {
     redisUtil.insertBundleSettingKey(parentUuid, parentSetting);
 
     // testing api
-    apiUtil.callSetWhQty4900Api(child2Uuid);
+    apiUtil.callSetWh4900QtyApi(child2Uuid);
 
     //     verify
     verifyUpdWhQtyTestCase.setChildQtyWillConsiderParentQty();

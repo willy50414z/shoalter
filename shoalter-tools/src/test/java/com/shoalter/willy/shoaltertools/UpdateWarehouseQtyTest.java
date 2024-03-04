@@ -3876,4 +3876,46 @@ public class UpdateWarehouseQtyTest {
     redisUtil.deleteSku(child1Sku, child2Sku, parentSku);
     redisUtil.deleteBundleLockParentRedisKey();
   }
+
+  @Test
+  public void updWhQty_setChildQtyWillConsiderParentQty() {
+    String child1Sku = "H088800118_S_child-SKU-E-1";
+    String child2Sku = "H088800118_S_child-SKU-E-2";
+    String parentSku = "SKU-E001";
+    String child1Uuid = "child-UUID-E-1";
+    String child2Uuid = "child-UUID-E-2";
+    String parentUuid = "parent-E-001";
+    String parentSetting =
+        "{\"is_reserved\":true,\"is_active\":false,\"priority\":0,\"bundle_mall_info\":[{\"mall\":\"hktv\",\"alert_qty\":100,\"ceiling_qty\":100}],\"bundle_child_info\":[{\"uuid\":\"child-UUID-E-1\",\"sku_id\":\"child-SKU-E-1\",\"storefront_store_code\":\"H088800118\",\"sku_qty\":1,\"ceiling_qty\":0,\"is_loop\":false},{\"uuid\":\"child-UUID-E-2\",\"sku_id\":\"child-SKU-E-2\",\"storefront_store_code\":\"H088800118\",\"sku_qty\":2,\"ceiling_qty\":0,\"is_loop\":false}]}";
+
+    // delete data
+    redisUtil.deleteRedisNodeKey();
+    redisUtil.deleteBundleParentKey(child1Uuid, child2Uuid);
+    redisUtil.deleteBundleSettingKey(parentUuid);
+    redisUtil.deleteInventoryUuid(child1Uuid, child2Uuid, parentUuid);
+    redisUtil.deleteSku(child1Sku, child2Sku, parentSku);
+    redisUtil.deleteBundleLockParentRedisKey();
+
+    // insert default data
+    redisUtil.insertIidsAndSkuIimsData(child1Uuid, child1Sku, "98");
+    redisUtil.insertIidsAndSkuIimsData(child2Uuid, child2Sku, "98");
+    redisUtil.insertIidsAndSkuIimsParentData(parentUuid, parentSku, "98");
+    redisUtil.insertBundleParentKey(child1Uuid, parentUuid);
+    redisUtil.insertBundleParentKey(child2Uuid, parentUuid);
+    redisUtil.insertBundleSettingKey(parentUuid, parentSetting);
+
+    // testing api
+    apiUtil.callSetWhQty4900Api(child2Uuid);
+
+    //     verify
+    verifyUpdWhQtyTestCase.setChildQtyWillConsiderParentQty();
+
+    // delete data
+    redisUtil.deleteRedisNodeKey();
+    redisUtil.deleteBundleParentKey(child1Uuid, child2Uuid);
+    redisUtil.deleteBundleSettingKey(parentUuid);
+    redisUtil.deleteInventoryUuid(child1Uuid, child2Uuid, parentUuid);
+    redisUtil.deleteSku(child1Sku, child2Sku, parentSku);
+    redisUtil.deleteBundleLockParentRedisKey();
+  }
 }

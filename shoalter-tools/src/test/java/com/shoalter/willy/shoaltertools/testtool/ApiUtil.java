@@ -99,4 +99,30 @@ public class ApiUtil {
         .log()
         .all();
   }
+
+  public void callSetWhQty4900Api(String childUuid) {
+    given()
+        .contentType("application/json")
+        .body(
+            "[\n"
+                + "  {\n"
+                + "    \"uuid\": \""
+                + childUuid
+                + "\",\n"
+                + "    \"warehouseQty\": [\n"
+                + "      {\n"
+                + "        \"warehouseSeqNo\": \"98\",\n"
+                + "        \"mode\": \"set\",\n"
+                + "        \"quantity\": 4900\n"
+                + "      }\n"
+                + "    ]\n"
+                + "  }\n"
+                + "]")
+        .when()
+        .put(getLocalUpdWhQtyUrl())
+        .then()
+        .statusCode(200)
+        .log()
+        .all();
+  }
 }

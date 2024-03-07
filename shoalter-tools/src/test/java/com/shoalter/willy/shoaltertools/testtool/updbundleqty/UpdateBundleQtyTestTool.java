@@ -127,4 +127,29 @@ public class UpdateBundleQtyTestTool {
         + "    ]\n"
         + "}";
   }
+
+  public static String getParentQtyNotChangeParentSetting() {
+    return "{\n"
+        + "    \"is_reserved\": true,\n"
+        + "    \"is_active\": false,\n"
+        + "    \"priority\": 0,\n"
+        + "    \"bundle_mall_info\": [\n"
+        + "        {\n"
+        + "            \"mall\": \"hktv\",\n"
+        + "            \"alert_qty\": 100,\n"
+        + "            \"ceiling_qty\": 100\n"
+        + "        }\n"
+        + "    ],\n"
+        + "    \"bundle_child_info\": [\n"
+        + "        {\n"
+        + "            \"uuid\": \"child-UUID-E-1-1\",\n"
+        + "            \"sku_id\": \"child-SKU-E-1-1\",\n"
+        + "            \"storefront_store_code\": \"H088800118\",\n"
+        + "            \"sku_qty\": 2,\n"
+        + "            \"ceiling_qty\": 0,\n"
+        + "            \"is_loop\": false\n"
+        + "        }\n"
+        + "    ]\n"
+        + "}";
+  }
 }

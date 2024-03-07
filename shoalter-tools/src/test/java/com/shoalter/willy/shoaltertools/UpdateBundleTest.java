@@ -1272,4 +1272,39 @@ public class UpdateBundleTest {
         child1Uuid, child2Uuid, child3Uuid, child4Uuid, child5Uuid, parentUuid);
     redisUtil.deleteSku(child1Sku, child2Sku, child3Sku, child4Sku, child5Sku, parentSku);
   }
+
+  @Test
+  public void updBundleQty_parentQtyNotChange() {
+    String childSku = "H088800118_S_child-SKU-E-1-1";
+    String parentSku = "SKU-E001-1";
+    String childUuid = "child-UUID-E-1-1";
+    String parentUuid = "parent-E-001-1";
+    String parentSetting = UpdateBundleQtyTestTool.getParentQtyNotChangeParentSetting();
+
+    // delete data
+    redisUtil.deleteRedisNodeKey();
+    redisUtil.deleteBundleParentKey(childUuid);
+    redisUtil.deleteBundleSettingKey(parentUuid);
+    redisUtil.deleteInventoryUuid(childUuid, parentUuid);
+    redisUtil.deleteSku(childSku, parentSku);
+
+    // insert default data
+    redisUtil.insertIidsAndSkuIimsData(childUuid, childSku, "98");
+    redisUtil.insertIidsAndSkuIimsParentData(parentUuid, parentSku, "98");
+    redisUtil.insertBundleParentKey(childUuid, parentUuid);
+    redisUtil.insertBundleSettingKey(parentUuid, parentSetting);
+
+    // testing api
+    apiUtil.callSetBundle2400QtyApi(parentUuid);
+
+    // verify qty
+    verifyUpdBundleQtyTestCase.parentQtyNotChange();
+
+    // delete data
+    redisUtil.deleteRedisNodeKey();
+    redisUtil.deleteBundleParentKey(childUuid);
+    redisUtil.deleteBundleSettingKey(parentUuid);
+    redisUtil.deleteInventoryUuid(childUuid, parentUuid);
+    redisUtil.deleteSku(childSku, parentSku);
+  }
 }

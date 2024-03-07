@@ -100,6 +100,32 @@ public class ApiUtil {
         .all();
   }
 
+  public void callSetBundle2400QtyApi(String bundleUuid) {
+    given()
+        .contentType("application/json")
+        .body(
+            "[\n"
+                + "  {\n"
+                + "    \"uuid\": \""
+                + bundleUuid
+                + "\",\n"
+                + "    \"mallQty\": [\n"
+                + "      {\n"
+                + "        \"mall\": \"hktv\",\n"
+                + "        \"mode\": \"set\",\n"
+                + "        \"qty\": 2400\n"
+                + "      }\n"
+                + "    ]\n"
+                + "  }\n"
+                + "]")
+        .when()
+        .put(getLocalUpdBundleQtyUrl())
+        .then()
+        .statusCode(200)
+        .log()
+        .all();
+  }
+
   public void callSetWh4900QtyApi(String childUuid) {
     given()
         .contentType("application/json")

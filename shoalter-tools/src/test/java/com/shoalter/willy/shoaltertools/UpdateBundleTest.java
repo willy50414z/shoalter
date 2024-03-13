@@ -18,6 +18,7 @@ import com.shoalter.willy.shoaltertools.testtool.updbundleqty.VerifyUpdateBundle
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
@@ -1271,6 +1272,133 @@ public class UpdateBundleTest {
     redisUtil.deleteInventoryUuid(
         child1Uuid, child2Uuid, child3Uuid, child4Uuid, child5Uuid, parentUuid);
     redisUtil.deleteSku(child1Sku, child2Sku, child3Sku, child4Sku, child5Sku, parentSku);
+  }
+
+  @Test
+  public void updBundleQty_replenishChildQty_success() {
+    // 減少parent的數量, 應該照比例回補到child裡面
+    String child1Sku = "H088800118_S_child-SKU-E-1";
+    String child2Sku = "H088800118_S_child-SKU-E-2";
+    String child3Sku = "H088800118_S_child-SKU-E-3";
+    String parentSku = "H088800118_S_E0001";
+    String child1Uuid = "child-UUID-E-1";
+    String child2Uuid = "child-UUID-E-2";
+    String child3Uuid = "child-UUID-E-3";
+    String parentUuid = "parent-E-001-1";
+    String parentSetting = UpdateBundleQtyTestTool.getDefaultParentSetting();
+    // delete data
+    redisUtil.deleteBundleParentKey(child1Uuid, child2Uuid, child3Uuid);
+    redisUtil.deleteBundleSettingKey(parentUuid);
+    redisUtil.deleteInventoryUuid(child1Uuid, child2Uuid, child3Uuid, parentUuid);
+    redisUtil.deleteSku(child1Sku, child2Sku, child3Sku, parentSku);
+
+    // insert default data
+    redisUtil.insertIidsAndSkuIimsData(child1Uuid, child1Sku, "98", "0");
+    redisUtil.insertIidsAndSkuIimsData(child2Uuid, child2Sku, "98", "0");
+    redisUtil.insertIidsAndSkuIimsData(child3Uuid, child3Sku, "98", "0");
+    redisUtil.insertIidsAndSkuIimsParentData(parentUuid, parentSku, "98");
+    redisUtil.insertBundleParentKey(child1Uuid, parentUuid);
+    redisUtil.insertBundleParentKey(child2Uuid, parentUuid);
+    redisUtil.insertBundleParentKey(child3Uuid, parentUuid);
+    redisUtil.insertBundleSettingKey(parentUuid, parentSetting);
+
+    // set parent default value
+    redisTempl.opsForHash().put(parentSku, "H08880011898_available", "10").block();
+
+    // testing api
+    apiUtil.callSetBundle0QtyApi(parentUuid);
+
+    String child1IimsQty =
+        Objects.requireNonNull(
+                redisTempl.opsForHash().get(child1Sku, "H08880011898_available").block())
+            .toString();
+    String child2IimsQty =
+        Objects.requireNonNull(
+                redisTempl.opsForHash().get(child2Sku, "H08880011898_available").block())
+            .toString();
+    String child3IimsQty =
+        Objects.requireNonNull(
+                redisTempl.opsForHash().get(child3Sku, "H08880011898_available").block())
+            .toString();
+
+    Assertions.assertEquals("10", child1IimsQty);
+    Assertions.assertEquals("20", child2IimsQty);
+    Assertions.assertEquals("30", child3IimsQty);
+  }
+
+  @Test
+  public void updBundleQty_childFrom98ShouldAddTo98() {
+    // child在98以外的倉庫時, 因parent減少造成child增加時, child 數量應該被加到iids98倉
+    String child1Sku = "H088800118_S_child-SKU-E-1";
+    String child2Sku = "H088800118_S_child-SKU-E-2";
+    String child3Sku = "H088800118_S_child-SKU-E-3";
+    String parentSku = "H088800118_S_E0001";
+    String child1Uuid = "child-UUID-E-1";
+    String child2Uuid = "child-UUID-E-2";
+    String child3Uuid = "child-UUID-E-3";
+    String parentUuid = "parent-E-001-1";
+    String parentSetting = UpdateBundleQtyTestTool.getDefaultParentSetting();
+
+    // delete data
+    redisUtil.deleteBundleParentKey(child1Uuid, child2Uuid, child3Uuid);
+    redisUtil.deleteBundleSettingKey(parentUuid);
+    redisUtil.deleteInventoryUuid(child1Uuid, child2Uuid, child3Uuid, parentUuid);
+    redisUtil.deleteSku(child1Sku, child2Sku, child3Sku, parentSku);
+
+    // insert default data
+    redisUtil.insertIidsAndSkuIimsData(child1Uuid, child1Sku, "98", "0");
+    redisUtil.insertIidsAndSkuIimsData(child2Uuid, child2Sku, "01", "0");
+    redisUtil.insertIidsAndSkuIimsData(child3Uuid, child3Sku, "02", "0");
+    redisUtil.insertIidsAndSkuIimsParentData(parentUuid, parentSku, "98");
+    redisUtil.insertBundleParentKey(child1Uuid, parentUuid);
+    redisUtil.insertBundleParentKey(child2Uuid, parentUuid);
+    redisUtil.insertBundleParentKey(child3Uuid, parentUuid);
+    redisUtil.insertBundleSettingKey(parentUuid, parentSetting);
+
+    // set parent default value
+    redisTempl.opsForHash().put(parentSku, "H08880011898_available", "10").block();
+
+    apiUtil.callChildFrom98ShouldAddTo98Api(parentUuid);
+    String child1IimsQty =
+        Objects.requireNonNull(
+                redisTempl.opsForHash().get(child1Sku, "H08880011898_available").block())
+            .toString();
+    String child2IimsQty =
+        Objects.requireNonNull(
+                redisTempl.opsForHash().get(child2Sku, "H08880011801_available").block())
+            .toString();
+    String child3IimsQty =
+        Objects.requireNonNull(
+                redisTempl.opsForHash().get(child3Sku, "H08880011802_available").block())
+            .toString();
+
+    String child2Iids98Qty =
+        Objects.requireNonNull(
+                redisTempl.opsForHash().get("inventory:" + child1Uuid, "98_qty").block())
+            .toString();
+    String child3Iids98Qty =
+        Objects.requireNonNull(
+                redisTempl.opsForHash().get("inventory:" + child2Uuid, "98_qty").block())
+            .toString();
+
+    String child2IidsQty =
+        Objects.requireNonNull(
+                redisTempl.opsForHash().get("inventory:" + child1Uuid, "01_qty").block())
+            .toString();
+    String child3IidsQty =
+        Objects.requireNonNull(
+                redisTempl.opsForHash().get("inventory:" + child2Uuid, "02_qty").block())
+            .toString();
+
+    Assertions.assertEquals("10", child1IimsQty);
+    Assertions.assertEquals("0", child2IimsQty);
+    Assertions.assertEquals("0", child3IimsQty);
+
+    Assertions.assertEquals("0", child2IidsQty);
+    Assertions.assertEquals("0", child3IidsQty);
+
+    Assertions.assertEquals("20", child2Iids98Qty);
+    Assertions.assertEquals("30", child3Iids98Qty);
   }
 
   @Test

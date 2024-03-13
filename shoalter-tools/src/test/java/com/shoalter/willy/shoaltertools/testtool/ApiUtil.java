@@ -100,6 +100,32 @@ public class ApiUtil {
         .all();
   }
 
+  public void callSetBundle0QtyApi(String bundleUuid) {
+    given()
+        .contentType("application/json")
+        .body(
+            "[\n"
+                + "  {\n"
+                + "    \"uuid\": \""
+                + bundleUuid
+                + "\",\n"
+                + "    \"mallQty\": [\n"
+                + "      {\n"
+                + "        \"mall\": \"hktv\",\n"
+                + "        \"mode\": \"set\",\n"
+                + "        \"qty\": 0\n"
+                + "      }\n"
+                + "    ]\n"
+                + "  }\n"
+                + "]")
+        .when()
+        .put(getLocalUpdBundleQtyUrl())
+        .then()
+        .statusCode(200)
+        .log()
+        .all();
+  }
+
   public void callSetBundle2400QtyApi(String bundleUuid) {
     given()
         .contentType("application/json")
@@ -146,6 +172,32 @@ public class ApiUtil {
                 + "]")
         .when()
         .put(getLocalUpdWhQtyUrl())
+        .then()
+        .statusCode(200)
+        .log()
+        .all();
+  }
+
+  public void callChildFrom98ShouldAddTo98Api(String bundleUuid) {
+    given()
+        .contentType("application/json")
+        .body(
+            "[\n"
+                + "  {\n"
+                + "    \"uuid\":\""
+                + bundleUuid
+                + "\",\n"
+                + "    \"mallQty\":[\n"
+                + "      {\n"
+                + "        \"mall\": \"hktv\",\n"
+                + "        \"qty\": 0,\n"
+                + "        \"mode\": \"set\"\n"
+                + "      }\n"
+                + "    ]\n"
+                + "  }\n"
+                + "]")
+        .when()
+        .put(getLocalUpdBundleQtyUrl())
         .then()
         .statusCode(200)
         .log()

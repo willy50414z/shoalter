@@ -32,13 +32,13 @@ public class BuildDtoUtil {
   }
 
   private static List<String> getDefaultWarehouses() {
-    return List.of("01", "02", "03", "15", "16", "17", "98");
+    return List.of("01", "02", "03", "15", "16", "17", "81", "82", "83", "98");
   }
 
-  public static Map<String, String> buildSkuIimsData(String uuid, String seqNo) {
+  public static Map<String, String> buildSkuIimsData(String uuid, String seqNo, String qty) {
     return Map.of(
         "H088800118" + seqNo + "_available",
-        "2400",
+        qty,
         "H088800118" + seqNo + "_instockstatus",
         "notSpecified",
         "share",

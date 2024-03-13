@@ -55,8 +55,16 @@ public class RedisUtil {
   }
 
   public void insertIidsAndSkuIimsData(String uuid, String sku, String seqNo) {
+    buildIidsData(uuid, sku, seqNo, "2400");
+  }
+
+  public void insertIidsAndSkuIimsData(String uuid, String sku, String seqNo, String qty) {
+    buildIidsData(uuid, sku, seqNo, qty);
+  }
+
+  public void buildIidsData(String uuid, String sku, String seqNo, String qty) {
     Map<String, String> iidsData = BuildDtoUtil.buildIidsPm20hktvData(sku, seqNo);
-    Map<String, String> iimsData = BuildDtoUtil.buildSkuIimsData(uuid, seqNo);
+    Map<String, String> iimsData = BuildDtoUtil.buildSkuIimsData(uuid, seqNo, qty);
     redisTempl.opsForHash().putAll("inventory:" + uuid, iidsData).block();
     redisTempl.opsForHash().putAll(sku, iimsData).block();
   }
@@ -64,7 +72,7 @@ public class RedisUtil {
   public void insertIidsAndSkuIimsParentData(String uuid, String sku, String seqNo) {
     String iidsKey = "inventory:" + uuid;
     Map<String, String> iidsData = BuildDtoUtil.buildIidsParenthktvData(sku, seqNo);
-    Map<String, String> iimsData = BuildDtoUtil.buildSkuIimsData(uuid, seqNo);
+    Map<String, String> iimsData = BuildDtoUtil.buildSkuIimsData(uuid, seqNo, "2400");
     redisTempl.opsForHash().putAll(iidsKey, iidsData).block();
     redisTempl.opsForHash().putAll(sku, iimsData).block();
   }

@@ -4,6 +4,11 @@ import com.shoalter.willy.shoaltertools.dto.ProductDto;
 import com.shoalter.willy.shoaltertools.dto.ProductInfoDto;
 import com.shoalter.willy.shoaltertools.dto.ProductMallDetailDto;
 import com.shoalter.willy.shoaltertools.dto.ProductWarehouseDetailDto;
+import com.shoalter.willy.shoaltertools.testtool.AssertUtil;
+import com.shoalter.willy.shoaltertools.testtool.RabbitMqUtil;
+import com.shoalter.willy.shoaltertools.testtool.RedisUtil;
+import com.shoalter.willy.shoaltertools.testtool.createproductInfo.CreateProductInfoTestTool;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -33,6 +38,8 @@ public class CreateProductInfoTest {
   ReactiveRedisTemplate<String, String> redisHKTVTempl;
 
   @Autowired private RabbitTemplate defaultRabbitTemplate;
+  @Autowired private RedisUtil redisUtil;
+  @Autowired private RabbitMqUtil rabbitMqUtil;
 
   private String EXCHANGE = "shoalter-see-product-master_topic";
   private String ROUTING_KEY = "shoalter-see-product-master.product-info-iids";
@@ -656,5 +663,43 @@ public class CreateProductInfoTest {
     stockLevelMap.put("updatestocktime", time);
     stockLevelMap.put("share", share);
     return stockLevelMap;
+  }
+
+  @Test
+  void putProductInfo_createParent_childWhNotMatch() {
+    String child1Sku = "H088800118_S_child-SKU-E-1";
+    String child2Sku = "H088800118_S_child-SKU-E-2";
+    String parentSku = "H088800118_S_parent-SKU-E-1";
+    String child1Uuid = "child-UUID-E-1-1";
+    String child2Uuid = "child-UUID-E-2-2";
+    String parentUuid = "parent-E-001-1";
+
+    // delete data
+    redisUtil.deleteRedisNodeKey();
+    redisUtil.deleteBundleParentKey(child1Uuid, child2Uuid);
+    redisUtil.deleteBundleSettingKey(parentUuid);
+    redisUtil.deleteInventoryUuid(child1Uuid, child2Uuid, parentUuid);
+    redisUtil.deleteSku(child1Sku, child2Sku, parentSku);
+
+    // insert default data
+    redisUtil.insertIidsAndSkuIimsData(child1Uuid, child1Sku, "02");
+    redisUtil.insertIidsAndSkuIimsData(child2Uuid, child2Sku, "01");
+
+    // testing
+    rabbitMqUtil.sendMsgToIidsQueue(CreateProductInfoTestTool.getCreateParentRabbitMqMsg());
+
+    // verify qty
+    AssertUtil.wait_2_sec();
+    Assertions.assertEquals(
+        new ArrayList<>(), redisTempl.opsForHash().entries(parentSku).collectList().block());
+    Assertions.assertEquals(
+        new ArrayList<>(), redisTempl.opsForHash().entries(parentUuid).collectList().block());
+
+    // delete data
+    redisUtil.deleteRedisNodeKey();
+    redisUtil.deleteBundleParentKey(child1Uuid, child2Uuid);
+    redisUtil.deleteBundleSettingKey(parentUuid);
+    redisUtil.deleteInventoryUuid(child1Uuid, child2Uuid, parentUuid);
+    redisUtil.deleteSku(child1Sku, child2Sku, parentSku);
   }
 }

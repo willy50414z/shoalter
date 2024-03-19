@@ -442,4 +442,34 @@ public class ApiUtil {
         .log()
         .all();
   }
+
+  public void callSetWh01Qty20AndWh02Qty30(String uuid) {
+    given()
+        .contentType("application/json")
+        .body(
+            "[{\"uuid\":\""
+                + uuid
+                + "\",\"warehouseQty\":[{\"warehouseSeqNo\":\"01\",\"mode\":\"set\",\"quantity\":20},{\"warehouseSeqNo\":\"02\",\"mode\":\"set\",\"quantity\":30}]}]")
+        .when()
+        .put(getLocalUpdWhQtyUrl())
+        .then()
+        .statusCode(200)
+        .log()
+        .all();
+  }
+
+  public void callSetHktvAndLittleMallToShare(String uuid) {
+    given()
+        .contentType("application/json")
+        .body(
+            "[{\"uuid\":\""
+                + uuid
+                + "\",\"stockLevels\":[{\"mall\":\"hktv\",\"share\":1},{\"mall\":\"little_mall\",\"share\":1}]}]")
+        .when()
+        .put(getLocalUpdMallStockLevelUrl())
+        .then()
+        .statusCode(200)
+        .log()
+        .all();
+  }
 }

@@ -1,23 +1,14 @@
 package com.shoalter.willy.shoaltertools.testtool.updateproductinfo;
 
-import static io.restassured.RestAssured.given;
-
 import com.shoalter.willy.shoaltertools.dto.ProductDto;
 import com.shoalter.willy.shoaltertools.dto.ProductInfoDto;
 import com.shoalter.willy.shoaltertools.dto.ProductMallDetailDto;
 import com.shoalter.willy.shoaltertools.dto.ProductWarehouseDetailDto;
-import com.shoalter.willy.shoaltertools.testtool.ApiUtil;
-import com.shoalter.willy.shoaltertools.testtool.AssertUtil;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Component;
 
-@Component
 public class UpdateProductInfoTestTool {
-
-  @Autowired ApiUtil apiUtil;
 
   public ProductInfoDto buildProductInfoDto_EditProductTestCase0010(String uuid, String sku) {
     return ProductInfoDto.builder()
@@ -137,35 +128,6 @@ public class UpdateProductInfoTestTool {
                                 .build()))
                     .build()))
         .build();
-  }
-
-  public void updateProduct_EditProductTestCase0014_setting_init_value(String uuid) {
-    AssertUtil.wait_2_sec();
-    given()
-        .contentType("application/json")
-        .body(
-            "[{\"uuid\":\""
-                + uuid
-                + "\",\"warehouseQty\":[{\"warehouseSeqNo\":\"01\",\"mode\":\"set\",\"quantity\":20},{\"warehouseSeqNo\":\"02\",\"mode\":\"set\",\"quantity\":30}]}]")
-        .when()
-        .put(apiUtil.getLocalUpdWhQtyUrl())
-        .then()
-        .statusCode(200)
-        .log()
-        .all();
-
-    given()
-        .contentType("application/json")
-        .body(
-            "[{\"uuid\":\""
-                + uuid
-                + "\",\"stockLevels\":[{\"mall\":\"hktv\",\"share\":1},{\"mall\":\"little_mall\",\"share\":1}]}]")
-        .when()
-        .put(apiUtil.getLocalUpdMallStockLevelUrl())
-        .then()
-        .statusCode(200)
-        .log()
-        .all();
   }
 
   public ProductInfoDto updateProductInfoDto_EditProductTestCase0014(String uuid, String sku) {
@@ -319,35 +281,6 @@ public class UpdateProductInfoTestTool {
         .build();
   }
 
-  public void updateProduct_EditProductTestCase0016_setting_init_value(String uuid) {
-    AssertUtil.wait_2_sec();
-    given()
-        .contentType("application/json")
-        .body(
-            "[{\"uuid\":\""
-                + uuid
-                + "\",\"warehouseQty\":[{\"warehouseSeqNo\":\"01\",\"mode\":\"set\",\"quantity\":50}]}]")
-        .when()
-        .put(apiUtil.getLocalUpdWhQtyUrl())
-        .then()
-        .statusCode(200)
-        .log()
-        .all();
-
-    given()
-        .contentType("application/json")
-        .body(
-            "[{\"uuid\":\""
-                + uuid
-                + "\",\"stockLevels\":[{\"mall\":\"little_mall\",\"share\":0,\"qty\":50,\"mode\":\"set\",\"instockstatus\":\"notSpecified\"}]}]")
-        .when()
-        .put(apiUtil.getLocalUpdMallStockLevelUrl())
-        .then()
-        .statusCode(200)
-        .log()
-        .all();
-  }
-
   public ProductInfoDto updateProductInfoDto_EditProductTestCase0016(String uuid) {
     return ProductInfoDto.builder()
         .action("UPDATE")
@@ -429,32 +362,6 @@ public class UpdateProductInfoTestTool {
         .build();
   }
 
-  public void updateProduct_EditProductTestCase0018_setting_init_value(String uuid) {
-    AssertUtil.wait_2_sec();
-    given()
-        .contentType("application/json")
-        .body(
-            "[{\"uuid\":\""
-                + uuid
-                + "\",\"warehouseQty\":[{\"warehouseSeqNo\":\"01\",\"mode\":\"set\",\"quantity\":100},{\"warehouseSeqNo\":\"02\",\"mode\":\"set\",\"quantity\":30}]}]")
-        .when()
-        .put(apiUtil.getLocalUpdWhQtyUrl())
-        .then()
-        .statusCode(200)
-        .log()
-        .all();
-
-    given()
-        .contentType("application/json")
-        .body("[{\"uuid\":\"" + uuid + "\",\"stockLevels\":[{\"mall\":\"hktv\",\"share\":1}]}]")
-        .when()
-        .put(apiUtil.getLocalUpdMallStockLevelUrl())
-        .then()
-        .statusCode(200)
-        .log()
-        .all();
-  }
-
   public ProductInfoDto updateProductInfoDto_EditProductTestCase0018(String uuid, String sku) {
     return ProductInfoDto.builder()
         .action("UPDATE")
@@ -526,35 +433,6 @@ public class UpdateProductInfoTestTool {
         .build();
   }
 
-  public void updateProduct_EditProductTestCase0019_setting_init_value(String uuid) {
-    AssertUtil.wait_2_sec();
-    given()
-        .contentType("application/json")
-        .body(
-            "[{\"uuid\":\""
-                + uuid
-                + "\",\"warehouseQty\":[{\"warehouseSeqNo\":\"01\",\"mode\":\"set\",\"quantity\":150}]}]")
-        .when()
-        .put(apiUtil.getLocalUpdWhQtyUrl())
-        .then()
-        .statusCode(200)
-        .log()
-        .all();
-
-    given()
-        .contentType("application/json")
-        .body(
-            "[{\"uuid\":\""
-                + uuid
-                + "\",\"stockLevels\":[{\"mall\":\"hktv\",\"share\":1},{\"mall\":\"little_mall\",\"qty\":50,\"mode\":\"set\",\"share\":0}]}]")
-        .when()
-        .put(apiUtil.getLocalUpdMallStockLevelUrl())
-        .then()
-        .statusCode(200)
-        .log()
-        .all();
-  }
-
   public ProductInfoDto updateProductInfoDto_EditProductTestCase0019(String uuid, String sku) {
     return ProductInfoDto.builder()
         .action("UPDATE")
@@ -622,35 +500,6 @@ public class UpdateProductInfoTestTool {
                                 .build()))
                     .build()))
         .build();
-  }
-
-  public void updateProduct_EditProductTestCase0020_setting_init_value(String uuid) {
-    AssertUtil.wait_2_sec();
-    given()
-        .contentType("application/json")
-        .body(
-            "[{\"uuid\":\""
-                + uuid
-                + "\",\"warehouseQty\":[{\"warehouseSeqNo\":\"01\",\"mode\":\"set\",\"quantity\":100}]}]")
-        .when()
-        .put(apiUtil.getLocalUpdWhQtyUrl())
-        .then()
-        .statusCode(200)
-        .log()
-        .all();
-
-    given()
-        .contentType("application/json")
-        .body(
-            "[{\"uuid\":\""
-                + uuid
-                + "\",\"stockLevels\":[{\"mall\":\"hktv\",\"qty\":50,\"mode\":\"set\",\"share\":0},{\"mall\":\"little_mall\",\"qty\":50,\"mode\":\"set\",\"share\":0}]}]")
-        .when()
-        .put(apiUtil.getLocalUpdMallStockLevelUrl())
-        .then()
-        .statusCode(200)
-        .log()
-        .all();
   }
 
   public ProductInfoDto updateProductInfoDto_EditProductTestCase0020(String uuid, String sku) {
@@ -733,35 +582,6 @@ public class UpdateProductInfoTestTool {
                                 .build()))
                     .build()))
         .build();
-  }
-
-  public void updateProduct_EditProductTestCase0021_setting_init_value(String uuid) {
-    AssertUtil.wait_2_sec();
-    given()
-        .contentType("application/json")
-        .body(
-            "[{\"uuid\":\""
-                + uuid
-                + "\",\"warehouseQty\":[{\"warehouseSeqNo\":\"01\",\"mode\":\"set\",\"quantity\":100},{\"warehouseSeqNo\":\"02\",\"mode\":\"set\",\"quantity\":90}]}]")
-        .when()
-        .put(apiUtil.getLocalUpdWhQtyUrl())
-        .then()
-        .statusCode(200)
-        .log()
-        .all();
-
-    given()
-        .contentType("application/json")
-        .body(
-            "[{\"uuid\":\""
-                + uuid
-                + "\",\"stockLevels\":[{\"mall\":\"little_mall\",\"qty\":30,\"mode\":\"set\",\"share\":0}]}]")
-        .when()
-        .put(apiUtil.getLocalUpdMallStockLevelUrl())
-        .then()
-        .statusCode(200)
-        .log()
-        .all();
   }
 
   public ProductInfoDto updateProductInfoDto_EditProductTestCase0021(String uuid, String sku) {
@@ -927,35 +747,6 @@ public class UpdateProductInfoTestTool {
                                 .build()))
                     .build()))
         .build();
-  }
-
-  public void updateProduct_testcase0013_setting_init_value(String uuid) {
-    AssertUtil.wait_2_sec();
-    given()
-        .contentType("application/json")
-        .body(
-            "[{\"uuid\":\""
-                + uuid
-                + "\",\"warehouseQty\":[{\"warehouseSeqNo\":\"01\",\"mode\":\"set\",\"quantity\":20},{\"warehouseSeqNo\":\"98\",\"mode\":\"set\",\"quantity\":10}]}]")
-        .when()
-        .put(apiUtil.getLocalUpdWhQtyUrl())
-        .then()
-        .statusCode(200)
-        .log()
-        .all();
-
-    given()
-        .contentType("application/json")
-        .body(
-            "[{\"uuid\":\""
-                + uuid
-                + "\",\"stockLevels\":[{\"mall\":\"hktv\",\"share\":0,\"mode\":\"set\",\"qty\":10}]}]")
-        .when()
-        .put(apiUtil.getLocalUpdMallStockLevelUrl())
-        .then()
-        .statusCode(200)
-        .log()
-        .all();
   }
 
   public ProductInfoDto updateProductInfoDto_testcase0013_moveOut98(String uuid, String sku) {

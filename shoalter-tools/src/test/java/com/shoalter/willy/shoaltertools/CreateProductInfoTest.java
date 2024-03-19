@@ -1,21 +1,15 @@
 package com.shoalter.willy.shoaltertools;
 
-import com.shoalter.willy.shoaltertools.dto.ProductDto;
-import com.shoalter.willy.shoaltertools.dto.ProductInfoDto;
-import com.shoalter.willy.shoaltertools.dto.ProductMallDetailDto;
-import com.shoalter.willy.shoaltertools.dto.ProductWarehouseDetailDto;
 import com.shoalter.willy.shoaltertools.testtool.AssertUtil;
 import com.shoalter.willy.shoaltertools.testtool.RabbitMqUtil;
 import com.shoalter.willy.shoaltertools.testtool.RedisUtil;
 import com.shoalter.willy.shoaltertools.testtool.createproductInfo.CreateProductInfoTestTool;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
-import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -24,7 +18,7 @@ import reactor.core.publisher.Mono;
 
 @SpringBootTest
 @Slf4j
-public class CreateProductInfoTest {
+public class CreateProductInfoTest extends CreateProductInfoTestTool {
   @Autowired
   @Qualifier("redisIIDSTemplate")
   ReactiveRedisTemplate<String, String> redisTempl;
@@ -37,12 +31,8 @@ public class CreateProductInfoTest {
   @Qualifier("redisHKTVTemplate")
   ReactiveRedisTemplate<String, String> redisHKTVTempl;
 
-  @Autowired private RabbitTemplate defaultRabbitTemplate;
   @Autowired private RedisUtil redisUtil;
   @Autowired private RabbitMqUtil rabbitMqUtil;
-
-  private String EXCHANGE = "shoalter-see-product-master_topic";
-  private String ROUTING_KEY = "shoalter-see-product-master.product-info-iids";
 
   // 驗證正常create product後redis裡的資料
   @Test
@@ -57,8 +47,7 @@ public class CreateProductInfoTest {
     redisLMTempl.delete(uuid).block();
 
     // createProduct
-    defaultRabbitTemplate.convertAndSend(
-        EXCHANGE, ROUTING_KEY, buildProductInfoDto_testcase0001(uuid, sku));
+    rabbitMqUtil.sendMsgToIidsQueue(buildProductInfoDto_testcase0001(uuid, sku));
 
     Thread.sleep(1000L);
 
@@ -153,8 +142,7 @@ public class CreateProductInfoTest {
     redisLMTempl.delete(uuid).block();
 
     // createProduct
-    defaultRabbitTemplate.convertAndSend(
-        EXCHANGE, ROUTING_KEY, buildProductInfoDto_testcase0002(uuid, sku));
+    rabbitMqUtil.sendMsgToIidsQueue(buildProductInfoDto_testcase0002(uuid, sku));
 
     Thread.sleep(1000L);
 
@@ -248,8 +236,7 @@ public class CreateProductInfoTest {
     redisTempl.delete("inventory:" + uuid, uuid, sku, updEventKey).block();
 
     // createProduct
-    defaultRabbitTemplate.convertAndSend(
-        EXCHANGE, ROUTING_KEY, buildProductInfoDto_testcase0003(uuid, sku));
+    rabbitMqUtil.sendMsgToIidsQueue(buildProductInfoDto_testcase0003(uuid, sku));
 
     Thread.sleep(1000L);
 
@@ -322,8 +309,7 @@ public class CreateProductInfoTest {
     redisLMTempl.delete(uuid).block();
 
     // createProduct
-    defaultRabbitTemplate.convertAndSend(
-        EXCHANGE, ROUTING_KEY, buildProductInfoDto_testcase0004(uuid, sku));
+    rabbitMqUtil.sendMsgToIidsQueue(buildProductInfoDto_testcase0004(uuid, sku));
 
     Thread.sleep(1000L);
 
@@ -406,265 +392,6 @@ public class CreateProductInfoTest {
     redisLMTempl.delete(uuid).block();
   }
 
-  private ProductInfoDto buildProductInfoDto_testcase0001(String uuid, String sku) {
-    return ProductInfoDto.builder()
-        .action("CREATE")
-        .products(
-            List.of(
-                ProductDto.builder()
-                    .uuid(uuid)
-                    .warehouseDetail(
-                        List.of(
-                            ProductWarehouseDetailDto.builder()
-                                .warehouseSeqNo("01")
-                                .mall(List.of("hktv", "little_mall"))
-                                .build()))
-                    .mallDetail(
-                        List.of(
-                            ProductMallDetailDto.builder()
-                                .mall("hktv")
-                                .storefrontStoreCode("H00001")
-                                .storeSkuId(sku)
-                                .build(),
-                            ProductMallDetailDto.builder()
-                                .mall("little_mall")
-                                .storefrontStoreCode("H00001")
-                                .build()))
-                    .build()))
-        .build();
-  }
-
-  private static Map<String, String> buildExpectedStockLevel_testcase0001(String sku, String time) {
-    Map<String, String> stockLevelMap = new HashMap<>();
-    stockLevelMap.put("01_mall", "hktv,little_mall");
-    stockLevelMap.put("01_qty", "0");
-    stockLevelMap.put("hktv_instockstatus", "notSpecified");
-    stockLevelMap.put("hktv_share", "0");
-    stockLevelMap.put("hktv_sku", sku);
-    stockLevelMap.put("hktv_store_code", "H00001");
-    stockLevelMap.put("little_mall_instockstatus", "notSpecified");
-    stockLevelMap.put("little_mall_share", "0");
-    stockLevelMap.put("little_mall_store_code", "H00001");
-    stockLevelMap.put("update_time", time);
-    stockLevelMap.put("create_time", time);
-    return stockLevelMap;
-  }
-
-  private ProductInfoDto buildProductInfoDto_testcase0002(String uuid, String sku) {
-    return ProductInfoDto.builder()
-        .action("CREATE")
-        .products(
-            List.of(
-                ProductDto.builder()
-                    .uuid(uuid)
-                    .warehouseDetail(
-                        List.of(
-                            ProductWarehouseDetailDto.builder()
-                                .warehouseSeqNo("01")
-                                .mall(List.of("hktv"))
-                                .build(),
-                            ProductWarehouseDetailDto.builder()
-                                .warehouseSeqNo("02")
-                                .mall(List.of("little_mall"))
-                                .build()))
-                    .mallDetail(
-                        List.of(
-                            ProductMallDetailDto.builder()
-                                .mall("hktv")
-                                .storefrontStoreCode("H00001")
-                                .storeSkuId(sku)
-                                .build(),
-                            ProductMallDetailDto.builder()
-                                .mall("little_mall")
-                                .storefrontStoreCode("H00001")
-                                .build()))
-                    .build()))
-        .build();
-  }
-
-  private static Map<String, String> buildExpectedStockLevel_testcase0002(String sku, String time) {
-    Map<String, String> stockLevelMap = new HashMap<>();
-    stockLevelMap.put("01_mall", "hktv");
-    stockLevelMap.put("01_qty", "0");
-    stockLevelMap.put("02_mall", "little_mall");
-    stockLevelMap.put("02_qty", "0");
-    stockLevelMap.put("hktv_instockstatus", "notSpecified");
-    stockLevelMap.put("hktv_share", "0");
-    stockLevelMap.put("hktv_sku", sku);
-    stockLevelMap.put("hktv_store_code", "H00001");
-    stockLevelMap.put("little_mall_instockstatus", "notSpecified");
-    stockLevelMap.put("little_mall_share", "0");
-    stockLevelMap.put("little_mall_store_code", "H00001");
-    stockLevelMap.put("update_time", time);
-    stockLevelMap.put("create_time", time);
-    return stockLevelMap;
-  }
-
-  private ProductInfoDto buildProductInfoDto_testcase0003(String uuid, String sku) {
-    return ProductInfoDto.builder()
-        .action("CREATE")
-        .products(
-            List.of(
-                ProductDto.builder()
-                    .uuid(uuid)
-                    .warehouseDetail(
-                        List.of(
-                            ProductWarehouseDetailDto.builder()
-                                .warehouseSeqNo("01")
-                                .mall(List.of())
-                                .build(),
-                            ProductWarehouseDetailDto.builder()
-                                .warehouseSeqNo("02")
-                                .mall(List.of())
-                                .build(),
-                            ProductWarehouseDetailDto.builder()
-                                .warehouseSeqNo("03")
-                                .mall(List.of())
-                                .build(),
-                            ProductWarehouseDetailDto.builder()
-                                .warehouseSeqNo("04")
-                                .mall(List.of())
-                                .build(),
-                            ProductWarehouseDetailDto.builder()
-                                .warehouseSeqNo("05")
-                                .mall(List.of())
-                                .build(),
-                            ProductWarehouseDetailDto.builder()
-                                .warehouseSeqNo("06")
-                                .mall(List.of())
-                                .build(),
-                            ProductWarehouseDetailDto.builder()
-                                .warehouseSeqNo("07")
-                                .mall(List.of())
-                                .build(),
-                            ProductWarehouseDetailDto.builder()
-                                .warehouseSeqNo("08")
-                                .mall(List.of())
-                                .build(),
-                            ProductWarehouseDetailDto.builder()
-                                .warehouseSeqNo("09")
-                                .mall(List.of("hktv"))
-                                .build(),
-                            ProductWarehouseDetailDto.builder()
-                                .warehouseSeqNo("10")
-                                .mall(List.of())
-                                .build()))
-                    .mallDetail(
-                        List.of(
-                            ProductMallDetailDto.builder()
-                                .mall("hktv")
-                                .storefrontStoreCode("H00001")
-                                .storeSkuId(sku)
-                                .build()))
-                    .build()))
-        .build();
-  }
-
-  private static Map<String, String> buildExpectedStockLevel_testcase0003(String sku, String time) {
-    Map<String, String> stockLevelMap = new HashMap<>();
-    stockLevelMap.put("01_mall", "");
-    stockLevelMap.put("01_qty", "0");
-    stockLevelMap.put("02_mall", "");
-    stockLevelMap.put("02_qty", "0");
-    stockLevelMap.put("03_mall", "");
-    stockLevelMap.put("03_qty", "0");
-    stockLevelMap.put("04_mall", "");
-    stockLevelMap.put("04_qty", "0");
-    stockLevelMap.put("05_mall", "");
-    stockLevelMap.put("05_qty", "0");
-    stockLevelMap.put("06_mall", "");
-    stockLevelMap.put("06_qty", "0");
-    stockLevelMap.put("07_mall", "");
-    stockLevelMap.put("07_qty", "0");
-    stockLevelMap.put("08_mall", "");
-    stockLevelMap.put("08_qty", "0");
-    stockLevelMap.put("09_mall", "hktv");
-    stockLevelMap.put("09_qty", "0");
-    stockLevelMap.put("10_mall", "");
-    stockLevelMap.put("10_qty", "0");
-    stockLevelMap.put("hktv_instockstatus", "notSpecified");
-    stockLevelMap.put("hktv_share", "0");
-    stockLevelMap.put("hktv_sku", sku);
-    stockLevelMap.put("hktv_store_code", "H00001");
-    stockLevelMap.put("update_time", time);
-    stockLevelMap.put("create_time", time);
-    return stockLevelMap;
-  }
-
-  private ProductInfoDto buildProductInfoDto_testcase0004(String uuid, String sku) {
-    return ProductInfoDto.builder()
-        .action("CREATE")
-        .products(
-            List.of(
-                ProductDto.builder()
-                    .uuid(uuid)
-                    .warehouseDetail(List.of())
-                    .mallDetail(
-                        List.of(
-                            ProductMallDetailDto.builder()
-                                .mall("hktv")
-                                .storefrontStoreCode("H00001")
-                                .storeSkuId(sku)
-                                .build(),
-                            ProductMallDetailDto.builder()
-                                .mall("little_mall")
-                                .storefrontStoreCode("H00002")
-                                .build()))
-                    .build()))
-        .build();
-  }
-
-  private static Map<String, String> buildExpectedStockLevel_testcase0004(String sku, String time) {
-    Map<String, String> stockLevelMap = new HashMap<>();
-    stockLevelMap.put("01_mall", "hktv,little_mall");
-    stockLevelMap.put("01_qty", "0");
-    stockLevelMap.put("hktv_instockstatus", "notSpecified");
-    stockLevelMap.put("hktv_share", "0");
-    stockLevelMap.put("hktv_sku", sku);
-    stockLevelMap.put("hktv_store_code", "H00001");
-    stockLevelMap.put("little_mall_instockstatus", "notSpecified");
-    stockLevelMap.put("little_mall_share", "0");
-    stockLevelMap.put("little_mall_store_code", "H00002");
-    stockLevelMap.put("update_time", time);
-    stockLevelMap.put("create_time", time);
-    return stockLevelMap;
-  }
-
-  private static Map<String, String> buildExpectedHktvStockLevel(
-      String warehouseId,
-      String available,
-      String instockstatus,
-      String share,
-      String uuid,
-      String time) {
-    Map<String, String> stockLevelMap = new HashMap<>();
-    stockLevelMap.put(warehouseId + "_available", available);
-    stockLevelMap.put(warehouseId + "_instockstatus", instockstatus);
-    stockLevelMap.put(warehouseId + "_updatestocktime", time);
-    stockLevelMap.put("share", share);
-    stockLevelMap.put("uuid", uuid);
-    return stockLevelMap;
-  }
-
-  private static String buildExpectedUpdateEventKey(String sku, String warehouseId) {
-    String updateKey = sku + "|||" + warehouseId;
-    return "evtq_part_stockdata_" + Math.abs(updateKey.hashCode() % 10);
-  }
-
-  private static String buildExpectedUpdateEventValue(String sku, String warehouseId) {
-    return sku + "|||" + warehouseId;
-  }
-
-  private static Map<String, String> buildExpectedLMStockLevel(
-      String quantity, String instockstatus, String share, String time) {
-    Map<String, String> stockLevelMap = new HashMap<>();
-    stockLevelMap.put("quantity", quantity);
-    stockLevelMap.put("instockstatus", instockstatus);
-    stockLevelMap.put("updatestocktime", time);
-    stockLevelMap.put("share", share);
-    return stockLevelMap;
-  }
-
   @Test
   void putProductInfo_createParent_childWhNotMatch() {
     String child1Sku = "H088800118_S_child-SKU-E-1";
@@ -686,7 +413,7 @@ public class CreateProductInfoTest {
     redisUtil.insertIidsAndSkuIimsData(child2Uuid, child2Sku, "01");
 
     // testing
-    rabbitMqUtil.sendMsgToIidsQueue(CreateProductInfoTestTool.getCreateParentRabbitMqMsg());
+    rabbitMqUtil.sendMsgToIidsQueue(getCreateParentRabbitMqMsg());
 
     // verify qty
     AssertUtil.wait_2_sec();

@@ -4,13 +4,14 @@ import com.shoalter.willy.shoaltertools.dto.ProductDto;
 import com.shoalter.willy.shoaltertools.dto.ProductInfoDto;
 import com.shoalter.willy.shoaltertools.dto.ProductMallDetailDto;
 import com.shoalter.willy.shoaltertools.dto.ProductWarehouseDetailDto;
+import com.shoalter.willy.shoaltertools.testtool.AssertUtil;
+import com.shoalter.willy.shoaltertools.testtool.RabbitMqUtil;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
-import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -32,14 +33,11 @@ public class DeleteProductInfoTest {
   @Qualifier("redisHKTVTemplate")
   ReactiveRedisTemplate<String, String> redisHKTVTempl;
 
-  @Autowired private RabbitTemplate defaultRabbitTemplate;
-
-  private String EXCHANGE = "shoalter-see-product-master_topic";
-  private String ROUTING_KEY = "shoalter-see-product-master.product-info-iids";
+  @Autowired private RabbitMqUtil rabbitMqUtil;
 
   // EditProduct case 25
   @Test
-  void deleteProduct_testcase0001() throws InterruptedException {
+  void deleteProduct_testcase0001() {
     String time = "20231207134648";
     String uuid = "iids-integration-test-testcase-0017";
     String sku = "iims-integration-test-testcase-0017";
@@ -51,10 +49,8 @@ public class DeleteProductInfoTest {
     redisLMTempl.delete(uuid).block();
 
     // createProduct
-    defaultRabbitTemplate.convertAndSend(
-        EXCHANGE, ROUTING_KEY, buildProductInfoDto_testcase0001(uuid, sku));
-
-    Thread.sleep(1000L);
+    rabbitMqUtil.sendMsgToIidsQueue(buildProductInfoDto_testcase0001(uuid, sku));
+    AssertUtil.wait_1_sec();
 
     // 驗證IIDS資料
     Assertions.assertEquals(
@@ -131,13 +127,37 @@ public class DeleteProductInfoTest {
             .block());
 
     // deleteProduct
-    defaultRabbitTemplate.convertAndSend(
-        EXCHANGE, ROUTING_KEY, deleteProductInfoDto_testcase0001(uuid, sku));
+    rabbitMqUtil.sendMsgToIidsQueue(deleteProductInfoDto_testcase0001(uuid, sku));
+    AssertUtil.wait_1_sec();
 
-    Thread.sleep(1000L);
     Assertions.assertFalse(redisTempl.hasKey("inventory:" + uuid).block());
     Assertions.assertFalse(redisTempl.hasKey(uuid).block());
-    Assertions.assertFalse(redisHKTVTempl.hasKey(sku).block());
+    Assertions.assertTrue(redisHKTVTempl.hasKey(sku).block());
+    Assertions.assertEquals(
+        Map.of(
+            "H0000101_available",
+            "0",
+            "H0000101_instockstatus",
+            "notSpecified",
+            "H0000101_updatestocktime",
+            time),
+        redisTempl
+            .<String, String>opsForHash()
+            .entries(sku)
+            .collectList()
+            .flatMap(
+                entries -> {
+                  Map<String, String> entryMap = new HashMap<>();
+                  for (Map.Entry<String, String> entry : entries) {
+                    if (entry.getKey().equals("H0000101_updatestocktime")) {
+                      entryMap.put(entry.getKey(), time);
+                    } else {
+                      entryMap.put(entry.getKey(), entry.getValue());
+                    }
+                  }
+                  return Mono.just(entryMap);
+                })
+            .block());
     Assertions.assertFalse(redisLMTempl.hasKey(uuid).block());
 
     redisHKTVTempl.delete(updEventKey).block();

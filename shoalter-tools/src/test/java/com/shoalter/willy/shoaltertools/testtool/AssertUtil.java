@@ -8,4 +8,12 @@ public class AssertUtil {
       throw new RuntimeException();
     }
   }
+
+  public static void wait_10_sec() {
+    try {
+      Thread.sleep(10000L);
+    } catch (InterruptedException e) {
+      throw new RuntimeException();
+    }
+  }
 }

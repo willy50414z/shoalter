@@ -1,22 +1,13 @@
 package com.shoalter.willy.shoaltertools;
 
-import static io.restassured.RestAssured.given;
-
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.shoalter.willy.shoaltertools.dto.BundleChildDto;
-import com.shoalter.willy.shoaltertools.dto.BundleMallInfoDto;
-import com.shoalter.willy.shoaltertools.dto.BundleSettingDto;
-import com.shoalter.willy.shoaltertools.dto.ProductDto;
-import com.shoalter.willy.shoaltertools.dto.ProductInfoDto;
-import com.shoalter.willy.shoaltertools.dto.ProductMallDetailDto;
-import com.shoalter.willy.shoaltertools.dto.ProductWarehouseDetailDto;
 import com.shoalter.willy.shoaltertools.testtool.ApiUtil;
 import com.shoalter.willy.shoaltertools.testtool.AssertUtil;
+import com.shoalter.willy.shoaltertools.testtool.RabbitMqUtil;
 import com.shoalter.willy.shoaltertools.testtool.RedisUtil;
 import com.shoalter.willy.shoaltertools.testtool.SystemConstants;
 import com.shoalter.willy.shoaltertools.testtool.updbundleqty.UpdateBundleQtyTestTool;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import lombok.extern.slf4j.Slf4j;
@@ -31,8 +22,7 @@ import reactor.core.publisher.Mono;
 
 @SpringBootTest
 @Slf4j
-public class UpdateBundleTest {
-  @Autowired private static ObjectMapper objectMapper;
+public class UpdateBundleTest extends UpdateBundleQtyTestTool {
 
   @Autowired
   @Qualifier("redisIIDSTemplate")
@@ -46,28 +36,14 @@ public class UpdateBundleTest {
   @Qualifier("redisHKTVTemplate")
   ReactiveRedisTemplate<String, String> redisHKTVTempl;
 
+  @Autowired private static ObjectMapper objectMapper;
   @Autowired private RabbitTemplate defaultRabbitTemplate;
   @Autowired private RedisUtil redisUtil;
   @Autowired private ApiUtil apiUtil;
-
-  private String EXCHANGE = "shoalter-see-product-master_topic";
-  private String ROUTING_KEY = "shoalter-see-product-master.product-info-iids";
-  private String BASIC_URL = "http://127.0.0.1:8099/s2s/v3";
-
-  public static final String INVENTORY_REDIS_KEY_PREFIX_BUNDLE_SETTING = "bundle:setting:";
-  public static final String INVENTORY_REDIS_KEY_PREFIX_BUNDLE_PARENT = "bundle:parent:";
-  public static final String INVENTORY_REDIS_HKEY_PREFIX = "inventory:";
-
-  public static final String childUuid1 = "childUuid-1";
-  public static final String childUuid2 = "childUuid-2";
-  public static final String childUuid3 = "childUuid-3";
-
-  public static final String childSku1 = "childSku-1";
-  public static final String childSku2 = "childSku-2";
-  public static final String childSku3 = "childSku-3";
+  @Autowired private RabbitMqUtil rabbitMqUtil;
 
   @Test
-  public void test1_addBundle_deductEnough() throws InterruptedException {
+  public void test1_addBundle_deductEnough() {
     // 清除資料
     for (int i = 1; i < 7; i++) {
       String uuid = "test-BundleParent-000" + i + "-000" + i + "-000" + i;
@@ -89,115 +65,16 @@ public class UpdateBundleTest {
       redisTempl.delete(storeSkuId).block();
     }
 
-    defaultRabbitTemplate.convertAndSend(
-        EXCHANGE, ROUTING_KEY, buildBundleProductInfoDto_testcase0001());
-    Thread.sleep(10000L);
+    rabbitMqUtil.sendMsgToIidsQueue(buildBundleProductInfoDto_testcase0001());
+    rabbitMqUtil.sendMsgToIidsQueue(buildBundleProductInfoDto_testcase0002());
+    rabbitMqUtil.sendMsgToIidsQueue(buildBundleProductInfoDto_testcase0003());
+    rabbitMqUtil.sendMsgToIidsQueue(buildBundleProductInfoDto_testcase0004());
+    rabbitMqUtil.sendMsgToIidsQueue(buildBundleProductInfoDto_testcase0005());
+    rabbitMqUtil.sendMsgToIidsQueue(buildBundleProductInfoDto_testcase0006());
+    AssertUtil.wait_10_sec();
 
-    defaultRabbitTemplate.convertAndSend(
-        EXCHANGE, ROUTING_KEY, buildBundleProductInfoDto_testcase0002());
-    Thread.sleep(10000L);
-
-    defaultRabbitTemplate.convertAndSend(
-        EXCHANGE, ROUTING_KEY, buildBundleProductInfoDto_testcase0003());
-    Thread.sleep(10000L);
-
-    defaultRabbitTemplate.convertAndSend(
-        EXCHANGE, ROUTING_KEY, buildBundleProductInfoDto_testcase0004());
-    Thread.sleep(10000L);
-
-    defaultRabbitTemplate.convertAndSend(
-        EXCHANGE, ROUTING_KEY, buildBundleProductInfoDto_testcase0005());
-    Thread.sleep(10000L);
-
-    defaultRabbitTemplate.convertAndSend(
-        EXCHANGE, ROUTING_KEY, buildBundleProductInfoDto_testcase0006());
-    Thread.sleep(10000L);
-
-    // set childUuid1/2/3 qty=233 to share
-    given()
-        .contentType("application/json")
-        .body(
-            "[\n"
-                + "  {\n"
-                + "    \"uuid\": \"childUuid-1\",\n"
-                + "    \"warehouseQty\": [\n"
-                + "      {\n"
-                + "        \"warehouseSeqNo\": \"01\",\n"
-                + "        \"mode\": \"set\",\n"
-                + "        \"quantity\": 233\n"
-                + "      }\n"
-                + "    ]\n"
-                + "  },\n"
-                + "  {\n"
-                + "    \"uuid\": \"childUuid-2\",\n"
-                + "    \"warehouseQty\": [\n"
-                + "      {\n"
-                + "        \"warehouseSeqNo\": \"01\",\n"
-                + "        \"mode\": \"set\",\n"
-                + "        \"quantity\": 223\n"
-                + "      }\n"
-                + "    ]\n"
-                + "  },\n"
-                + "  {\n"
-                + "    \"uuid\": \"childUuid-3\",\n"
-                + "    \"warehouseQty\": [\n"
-                + "      {\n"
-                + "        \"warehouseSeqNo\": \"01\",\n"
-                + "        \"mode\": \"set\",\n"
-                + "        \"quantity\": 233\n"
-                + "      }\n"
-                + "    ]\n"
-                + "  }\n"
-                + "]")
-        .when()
-        .put(BASIC_URL + "/warehouse/quantity")
-        .then()
-        .statusCode(200)
-        .log()
-        .all();
-
-    // set childUuid1/2/3 qty=233 to mall
-    given()
-        .contentType("application/json")
-        .body(
-            "[\n"
-                + "  {\n"
-                + "    \"uuid\": \"childUuid-1\",\n"
-                + "    \"stockLevels\": [\n"
-                + "      {\n"
-                + "        \"mall\": \"hktv\",\n"
-                + "        \"qty\": 233,\n"
-                + "        \"mode\": \"set\"\n"
-                + "      }\n"
-                + "    ]\n"
-                + "  },\n"
-                + "  {\n"
-                + "    \"uuid\": \"childUuid-2\",\n"
-                + "    \"stockLevels\": [\n"
-                + "      {\n"
-                + "        \"mall\": \"hktv\",\n"
-                + "        \"qty\": 223,\n"
-                + "        \"mode\": \"set\"\n"
-                + "      }\n"
-                + "    ]\n"
-                + "  },\n"
-                + "  {\n"
-                + "    \"uuid\": \"childUuid-3\",\n"
-                + "    \"stockLevels\": [\n"
-                + "      {\n"
-                + "        \"mall\": \"hktv\",\n"
-                + "        \"qty\": 233,\n"
-                + "        \"mode\": \"set\"\n"
-                + "      }\n"
-                + "    ]\n"
-                + "  }\n"
-                + "]")
-        .when()
-        .put(BASIC_URL + "/mall/stock_levels")
-        .then()
-        .statusCode(200)
-        .log()
-        .all();
+    apiUtil.callSetChildUuid123QtyEqual233ToShare();
+    apiUtil.callSetChildUuid123Qty233ToMall();
 
     // 驗證資料正確 所有child qty都是 233
     Map<String, Map<String, String>> resultMap = case1AssertionExpectation();
@@ -205,7 +82,7 @@ public class UpdateBundleTest {
     // child1
     Assertions.assertEquals(
         childMap1,
-        redisLMTempl
+        redisTempl
             .<String, String>opsForHash()
             .entries("child_S_childSku-1")
             .collectList()
@@ -224,100 +101,8 @@ public class UpdateBundleTest {
                 })
             .block());
 
-    // 建立每個 parentBundle qty=10
-    given()
-        .contentType("application/json")
-        .body(
-            "[\n"
-                + "  {\n"
-                + "    \"uuid\":\"test-BundleParent-0001-0001-0001\",\n"
-                + "    \"mallQty\":[\n"
-                + "      {\n"
-                + "        \"mall\": \"hktv\",\n"
-                + "        \"qty\": 10,\n"
-                + "        \"mode\": \"set\"\n"
-                + "      }\n"
-                + "    ]\n"
-                + "  },\n"
-                + "    {\n"
-                + "    \"uuid\":\"test-BundleParent-0002-0002-0002\",\n"
-                + "    \"mallQty\":[\n"
-                + "      {\n"
-                + "        \"mall\": \"hktv\",\n"
-                + "        \"qty\": 10,\n"
-                + "        \"mode\": \"set\"\n"
-                + "      }\n"
-                + "    ]\n"
-                + "  },\n"
-                + "    {\n"
-                + "    \"uuid\":\"test-BundleParent-0003-0003-0003\",\n"
-                + "    \"mallQty\":[\n"
-                + "      {\n"
-                + "        \"mall\": \"hktv\",\n"
-                + "        \"qty\": 10,\n"
-                + "        \"mode\": \"set\"\n"
-                + "      }\n"
-                + "    ]\n"
-                + "  },\n"
-                + "    {\n"
-                + "    \"uuid\":\"test-BundleParent-0004-0004-0004\",\n"
-                + "    \"mallQty\":[\n"
-                + "      {\n"
-                + "        \"mall\": \"hktv\",\n"
-                + "        \"qty\": 10,\n"
-                + "        \"mode\": \"set\"\n"
-                + "      }\n"
-                + "    ]\n"
-                + "  },\n"
-                + "    {\n"
-                + "    \"uuid\":\"test-BundleParent-0005-0005-0005\",\n"
-                + "    \"mallQty\":[\n"
-                + "      {\n"
-                + "        \"mall\": \"hktv\",\n"
-                + "        \"qty\": 10,\n"
-                + "        \"mode\": \"set\"\n"
-                + "      }\n"
-                + "    ]\n"
-                + "  },\n"
-                + "    {\n"
-                + "    \"uuid\":\"test-BundleParent-0006-0006-0006\",\n"
-                + "    \"mallQty\":[\n"
-                + "      {\n"
-                + "        \"mall\": \"hktv\",\n"
-                + "        \"qty\": 10,\n"
-                + "        \"mode\": \"set\"\n"
-                + "      }\n"
-                + "    ]\n"
-                + "  }\n"
-                + "]")
-        .when()
-        .put(BASIC_URL + "/mall/bundle/quantity")
-        .then()
-        .statusCode(200)
-        .log()
-        .all();
-
-    // deduct child1 15
-    given()
-        .contentType("application/json")
-        .body(
-            "[\n"
-                + "  {\n"
-                + "    \"uuid\": \"childUuid-1\",\n"
-                + "    \"warehouseQty\": [\n"
-                + "      {\n"
-                + "        \"warehouseSeqNo\": \"01\",\n"
-                + "        \"mode\": \"deduct\",\n"
-                + "        \"quantity\": 15\n"
-                + "      }\n"
-                + "    ]\n"
-                + "  }]")
-        .when()
-        .put(BASIC_URL + "/warehouse/quantity")
-        .then()
-        .statusCode(200)
-        .log()
-        .all();
+    apiUtil.callUpdAllBundleQtyTo10();
+    apiUtil.callDeductChild1Qty15();
 
     // [案例1] child本人夠扣: childUuid1 deduct 15 => childUuid1 share 0 non-share 178
     Map<String, String> case1Result = new HashMap<>();
@@ -326,7 +111,7 @@ public class UpdateBundleTest {
 
     Assertions.assertEquals(
         case1Result,
-        redisLMTempl
+        redisTempl
             .<String, String>opsForHash()
             .entries("child_S_childSku-1")
             .collectList()
@@ -345,28 +130,7 @@ public class UpdateBundleTest {
                 })
             .block());
 
-    // deduct child2 92
-    given()
-        .contentType("application/json")
-        .body(
-            "[\n"
-                + "  {\n"
-                + "    \"uuid\": \"childUuid-2\",\n"
-                + "    \"warehouseQty\": [\n"
-                + "      {\n"
-                + "        \"warehouseSeqNo\": \"01\",\n"
-                + "        \"mode\": \"deduct\",\n"
-                + "        \"quantity\": 92\n"
-                + "      }\n"
-                + "    ]\n"
-                + "  }\n"
-                + "]")
-        .when()
-        .put(BASIC_URL + "/warehouse/quantity")
-        .then()
-        .statusCode(200)
-        .log()
-        .all();
+    apiUtil.callDeductChild2Qty92();
 
     // [案例2] child本人不夠扣，single sku bundle夠扣，order by child ratio, create time desc補貨
     Map<String, String> case2Result_child = new HashMap<>();
@@ -387,7 +151,7 @@ public class UpdateBundleTest {
 
     Assertions.assertEquals(
         case2Result_child,
-        redisLMTempl
+        redisTempl
             .<String, String>opsForHash()
             .entries("child_S_childSku-2")
             .collectList()
@@ -408,7 +172,7 @@ public class UpdateBundleTest {
 
     Assertions.assertEquals(
         case2Result_parent4,
-        redisLMTempl
+        redisTempl
             .<String, String>opsForHash()
             .entries("H0121001_S_P0004")
             .collectList()
@@ -429,7 +193,7 @@ public class UpdateBundleTest {
 
     Assertions.assertEquals(
         case2Result_parent5,
-        redisLMTempl
+        redisTempl
             .<String, String>opsForHash()
             .entries("H0121001_S_P0005")
             .collectList()
@@ -450,7 +214,7 @@ public class UpdateBundleTest {
 
     Assertions.assertEquals(
         case2Result_parent6,
-        redisLMTempl
+        redisTempl
             .<String, String>opsForHash()
             .entries("H0121001_S_P0006")
             .collectList()
@@ -470,28 +234,7 @@ public class UpdateBundleTest {
             .block());
 
     // [案例3] child本人不夠扣，single sku bundle不夠扣，order by child ratio, create time desc補貨
-    // deduct child2 92
-    given()
-        .contentType("application/json")
-        .body(
-            "[\n"
-                + "  {\n"
-                + "    \"uuid\": \"childUuid-2\",\n"
-                + "    \"warehouseQty\": [\n"
-                + "      {\n"
-                + "        \"warehouseSeqNo\": \"01\",\n"
-                + "        \"mode\": \"deduct\",\n"
-                + "        \"quantity\": 63\n"
-                + "      }\n"
-                + "    ]\n"
-                + "  }\n"
-                + "]")
-        .when()
-        .put(BASIC_URL + "/warehouse/quantity")
-        .then()
-        .statusCode(200)
-        .log()
-        .all();
+    apiUtil.callDeductChild2Qty63();
 
     Map<String, String> case3Result_child = new HashMap<>();
     case3Result_child.put("child01_available", "0");
@@ -523,7 +266,7 @@ public class UpdateBundleTest {
 
     Assertions.assertEquals(
         case3Result_child,
-        redisLMTempl
+        redisTempl
             .<String, String>opsForHash()
             .entries("child_S_childSku-2")
             .collectList()
@@ -544,7 +287,7 @@ public class UpdateBundleTest {
 
     Assertions.assertEquals(
         case3Result_parent1,
-        redisLMTempl
+        redisTempl
             .<String, String>opsForHash()
             .entries("H0121001_S_P0001")
             .collectList()
@@ -565,7 +308,7 @@ public class UpdateBundleTest {
 
     Assertions.assertEquals(
         case3Result_parent2,
-        redisLMTempl
+        redisTempl
             .<String, String>opsForHash()
             .entries("H0121001_S_P0002")
             .collectList()
@@ -586,7 +329,7 @@ public class UpdateBundleTest {
 
     Assertions.assertEquals(
         case3Result_parent3,
-        redisLMTempl
+        redisTempl
             .<String, String>opsForHash()
             .entries("H0121001_S_P0003")
             .collectList()
@@ -607,7 +350,7 @@ public class UpdateBundleTest {
 
     Assertions.assertEquals(
         case3Result_parent4,
-        redisLMTempl
+        redisTempl
             .<String, String>opsForHash()
             .entries("H0121001_S_P0004")
             .collectList()
@@ -628,7 +371,7 @@ public class UpdateBundleTest {
 
     Assertions.assertEquals(
         case3Result_parent5,
-        redisLMTempl
+        redisTempl
             .<String, String>opsForHash()
             .entries("H0121001_S_P0005")
             .collectList()
@@ -649,7 +392,7 @@ public class UpdateBundleTest {
 
     Assertions.assertEquals(
         case3Result_parent6,
-        redisLMTempl
+        redisTempl
             .<String, String>opsForHash()
             .entries("H0121001_S_P0006")
             .collectList()
@@ -688,391 +431,6 @@ public class UpdateBundleTest {
       redisTempl.delete(uuid).block();
       redisTempl.delete(storeSkuId).block();
     }
-  }
-
-  private ProductInfoDto buildBundleProductInfoDto_testcase0001() {
-
-    return ProductInfoDto.builder()
-        .action("CREATE")
-        .products(
-            List.of(
-                ProductDto.builder()
-                    .uuid("test-BundleParent-0001-0001-0001")
-                    .mallDetail(
-                        List.of(
-                            ProductMallDetailDto.builder()
-                                .mall("hktv")
-                                .storeSkuId("H0121001_S_P0001")
-                                .storefrontStoreCode("H012100101")
-                                .build()))
-                    .warehouseDetail(
-                        List.of(
-                            ProductWarehouseDetailDto.builder()
-                                .warehouseSeqNo("01")
-                                .mall(List.of("hktv"))
-                                .build()))
-                    .bundleSetting(
-                        BundleSettingDto.builder()
-                            .isReserved(true)
-                            .isActive(false)
-                            .priority(0)
-                            .bundleMallInfoList(
-                                List.of(
-                                    BundleMallInfoDto.builder()
-                                        .mall("hktv")
-                                        .alertQty(100)
-                                        .ceilingQty(100)
-                                        .build()))
-                            .bundleChildInfoList(
-                                List.of(
-                                    BundleChildDto.builder()
-                                        .uuid(childUuid1)
-                                        .skuId(childSku1)
-                                        .skuQty(2)
-                                        .ceilingQty(0)
-                                        .storefrontStoreCode("child")
-                                        .isLoop(false)
-                                        .build(),
-                                    BundleChildDto.builder()
-                                        .uuid(childUuid2)
-                                        .skuId(childSku2)
-                                        .skuQty(2)
-                                        .ceilingQty(0)
-                                        .storefrontStoreCode("child")
-                                        .isLoop(false)
-                                        .build(),
-                                    BundleChildDto.builder()
-                                        .uuid(childUuid3)
-                                        .skuId(childSku3)
-                                        .skuQty(4)
-                                        .ceilingQty(0)
-                                        .storefrontStoreCode("child")
-                                        .isLoop(false)
-                                        .build()))
-                            .build())
-                    .build(),
-                ProductDto.builder()
-                    .uuid(childUuid1)
-                    .warehouseDetail(
-                        List.of(
-                            ProductWarehouseDetailDto.builder()
-                                .warehouseSeqNo("01")
-                                .mall(List.of("hktv"))
-                                .build()))
-                    .mallDetail(
-                        List.of(
-                            ProductMallDetailDto.builder()
-                                .mall("hktv")
-                                .storefrontStoreCode("child")
-                                .storeSkuId("child_S_" + childSku1)
-                                .build()))
-                    .build(),
-                ProductDto.builder()
-                    .uuid(childUuid2)
-                    .warehouseDetail(
-                        List.of(
-                            ProductWarehouseDetailDto.builder()
-                                .warehouseSeqNo("01")
-                                .mall(List.of("hktv"))
-                                .build()))
-                    .mallDetail(
-                        List.of(
-                            ProductMallDetailDto.builder()
-                                .mall("hktv")
-                                .storefrontStoreCode("child")
-                                .storeSkuId("child_S_" + childSku2)
-                                .build()))
-                    .build(),
-                ProductDto.builder()
-                    .uuid(childUuid3)
-                    .warehouseDetail(
-                        List.of(
-                            ProductWarehouseDetailDto.builder()
-                                .warehouseSeqNo("01")
-                                .mall(List.of("hktv"))
-                                .build()))
-                    .mallDetail(
-                        List.of(
-                            ProductMallDetailDto.builder()
-                                .mall("hktv")
-                                .storefrontStoreCode("child")
-                                .storeSkuId("child_S_" + childSku3)
-                                .build()))
-                    .build()))
-        .build();
-  }
-
-  private ProductInfoDto buildBundleProductInfoDto_testcase0002() {
-
-    return ProductInfoDto.builder()
-        .action("CREATE")
-        .products(
-            List.of(
-                ProductDto.builder()
-                    .uuid("test-BundleParent-0002-0002-0002")
-                    .mallDetail(
-                        List.of(
-                            ProductMallDetailDto.builder()
-                                .mall("hktv")
-                                .storeSkuId("H0121001_S_P0002")
-                                .storefrontStoreCode("H012100101")
-                                .build()))
-                    .warehouseDetail(
-                        List.of(
-                            ProductWarehouseDetailDto.builder()
-                                .warehouseSeqNo("01")
-                                .mall(List.of("hktv"))
-                                .build()))
-                    .bundleSetting(
-                        BundleSettingDto.builder()
-                            .isReserved(true)
-                            .isActive(false)
-                            .priority(0)
-                            .bundleMallInfoList(
-                                List.of(
-                                    BundleMallInfoDto.builder()
-                                        .mall("hktv")
-                                        .alertQty(100)
-                                        .ceilingQty(100)
-                                        .build()))
-                            .bundleChildInfoList(
-                                List.of(
-                                    BundleChildDto.builder()
-                                        .uuid(childUuid1)
-                                        .skuId(childSku1)
-                                        .skuQty(2)
-                                        .ceilingQty(0)
-                                        .storefrontStoreCode("child")
-                                        .isLoop(false)
-                                        .build(),
-                                    BundleChildDto.builder()
-                                        .uuid(childUuid2)
-                                        .skuId(childSku2)
-                                        .skuQty(3)
-                                        .ceilingQty(0)
-                                        .storefrontStoreCode("child")
-                                        .isLoop(false)
-                                        .build()))
-                            .build())
-                    .build()))
-        .build();
-  }
-
-  private ProductInfoDto buildBundleProductInfoDto_testcase0003() {
-
-    return ProductInfoDto.builder()
-        .action("CREATE")
-        .products(
-            List.of(
-                ProductDto.builder()
-                    .uuid("test-BundleParent-0003-0003-0003")
-                    .mallDetail(
-                        List.of(
-                            ProductMallDetailDto.builder()
-                                .mall("hktv")
-                                .storeSkuId("H0121001_S_P0003")
-                                .storefrontStoreCode("H012100101")
-                                .build()))
-                    .warehouseDetail(
-                        List.of(
-                            ProductWarehouseDetailDto.builder()
-                                .warehouseSeqNo("01")
-                                .mall(List.of("hktv"))
-                                .build()))
-                    .bundleSetting(
-                        BundleSettingDto.builder()
-                            .isReserved(true)
-                            .isActive(false)
-                            .priority(0)
-                            .bundleMallInfoList(
-                                List.of(
-                                    BundleMallInfoDto.builder()
-                                        .mall("hktv")
-                                        .alertQty(100)
-                                        .ceilingQty(100)
-                                        .build()))
-                            .bundleChildInfoList(
-                                List.of(
-                                    BundleChildDto.builder()
-                                        .uuid(childUuid3)
-                                        .skuId(childSku3)
-                                        .skuQty(4)
-                                        .ceilingQty(0)
-                                        .storefrontStoreCode("child")
-                                        .isLoop(false)
-                                        .build(),
-                                    BundleChildDto.builder()
-                                        .uuid(childUuid2)
-                                        .skuId(childSku2)
-                                        .skuQty(3)
-                                        .ceilingQty(0)
-                                        .storefrontStoreCode("child")
-                                        .isLoop(false)
-                                        .build()))
-                            .build())
-                    .build()))
-        .build();
-  }
-
-  private ProductInfoDto buildBundleProductInfoDto_testcase0004() {
-    return ProductInfoDto.builder()
-        .action("CREATE")
-        .products(
-            List.of(
-                ProductDto.builder()
-                    .uuid("test-BundleParent-0004-0004-0004")
-                    .mallDetail(
-                        List.of(
-                            ProductMallDetailDto.builder()
-                                .mall("hktv")
-                                .storeSkuId("H0121001_S_P0004")
-                                .storefrontStoreCode("H012100101")
-                                .build()))
-                    .warehouseDetail(
-                        List.of(
-                            ProductWarehouseDetailDto.builder()
-                                .warehouseSeqNo("01")
-                                .mall(List.of("hktv"))
-                                .build()))
-                    .bundleSetting(
-                        BundleSettingDto.builder()
-                            .isReserved(true)
-                            .isActive(false)
-                            .priority(0)
-                            .bundleMallInfoList(
-                                List.of(
-                                    BundleMallInfoDto.builder()
-                                        .mall("hktv")
-                                        .alertQty(100)
-                                        .ceilingQty(100)
-                                        .build()))
-                            .bundleChildInfoList(
-                                List.of(
-                                    BundleChildDto.builder()
-                                        .uuid(childUuid2)
-                                        .skuId(childSku2)
-                                        .skuQty(2)
-                                        .ceilingQty(0)
-                                        .storefrontStoreCode("child")
-                                        .isLoop(false)
-                                        .build()))
-                            .build())
-                    .build()))
-        .build();
-  }
-
-  private ProductInfoDto buildBundleProductInfoDto_testcase0005() {
-    return ProductInfoDto.builder()
-        .action("CREATE")
-        .products(
-            List.of(
-                ProductDto.builder()
-                    .uuid("test-BundleParent-0005-0005-0005")
-                    .mallDetail(
-                        List.of(
-                            ProductMallDetailDto.builder()
-                                .mall("hktv")
-                                .storeSkuId("H0121001_S_P0005")
-                                .storefrontStoreCode("H012100101")
-                                .build()))
-                    .warehouseDetail(
-                        List.of(
-                            ProductWarehouseDetailDto.builder()
-                                .warehouseSeqNo("01")
-                                .mall(List.of("hktv"))
-                                .build()))
-                    .bundleSetting(
-                        BundleSettingDto.builder()
-                            .isReserved(true)
-                            .isActive(false)
-                            .priority(0)
-                            .bundleMallInfoList(
-                                List.of(
-                                    BundleMallInfoDto.builder()
-                                        .mall("hktv")
-                                        .alertQty(100)
-                                        .ceilingQty(100)
-                                        .build()))
-                            .bundleChildInfoList(
-                                List.of(
-                                    BundleChildDto.builder()
-                                        .uuid(childUuid2)
-                                        .skuId(childSku2)
-                                        .skuQty(3)
-                                        .ceilingQty(0)
-                                        .storefrontStoreCode("child")
-                                        .isLoop(false)
-                                        .build()))
-                            .build())
-                    .build()))
-        .build();
-  }
-
-  private ProductInfoDto buildBundleProductInfoDto_testcase0006() {
-    return ProductInfoDto.builder()
-        .action("CREATE")
-        .products(
-            List.of(
-                ProductDto.builder()
-                    .uuid("test-BundleParent-0006-0006-0006")
-                    .mallDetail(
-                        List.of(
-                            ProductMallDetailDto.builder()
-                                .mall("hktv")
-                                .storeSkuId("H0121001_S_P0006")
-                                .storefrontStoreCode("H012100101")
-                                .build()))
-                    .warehouseDetail(
-                        List.of(
-                            ProductWarehouseDetailDto.builder()
-                                .warehouseSeqNo("01")
-                                .mall(List.of("hktv"))
-                                .build()))
-                    .bundleSetting(
-                        BundleSettingDto.builder()
-                            .isReserved(true)
-                            .isActive(false)
-                            .priority(0)
-                            .bundleMallInfoList(
-                                List.of(
-                                    BundleMallInfoDto.builder()
-                                        .mall("hktv")
-                                        .alertQty(100)
-                                        .ceilingQty(100)
-                                        .build()))
-                            .bundleChildInfoList(
-                                List.of(
-                                    BundleChildDto.builder()
-                                        .uuid(childUuid2)
-                                        .skuId(childSku2)
-                                        .skuQty(3)
-                                        .ceilingQty(0)
-                                        .storefrontStoreCode("child")
-                                        .isLoop(false)
-                                        .build()))
-                            .build())
-                    .build()))
-        .build();
-  }
-
-  private static Map<String, Map<String, String>> case1AssertionExpectation() {
-    Map<String, Map<String, String>> resultMap = new HashMap<>();
-    Map<String, String> child1Map = new HashMap<>();
-    child1Map.put("child01_available", "233");
-    child1Map.put("uuid", childUuid1);
-    resultMap.put("1", child1Map);
-
-    Map<String, String> child2Map = new HashMap<>();
-    child2Map.put("child01_available", "233");
-    child2Map.put("uuid", childUuid2);
-    resultMap.put("2", child2Map);
-
-    Map<String, String> child3Map = new HashMap<>();
-    child3Map.put("child01_available", "233");
-    child3Map.put("uuid", childUuid3);
-    resultMap.put("3", child3Map);
-
-    return resultMap;
   }
 
   @Test

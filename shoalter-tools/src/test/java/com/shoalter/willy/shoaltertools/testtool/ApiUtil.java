@@ -203,4 +203,243 @@ public class ApiUtil {
         .log()
         .all();
   }
+
+  public void callSetChildUuid123QtyEqual233ToShare() {
+    //  set childUuid1/2/3 qty=233 to share
+    given()
+        .contentType("application/json")
+        .body(
+            "[\n"
+                + "  {\n"
+                + "    \"uuid\": \"childUuid-1\",\n"
+                + "    \"warehouseQty\": [\n"
+                + "      {\n"
+                + "        \"warehouseSeqNo\": \"01\",\n"
+                + "        \"mode\": \"set\",\n"
+                + "        \"quantity\": 233\n"
+                + "      }\n"
+                + "    ]\n"
+                + "  },\n"
+                + "  {\n"
+                + "    \"uuid\": \"childUuid-2\",\n"
+                + "    \"warehouseQty\": [\n"
+                + "      {\n"
+                + "        \"warehouseSeqNo\": \"01\",\n"
+                + "        \"mode\": \"set\",\n"
+                + "        \"quantity\": 223\n"
+                + "      }\n"
+                + "    ]\n"
+                + "  },\n"
+                + "  {\n"
+                + "    \"uuid\": \"childUuid-3\",\n"
+                + "    \"warehouseQty\": [\n"
+                + "      {\n"
+                + "        \"warehouseSeqNo\": \"01\",\n"
+                + "        \"mode\": \"set\",\n"
+                + "        \"quantity\": 233\n"
+                + "      }\n"
+                + "    ]\n"
+                + "  }\n"
+                + "]")
+        .when()
+        .put(getLocalUpdWhQtyUrl())
+        .then()
+        .statusCode(200)
+        .log()
+        .all();
+  }
+
+  public void callSetChildUuid123Qty233ToMall() {
+    // set childUuid1/2/3 qty=233 to mall
+    given()
+        .contentType("application/json")
+        .body(
+            "[\n"
+                + "  {\n"
+                + "    \"uuid\": \"childUuid-1\",\n"
+                + "    \"stockLevels\": [\n"
+                + "      {\n"
+                + "        \"mall\": \"hktv\",\n"
+                + "        \"qty\": 233,\n"
+                + "        \"mode\": \"set\"\n"
+                + "      }\n"
+                + "    ]\n"
+                + "  },\n"
+                + "  {\n"
+                + "    \"uuid\": \"childUuid-2\",\n"
+                + "    \"stockLevels\": [\n"
+                + "      {\n"
+                + "        \"mall\": \"hktv\",\n"
+                + "        \"qty\": 223,\n"
+                + "        \"mode\": \"set\"\n"
+                + "      }\n"
+                + "    ]\n"
+                + "  },\n"
+                + "  {\n"
+                + "    \"uuid\": \"childUuid-3\",\n"
+                + "    \"stockLevels\": [\n"
+                + "      {\n"
+                + "        \"mall\": \"hktv\",\n"
+                + "        \"qty\": 233,\n"
+                + "        \"mode\": \"set\"\n"
+                + "      }\n"
+                + "    ]\n"
+                + "  }\n"
+                + "]")
+        .when()
+        .put(getLocalUpdMallStockLevelUrl())
+        .then()
+        .statusCode(200)
+        .log()
+        .all();
+  }
+
+  public void callUpdAllBundleQtyTo10() {
+    // 建立每個 parentBundle qty=10
+    given()
+        .contentType("application/json")
+        .body(
+            "[\n"
+                + "  {\n"
+                + "    \"uuid\":\"test-BundleParent-0001-0001-0001\",\n"
+                + "    \"mallQty\":[\n"
+                + "      {\n"
+                + "        \"mall\": \"hktv\",\n"
+                + "        \"qty\": 10,\n"
+                + "        \"mode\": \"set\"\n"
+                + "      }\n"
+                + "    ]\n"
+                + "  },\n"
+                + "    {\n"
+                + "    \"uuid\":\"test-BundleParent-0002-0002-0002\",\n"
+                + "    \"mallQty\":[\n"
+                + "      {\n"
+                + "        \"mall\": \"hktv\",\n"
+                + "        \"qty\": 10,\n"
+                + "        \"mode\": \"set\"\n"
+                + "      }\n"
+                + "    ]\n"
+                + "  },\n"
+                + "    {\n"
+                + "    \"uuid\":\"test-BundleParent-0003-0003-0003\",\n"
+                + "    \"mallQty\":[\n"
+                + "      {\n"
+                + "        \"mall\": \"hktv\",\n"
+                + "        \"qty\": 10,\n"
+                + "        \"mode\": \"set\"\n"
+                + "      }\n"
+                + "    ]\n"
+                + "  },\n"
+                + "    {\n"
+                + "    \"uuid\":\"test-BundleParent-0004-0004-0004\",\n"
+                + "    \"mallQty\":[\n"
+                + "      {\n"
+                + "        \"mall\": \"hktv\",\n"
+                + "        \"qty\": 10,\n"
+                + "        \"mode\": \"set\"\n"
+                + "      }\n"
+                + "    ]\n"
+                + "  },\n"
+                + "    {\n"
+                + "    \"uuid\":\"test-BundleParent-0005-0005-0005\",\n"
+                + "    \"mallQty\":[\n"
+                + "      {\n"
+                + "        \"mall\": \"hktv\",\n"
+                + "        \"qty\": 10,\n"
+                + "        \"mode\": \"set\"\n"
+                + "      }\n"
+                + "    ]\n"
+                + "  },\n"
+                + "    {\n"
+                + "    \"uuid\":\"test-BundleParent-0006-0006-0006\",\n"
+                + "    \"mallQty\":[\n"
+                + "      {\n"
+                + "        \"mall\": \"hktv\",\n"
+                + "        \"qty\": 10,\n"
+                + "        \"mode\": \"set\"\n"
+                + "      }\n"
+                + "    ]\n"
+                + "  }\n"
+                + "]")
+        .when()
+        .put(getLocalUpdBundleQtyUrl())
+        .then()
+        .statusCode(200)
+        .log()
+        .all();
+  }
+
+  public void callDeductChild1Qty15() {
+    // deduct child1 15
+    given()
+        .contentType("application/json")
+        .body(
+            "[\n"
+                + "  {\n"
+                + "    \"uuid\": \"childUuid-1\",\n"
+                + "    \"warehouseQty\": [\n"
+                + "      {\n"
+                + "        \"warehouseSeqNo\": \"01\",\n"
+                + "        \"mode\": \"deduct\",\n"
+                + "        \"quantity\": 15\n"
+                + "      }\n"
+                + "    ]\n"
+                + "  }]")
+        .when()
+        .put(getLocalUpdWhQtyUrl())
+        .then()
+        .statusCode(200)
+        .log()
+        .all();
+  }
+
+  public void callDeductChild2Qty92() {
+    // deduct child2 92
+    given()
+        .contentType("application/json")
+        .body(
+            "[\n"
+                + "  {\n"
+                + "    \"uuid\": \"childUuid-2\",\n"
+                + "    \"warehouseQty\": [\n"
+                + "      {\n"
+                + "        \"warehouseSeqNo\": \"01\",\n"
+                + "        \"mode\": \"deduct\",\n"
+                + "        \"quantity\": 92\n"
+                + "      }\n"
+                + "    ]\n"
+                + "  }\n"
+                + "]")
+        .when()
+        .put(getLocalUpdWhQtyUrl())
+        .then()
+        .statusCode(200)
+        .log()
+        .all();
+  }
+
+  public void callDeductChild2Qty63() {
+    // deduct child2 63
+    given()
+        .contentType("application/json")
+        .body(
+            "[\n"
+                + "  {\n"
+                + "    \"uuid\": \"childUuid-2\",\n"
+                + "    \"warehouseQty\": [\n"
+                + "      {\n"
+                + "        \"warehouseSeqNo\": \"01\",\n"
+                + "        \"mode\": \"deduct\",\n"
+                + "        \"quantity\": 63\n"
+                + "      }\n"
+                + "    ]\n"
+                + "  }\n"
+                + "]")
+        .when()
+        .put(getLocalUpdWhQtyUrl())
+        .then()
+        .statusCode(200)
+        .log()
+        .all();
+  }
 }

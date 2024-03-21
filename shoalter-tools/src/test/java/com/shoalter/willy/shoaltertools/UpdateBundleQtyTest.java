@@ -795,8 +795,8 @@ public class UpdateBundleQtyTest extends UpdateBundleQtyTestTool {
     Assertions.assertEquals("0", child2IidsQty);
     Assertions.assertEquals("0", child3IidsQty);
 
-    Assertions.assertEquals("20", child2Iids98Qty);
-    Assertions.assertEquals("30", child3Iids98Qty);
+    Assertions.assertEquals("0", child2Iids98Qty);
+    Assertions.assertEquals("0", child3Iids98Qty);
   }
 
   @Test
@@ -974,7 +974,9 @@ public class UpdateBundleQtyTest extends UpdateBundleQtyTestTool {
         "2400", redisTempl.opsForHash().get(child2Sku, "H08880011801_available").block());
     Assertions.assertNull(redisTempl.opsForHash().get(child2Sku, "H08880011898_available").block());
     Assertions.assertEquals(
-        "4800", redisTempl.opsForHash().get("inventory:" + child2Uuid, "98_qty").block());
+        "0", redisTempl.opsForHash().get("inventory:" + child2Uuid, "01_qty").block());
+    Assertions.assertEquals(
+        "0", redisTempl.opsForHash().get("inventory:" + child2Uuid, "98_qty").block());
     Assertions.assertEquals(
         "7200", redisTempl.opsForHash().get(child3Sku, "H08880011898_available").block());
     Assertions.assertEquals(

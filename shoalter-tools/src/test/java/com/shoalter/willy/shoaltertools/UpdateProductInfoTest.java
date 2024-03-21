@@ -152,6 +152,7 @@ public class UpdateProductInfoTest extends UpdateProductInfoTestTool {
 
     // createProduct
     rabbitMqUtil.sendMsgToIidsQueue(buildProductInfoDto_EditProductTestCase0014(uuid, sku));
+    AssertUtil.wait_2_sec();
 
     // setting init value
     apiUtil.callSetWh01Qty20AndWh02Qty30(uuid);

@@ -3,11 +3,14 @@ package com.shoalter.willy.shoaltertools;
 import static io.restassured.RestAssured.given;
 import static org.hamcrest.Matchers.equalTo;
 
+import com.shoalter.willy.shoaltertools.testtool.ApiUtil;
+import com.shoalter.willy.shoaltertools.testtool.RedisUtil;
 import io.restassured.path.json.JsonPath;
 import java.io.File;
 import java.util.HashMap;
 import java.util.Map;
 import lombok.extern.slf4j.Slf4j;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -17,10 +20,12 @@ import org.springframework.data.redis.core.ReactiveRedisTemplate;
 @Slf4j
 public class GetStockLevelTest {
   @Autowired ReactiveRedisTemplate<String, String> redisTempl;
+  @Autowired private RedisUtil redisUtil;
+  @Autowired private ApiUtil apiUtil;
   private String BASIC_URL = "http://127.0.0.1:8099/s2s/v3";
 
   @Test
-  void getStockLevelTest() throws InterruptedException {
+  void getStockLevelTest() {
     String sku = "H0121001_S_TEST001";
     String uuid = "test-0001-uuid-00001";
     Map<String, String> fieldMapIims = new HashMap<>();
@@ -65,7 +70,7 @@ public class GetStockLevelTest {
   }
 
   @Test
-  void getStockLevelBundleTest() throws InterruptedException {
+  void getStockLevelBundleTest() {
     String bundleSku = "H0121001_S_BUNDLE";
     String childSku = "H0121001_S_CHILD01";
     String bundleUuid = "test-bundle-uuid-000";
@@ -140,5 +145,40 @@ public class GetStockLevelTest {
           .delete(bundleUuid + i, "inventory:" + bundleUuid + i, "bundle:setting:" + bundleUuid + i)
           .block();
     }
+  }
+
+  @Test
+  void getStockLevel_buildPm20DataIfNotExist() {
+    String sku = "H088800118_S_child-SKU-E-1";
+    String uuid = "child-UUID-E-1";
+
+    // delete data
+    redisUtil.deleteInventoryUuid(uuid);
+    redisUtil.deleteSku(sku, uuid);
+
+    // insert default data
+    redisUtil.insertIidsV1DataAndSkuIimsData(uuid, sku, "98");
+
+    // testing api
+    apiUtil.getStockLevelV3(uuid);
+
+    //     verify
+    Assertions.assertEquals(
+        "H088800118", redisTempl.opsForHash().get("inventory:" + uuid, "hktv_store_code").block());
+    Assertions.assertEquals(
+        "0", redisTempl.opsForHash().get("inventory:" + uuid, "98_qty").block());
+    Assertions.assertEquals(
+        sku, redisTempl.opsForHash().get("inventory:" + uuid, "hktv_sku").block());
+    Assertions.assertEquals(
+        "hktv", redisTempl.opsForHash().get("inventory:" + uuid, "98_mall").block());
+    Assertions.assertEquals(
+        "notSpecified",
+        redisTempl.opsForHash().get("inventory:" + uuid, "hktv_instockstatus").block());
+    Assertions.assertEquals(
+        "0", redisTempl.opsForHash().get("inventory:" + uuid, "hktv_share").block());
+
+    // delete data
+    redisUtil.deleteInventoryUuid(uuid);
+    redisUtil.deleteSku(sku, uuid);
   }
 }

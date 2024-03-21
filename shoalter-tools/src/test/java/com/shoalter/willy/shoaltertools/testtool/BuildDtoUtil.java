@@ -118,4 +118,16 @@ public class BuildDtoUtil {
     parentData.put("hktv_setting_qty", "2400");
     return parentData;
   }
+
+  public static Map<String, String> buildIidsV1Data(String sku, String seqNo, String qty) {
+    Map<String, String> iidsData = new HashMap<>();
+    iidsData.put("hktvsku", sku);
+    iidsData.put("quantity", qty);
+    iidsData.put("updatestocktime", "20230320175310");
+    iidsData.put("nonsharemall", "hktv");
+    iidsData.put("hktvwarehouse", "H088800118" + seqNo);
+    iidsData.put("instockstatus", "notSpecified");
+    iidsData.put("sharemall", "");
+    return iidsData;
+  }
 }

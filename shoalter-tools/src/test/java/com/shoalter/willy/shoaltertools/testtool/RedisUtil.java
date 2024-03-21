@@ -99,4 +99,15 @@ public class RedisUtil {
   public void insertSkusInSpecifyRedisNode(String key, String... skus) {
     redisTempl.opsForSet().add(key, skus).block();
   }
+
+  public void insertIidsV1DataAndSkuIimsData(String uuid, String sku, String seqNo) {
+    buildIidsV1AndIimsData(uuid, sku, seqNo, "2400");
+  }
+
+  public void buildIidsV1AndIimsData(String uuid, String sku, String seqNo, String qty) {
+    Map<String, String> iidsData = BuildDtoUtil.buildIidsV1Data(sku, seqNo, qty);
+    Map<String, String> iimsData = BuildDtoUtil.buildSkuIimsData(uuid, seqNo, qty);
+    redisTempl.opsForHash().putAll(uuid, iidsData).block();
+    redisTempl.opsForHash().putAll(sku, iimsData).block();
+  }
 }

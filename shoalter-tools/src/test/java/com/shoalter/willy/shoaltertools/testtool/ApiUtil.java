@@ -22,6 +22,10 @@ public class ApiUtil {
     return getLocalIidsUrl() + "/s2s/v3/mall/stock_levels";
   }
 
+  public String getLocalStockLevelV3Url() {
+    return getLocalIidsUrl() + "/s2s/v3/get_stock_levels";
+  }
+
   public void callDeductWh4700QtyApi(String childUuid) {
     given()
         .contentType("application/json")
@@ -493,6 +497,18 @@ public class ApiUtil {
                 + "]")
         .when()
         .put(getLocalUpdWhQtyUrl())
+        .then()
+        .statusCode(200)
+        .log()
+        .all();
+  }
+
+  public void getStockLevelV3(String uuid) {
+    given()
+        .contentType("application/json")
+        .body("{\n" + "  \"uuidList\": [\n" + "    \"" + uuid + "\"\n" + "  ]\n" + "}")
+        .when()
+        .post(getLocalStockLevelV3Url())
         .then()
         .statusCode(200)
         .log()

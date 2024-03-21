@@ -22,7 +22,7 @@ import reactor.core.publisher.Mono;
 
 @SpringBootTest
 @Slf4j
-public class UpdateBundleTest extends UpdateBundleQtyTestTool {
+public class UpdateBundleQtyTest extends UpdateBundleQtyTestTool {
 
   @Autowired
   @Qualifier("redisIIDSTemplate")
@@ -469,29 +469,14 @@ public class UpdateBundleTest extends UpdateBundleQtyTestTool {
         .members(SystemConstants.getRedisNodeKeys().get(0))
         .collectList()
         .doOnNext(
-            skus ->
-                Assertions.assertFalse(
-                    skus.contains("H088800118_S_child-SKU-E-1")
-                        && skus.contains("H088800118_S_child-SKU-E-2")))
+            skus -> Assertions.assertFalse(skus.contains(child1Sku) && skus.contains(child2Sku)))
         .block();
     Assertions.assertEquals(
-        "1200",
-        redisTempl
-            .opsForHash()
-            .get("H088800118_S_child-SKU-E-1", "H08880011898_available")
-            .block());
+        "1200", redisTempl.opsForHash().get(child1Sku, "H08880011898_available").block());
     Assertions.assertEquals(
-        "0",
-        redisTempl
-            .opsForHash()
-            .get("H088800118_S_child-SKU-E-2", "H08880011898_available")
-            .block());
+        "0", redisTempl.opsForHash().get(child2Sku, "H08880011898_available").block());
     Assertions.assertEquals(
-        "3600",
-        redisTempl
-            .opsForHash()
-            .get("H088800118_S_parent-SKU-E-1-1", "H08880011898_available")
-            .block());
+        "3600", redisTempl.opsForHash().get(parentSku, "H08880011898_available").block());
 
     // delete data
     redisUtil.deleteRedisNodeKey();
@@ -535,25 +520,13 @@ public class UpdateBundleTest extends UpdateBundleQtyTestTool {
 
     // verify qty
     Assertions.assertEquals(
-        "1200",
-        redisTempl
-            .opsForHash()
-            .get("H088800118_S_child-SKU-E-1-1", "H08880011898_available")
-            .block());
+        "1200", redisTempl.opsForHash().get(child1Sku, "H08880011898_available").block());
     Assertions.assertEquals(
-        "0",
-        redisTempl
-            .opsForHash()
-            .get("H088800118_S_child-SKU-E-2-2", "H08880011898_available")
-            .block());
+        "0", redisTempl.opsForHash().get(child2Sku, "H08880011898_available").block());
     Assertions.assertEquals(
-        "0",
-        redisTempl
-            .opsForHash()
-            .get("H088800118_S_child-SKU-E-4-4", "H08880011898_available")
-            .block());
+        "0", redisTempl.opsForHash().get(child3Sku, "H08880011898_available").block());
     Assertions.assertEquals(
-        "3600", redisTempl.opsForHash().get("SKU-E001-1", "H08880011898_available").block());
+        "3600", redisTempl.opsForHash().get(parentSku, "H08880011898_available").block());
 
     // test has redis node situation
     // delete data
@@ -577,25 +550,13 @@ public class UpdateBundleTest extends UpdateBundleQtyTestTool {
 
     // verify qty
     Assertions.assertEquals(
-        "1200",
-        redisTempl
-            .opsForHash()
-            .get("H088800118_S_child-SKU-E-1-1", "H08880011898_available")
-            .block());
+        "1200", redisTempl.opsForHash().get(child1Sku, "H08880011898_available").block());
     Assertions.assertEquals(
-        "0",
-        redisTempl
-            .opsForHash()
-            .get("H088800118_S_child-SKU-E-2-2", "H08880011898_available")
-            .block());
+        "0", redisTempl.opsForHash().get(child2Sku, "H08880011898_available").block());
     Assertions.assertEquals(
-        "0",
-        redisTempl
-            .opsForHash()
-            .get("H088800118_S_child-SKU-E-4-4", "H08880011898_available")
-            .block());
+        "0", redisTempl.opsForHash().get(child3Sku, "H08880011898_available").block());
     Assertions.assertEquals(
-        "3600", redisTempl.opsForHash().get("SKU-E001-1", "H08880011898_available").block());
+        "3600", redisTempl.opsForHash().get(parentSku, "H08880011898_available").block());
 
     // delete data
     redisUtil.deleteRedisNodeKey();
@@ -632,13 +593,9 @@ public class UpdateBundleTest extends UpdateBundleQtyTestTool {
     // verify qty
     AssertUtil.wait_2_sec();
     Assertions.assertEquals(
-        "2400",
-        redisTempl
-            .opsForHash()
-            .get("H088800118_S_child-SKU-E-1-1", "H08880011898_available")
-            .block());
+        "2400", redisTempl.opsForHash().get(childSku, "H08880011898_available").block());
     Assertions.assertEquals(
-        "2400", redisTempl.opsForHash().get("SKU-E001-1", "H08880011898_available").block());
+        "2400", redisTempl.opsForHash().get(parentSku, "H08880011898_available").block());
 
     // delete data
     redisUtil.deleteRedisNodeKey();
@@ -694,37 +651,17 @@ public class UpdateBundleTest extends UpdateBundleQtyTestTool {
     // verify qty
     AssertUtil.wait_2_sec();
     Assertions.assertEquals(
-        "1200",
-        redisTempl
-            .opsForHash()
-            .get("H088800118_S_child-SKU-E-1", "H08880011898_available")
-            .block());
+        "1200", redisTempl.opsForHash().get(child1Sku, "H08880011898_available").block());
     Assertions.assertEquals(
-        "0",
-        redisTempl
-            .opsForHash()
-            .get("H088800118_S_child-SKU-E-2", "H08880011898_available")
-            .block());
+        "0", redisTempl.opsForHash().get(child2Sku, "H08880011898_available").block());
     Assertions.assertEquals(
-        "1200",
-        redisTempl
-            .opsForHash()
-            .get("H088800118_S_child-SKU-E-3", "H08880011898_available")
-            .block());
+        "1200", redisTempl.opsForHash().get(child3Sku, "H08880011898_available").block());
     Assertions.assertEquals(
-        "0",
-        redisTempl
-            .opsForHash()
-            .get("H088800118_S_child-SKU-E-4", "H08880011898_available")
-            .block());
+        "0", redisTempl.opsForHash().get(child4Sku, "H08880011898_available").block());
     Assertions.assertEquals(
-        "1200",
-        redisTempl
-            .opsForHash()
-            .get("H088800118_S_child-SKU-E-5", "H08880011898_available")
-            .block());
+        "1200", redisTempl.opsForHash().get(child5Sku, "H08880011898_available").block());
     Assertions.assertEquals(
-        "3600", redisTempl.opsForHash().get("SKU-E001-1", "H08880011898_available").block());
+        "3600", redisTempl.opsForHash().get(parentSku, "H08880011898_available").block());
 
     // delete data
     redisUtil.deleteRedisNodeKey();
@@ -889,13 +826,9 @@ public class UpdateBundleTest extends UpdateBundleQtyTestTool {
     // verify qty
     AssertUtil.wait_2_sec();
     Assertions.assertEquals(
-        "2400",
-        redisTempl
-            .opsForHash()
-            .get("H088800118_S_child-SKU-E-1-1", "H08880011898_available")
-            .block());
+        "2400", redisTempl.opsForHash().get(childSku, "H08880011898_available").block());
     Assertions.assertEquals(
-        "2400", redisTempl.opsForHash().get("SKU-E001-1", "H08880011898_available").block());
+        "2400", redisTempl.opsForHash().get(parentSku, "H08880011898_available").block());
 
     // delete data
     redisUtil.deleteRedisNodeKey();
@@ -936,23 +869,11 @@ public class UpdateBundleTest extends UpdateBundleQtyTestTool {
     // verify qty
     AssertUtil.wait_2_sec();
     Assertions.assertEquals(
-        "1200",
-        redisTempl
-            .opsForHash()
-            .get("H088800118_S_child-SKU-E-1", "H08880011898_available")
-            .block());
+        "1200", redisTempl.opsForHash().get(child1Sku, "H08880011898_available").block());
     Assertions.assertEquals(
-        "0",
-        redisTempl
-            .opsForHash()
-            .get("H088800118_S_child-SKU-E-2", "H08880011898_available")
-            .block());
+        "0", redisTempl.opsForHash().get(child2Sku, "H08880011898_available").block());
     Assertions.assertEquals(
-        "3600",
-        redisTempl
-            .opsForHash()
-            .get("H088800118_S_parent-SKU-E-1", "H08880011898_available")
-            .block());
+        "3600", redisTempl.opsForHash().get(parentSku, "H08880011898_available").block());
 
     // delete data
     redisUtil.deleteRedisNodeKey();
@@ -997,29 +918,13 @@ public class UpdateBundleTest extends UpdateBundleQtyTestTool {
     // verify qty
     AssertUtil.wait_2_sec();
     Assertions.assertEquals(
-        "4800",
-        redisTempl
-            .opsForHash()
-            .get("H088800118_S_child-SKU-E-1-1", "H08880011898_available")
-            .block());
+        "4800", redisTempl.opsForHash().get(child1Sku, "H08880011898_available").block());
     Assertions.assertEquals(
-        "7200",
-        redisTempl
-            .opsForHash()
-            .get("H088800118_S_child-SKU-E-2-2", "H08880011898_available")
-            .block());
+        "7200", redisTempl.opsForHash().get(child2Sku, "H08880011898_available").block());
     Assertions.assertEquals(
-        "7200",
-        redisTempl
-            .opsForHash()
-            .get("H088800118_S_child-SKU-E-4-4", "H08880011898_available")
-            .block());
+        "7200", redisTempl.opsForHash().get(child3Sku, "H08880011898_available").block());
     Assertions.assertEquals(
-        "0",
-        redisTempl
-            .opsForHash()
-            .get("H088800118_S_parent-SKU-E-1-1", "H08880011898_available")
-            .block());
+        "0", redisTempl.opsForHash().get(parentSku, "H08880011898_available").block());
 
     // delete data
     redisUtil.deleteRedisNodeKey();
@@ -1064,36 +969,16 @@ public class UpdateBundleTest extends UpdateBundleQtyTestTool {
     // verify qty
     AssertUtil.wait_2_sec();
     Assertions.assertEquals(
-        "4800",
-        redisTempl
-            .opsForHash()
-            .get("H088800118_S_child-SKU-E-1-1", "H08880011898_available")
-            .block());
+        "4800", redisTempl.opsForHash().get(child1Sku, "H08880011898_available").block());
     Assertions.assertEquals(
-        "2400",
-        redisTempl
-            .opsForHash()
-            .get("H088800118_S_child-SKU-E-2-2", "H08880011801_available")
-            .block());
-    Assertions.assertNull(
-        redisTempl
-            .opsForHash()
-            .get("H088800118_S_child-SKU-E-2-2", "H08880011898_available")
-            .block());
+        "2400", redisTempl.opsForHash().get(child2Sku, "H08880011801_available").block());
+    Assertions.assertNull(redisTempl.opsForHash().get(child2Sku, "H08880011898_available").block());
     Assertions.assertEquals(
-        "4800", redisTempl.opsForHash().get("inventory:child-UUID-E-2-2", "98_qty").block());
+        "4800", redisTempl.opsForHash().get("inventory:" + child2Uuid, "98_qty").block());
     Assertions.assertEquals(
-        "7200",
-        redisTempl
-            .opsForHash()
-            .get("H088800118_S_child-SKU-E-4-4", "H08880011898_available")
-            .block());
+        "7200", redisTempl.opsForHash().get(child3Sku, "H08880011898_available").block());
     Assertions.assertEquals(
-        "0",
-        redisTempl
-            .opsForHash()
-            .get("H088800118_S_parent-SKU-E-1-1", "H08880011898_available")
-            .block());
+        "0", redisTempl.opsForHash().get(parentSku, "H08880011898_available").block());
 
     // delete data
     redisUtil.deleteRedisNodeKey();
@@ -1134,23 +1019,11 @@ public class UpdateBundleTest extends UpdateBundleQtyTestTool {
     // verify qty
     AssertUtil.wait_2_sec();
     Assertions.assertEquals(
-        "2400",
-        redisTempl
-            .opsForHash()
-            .get("H088800118_S_child-SKU-E-1", "H08880011898_available")
-            .block());
+        "2400", redisTempl.opsForHash().get(child1Sku, "H08880011898_available").block());
     Assertions.assertEquals(
-        "2400",
-        redisTempl
-            .opsForHash()
-            .get("H088800118_S_child-SKU-E-2", "H08880011801_available")
-            .block());
+        "2400", redisTempl.opsForHash().get(child2Sku, "H08880011801_available").block());
     Assertions.assertEquals(
-        "2400",
-        redisTempl
-            .opsForHash()
-            .get("H088800118_S_parent-SKU-E-1", "H08880011898_available")
-            .block());
+        "2400", redisTempl.opsForHash().get(parentSku, "H08880011898_available").block());
 
     // delete data
     redisUtil.deleteRedisNodeKey();

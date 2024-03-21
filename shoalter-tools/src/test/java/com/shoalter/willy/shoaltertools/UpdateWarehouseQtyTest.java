@@ -2,16 +2,15 @@ package com.shoalter.willy.shoaltertools;
 
 import static io.restassured.RestAssured.given;
 
-import com.shoalter.willy.shoaltertools.dto.BundleChildDto;
-import com.shoalter.willy.shoaltertools.dto.BundleMallInfoDto;
-import com.shoalter.willy.shoaltertools.dto.BundleSettingDto;
 import com.shoalter.willy.shoaltertools.dto.ProductDto;
 import com.shoalter.willy.shoaltertools.dto.ProductInfoDto;
 import com.shoalter.willy.shoaltertools.dto.ProductMallDetailDto;
 import com.shoalter.willy.shoaltertools.dto.ProductWarehouseDetailDto;
 import com.shoalter.willy.shoaltertools.testtool.ApiUtil;
+import com.shoalter.willy.shoaltertools.testtool.AssertUtil;
+import com.shoalter.willy.shoaltertools.testtool.RabbitMqUtil;
 import com.shoalter.willy.shoaltertools.testtool.RedisUtil;
-import com.shoalter.willy.shoaltertools.testtool.updwhqty.VerifyUpdateWarehouseQtyTestCase;
+import com.shoalter.willy.shoaltertools.testtool.updwhqty.UpdateWarehouseQtyTestTool;
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
@@ -24,7 +23,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.hamcrest.Matchers;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
-import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -33,7 +31,7 @@ import reactor.core.publisher.Mono;
 
 @SpringBootTest
 @Slf4j
-public class UpdateWarehouseQtyTest {
+public class UpdateWarehouseQtyTest extends UpdateWarehouseQtyTestTool {
 
   @Autowired
   @Qualifier("redisIIDSTemplate")
@@ -47,30 +45,19 @@ public class UpdateWarehouseQtyTest {
   @Qualifier("redisHKTVTemplate")
   ReactiveRedisTemplate<String, String> redisHKTVTempl;
 
-  @Autowired private RabbitTemplate defaultRabbitTemplate;
   @Autowired private RedisUtil redisUtil;
   @Autowired private ApiUtil apiUtil;
-  @Autowired private VerifyUpdateWarehouseQtyTestCase verifyUpdWhQtyTestCase;
-
-  private String EXCHANGE = "shoalter-see-product-master_topic";
-  private String ROUTING_KEY = "shoalter-see-product-master.product-info-iids";
+  @Autowired private RabbitMqUtil rabbitMqUtil;
 
   private String BASIC_URL = "http://127.0.0.1:8099/s2s/v3";
 
   private static final String INVENTORY_REDIS_HKEY_PREFIX = "inventory:";
   private static final String INVENTORY_REDIS_KEY_PREFIX_BUNDLE_SETTING = "bundle:setting:";
   private static final String INVENTORY_REDIS_KEY_PREFIX_BUNDLE_PARENT = "bundle:parent:";
-  private static final String childUuid1 = "childUuid-1";
-  private static final String childUuid2 = "childUuid-2";
-  private static final String childUuid3 = "childUuid-3";
-
-  private static final String childSku1 = "childSku-1";
-  private static final String childSku2 = "childSku-2";
-  private static final String childSku3 = "childSku-3";
 
   // updateWarehouseQuantity case 1
   @Test
-  void updateWarehouseQty_testcase0001() throws InterruptedException {
+  void updateWarehouseQty_testcase0001() {
     String time = "20231207134648";
     String uuid = "iids-integration-test-testcase-0018";
     String sku = "iims-integration-test-testcase-0018";
@@ -80,9 +67,8 @@ public class UpdateWarehouseQtyTest {
     redisHKTVTempl.delete(sku, updEventKey).block();
 
     // createProduct
-    defaultRabbitTemplate.convertAndSend(EXCHANGE, ROUTING_KEY, buildProductInfoDto(uuid, sku));
-
-    Thread.sleep(1000L);
+    rabbitMqUtil.sendMsgToIidsQueue(buildProductInfoDto(uuid, sku));
+    AssertUtil.wait_1_sec();
 
     // setting init value
     given()
@@ -123,7 +109,7 @@ public class UpdateWarehouseQtyTest {
         .log()
         .all();
 
-    Thread.sleep(1000L);
+    AssertUtil.wait_1_sec();
 
     // 驗證IIDS資料
     Assertions.assertEquals(
@@ -184,7 +170,7 @@ public class UpdateWarehouseQtyTest {
 
   // updateWarehouseQuantity case 2
   @Test
-  void updateWarehouseQty_testcase0002() throws InterruptedException {
+  void updateWarehouseQty_testcase0002() {
     String time = "20231207134648";
     String uuid = "iids-integration-test-testcase-0019";
     String sku = "iims-integration-test-testcase-0019";
@@ -194,9 +180,8 @@ public class UpdateWarehouseQtyTest {
     redisHKTVTempl.delete(sku, updEventKey).block();
 
     // createProduct
-    defaultRabbitTemplate.convertAndSend(EXCHANGE, ROUTING_KEY, buildProductInfoDto(uuid, sku));
-
-    Thread.sleep(1000L);
+    rabbitMqUtil.sendMsgToIidsQueue(buildProductInfoDto(uuid, sku));
+    AssertUtil.wait_1_sec();
 
     // setting init value
     given()
@@ -299,7 +284,7 @@ public class UpdateWarehouseQtyTest {
 
   // updateWarehouseQuantity case 3
   @Test
-  void updateWarehouseQty_testcase0003() throws InterruptedException {
+  void updateWarehouseQty_testcase0003() {
     String time = "20231207134648";
     String uuid = "iids-integration-test-testcase-0020";
     String sku = "iims-integration-test-testcase-0020";
@@ -309,9 +294,8 @@ public class UpdateWarehouseQtyTest {
     redisHKTVTempl.delete(sku, updEventKey).block();
 
     // createProduct
-    defaultRabbitTemplate.convertAndSend(EXCHANGE, ROUTING_KEY, buildProductInfoDto(uuid, sku));
-
-    Thread.sleep(1000L);
+    rabbitMqUtil.sendMsgToIidsQueue(buildProductInfoDto(uuid, sku));
+    AssertUtil.wait_1_sec();
 
     // setting init value
     given()
@@ -414,7 +398,7 @@ public class UpdateWarehouseQtyTest {
 
   // updateWarehouseQuantity case 4
   @Test
-  void updateWarehouseQty_testcase0004() throws InterruptedException {
+  void updateWarehouseQty_testcase0004() {
     String time = "20231207134648";
     String uuid = "iids-integration-test-testcase-0021";
     String sku = "iims-integration-test-testcase-0021";
@@ -424,9 +408,8 @@ public class UpdateWarehouseQtyTest {
     redisHKTVTempl.delete(sku, updEventKey).block();
 
     // createProduct
-    defaultRabbitTemplate.convertAndSend(EXCHANGE, ROUTING_KEY, buildProductInfoDto(uuid, sku));
-
-    Thread.sleep(1000L);
+    rabbitMqUtil.sendMsgToIidsQueue(buildProductInfoDto(uuid, sku));
+    AssertUtil.wait_1_sec();
 
     // setting init value
     given()
@@ -467,7 +450,7 @@ public class UpdateWarehouseQtyTest {
         .log()
         .all();
 
-    Thread.sleep(1000L);
+    AssertUtil.wait_1_sec();
 
     // 驗證IIDS資料
     Assertions.assertEquals(
@@ -528,7 +511,7 @@ public class UpdateWarehouseQtyTest {
 
   // updateWarehouseQuantity case 5
   @Test
-  void updateWarehouseQty_testcase0005() throws InterruptedException {
+  void updateWarehouseQty_testcase0005() {
     String time = "20231207134648";
     String uuid = "iids-integration-test-testcase-0022";
     String sku = "iims-integration-test-testcase-0022";
@@ -538,9 +521,8 @@ public class UpdateWarehouseQtyTest {
     redisHKTVTempl.delete(sku, updEventKey).block();
 
     // createProduct
-    defaultRabbitTemplate.convertAndSend(EXCHANGE, ROUTING_KEY, buildProductInfoDto(uuid, sku));
-
-    Thread.sleep(1000L);
+    rabbitMqUtil.sendMsgToIidsQueue(buildProductInfoDto(uuid, sku));
+    AssertUtil.wait_1_sec();
 
     // setting init value
     given()
@@ -581,7 +563,7 @@ public class UpdateWarehouseQtyTest {
         .log()
         .all();
 
-    Thread.sleep(1000L);
+    AssertUtil.wait_1_sec();
 
     // 驗證IIDS資料
     Assertions.assertEquals(
@@ -642,7 +624,7 @@ public class UpdateWarehouseQtyTest {
 
   // updateWarehouseQuantity case 7
   @Test
-  void updateWarehouseQty_testcase0006() throws InterruptedException {
+  void updateWarehouseQty_testcase0006() {
     String time = "20231207134648";
     String uuid = "iids-integration-test-testcase-0023";
     String sku = "iims-integration-test-testcase-0023";
@@ -652,9 +634,9 @@ public class UpdateWarehouseQtyTest {
     redisHKTVTempl.delete(sku, updEventKey).block();
 
     // createProduct
-    defaultRabbitTemplate.convertAndSend(EXCHANGE, ROUTING_KEY, buildProductInfoDto(uuid, sku));
+    rabbitMqUtil.sendMsgToIidsQueue(buildProductInfoDto(uuid, sku));
 
-    Thread.sleep(1000L);
+    AssertUtil.wait_1_sec();
 
     // setting init value
     given()
@@ -757,7 +739,7 @@ public class UpdateWarehouseQtyTest {
 
   // updateWarehouseQuantity case 8
   @Test
-  void updateWarehouseQty_testcase0007() throws InterruptedException {
+  void updateWarehouseQty_testcase0007() {
     String time = "20231207134648";
     String uuid = "iids-integration-test-testcase-0024";
     String sku = "iims-integration-test-testcase-0024";
@@ -767,9 +749,9 @@ public class UpdateWarehouseQtyTest {
     redisHKTVTempl.delete(sku, updEventKey).block();
 
     // createProduct
-    defaultRabbitTemplate.convertAndSend(EXCHANGE, ROUTING_KEY, buildProductInfoDto(uuid, sku));
+    rabbitMqUtil.sendMsgToIidsQueue(buildProductInfoDto(uuid, sku));
 
-    Thread.sleep(1000L);
+    AssertUtil.wait_1_sec();
 
     // setting init value
     given()
@@ -872,7 +854,7 @@ public class UpdateWarehouseQtyTest {
 
   // 扣庫存因為mall庫存不足所以會扣失敗
   @Test
-  void updateWarehouseQty_testcase0008() throws InterruptedException {
+  void updateWarehouseQty_testcase0008() {
     String uuid = "iids-integration-test-updateWarehouseQty-0001";
     String sku = "iims-integration-test-updateWarehouseQty-0001";
     String updEventKey = buildExpectedUpdateEventKey(sku, "H0000101");
@@ -908,9 +890,9 @@ public class UpdateWarehouseQtyTest {
             .build();
 
     // createProduct
-    defaultRabbitTemplate.convertAndSend(EXCHANGE, ROUTING_KEY, productInfoDto);
+    rabbitMqUtil.sendMsgToIidsQueue(buildProductInfoDto(uuid, sku));
 
-    Thread.sleep(1000L);
+    AssertUtil.wait_1_sec();
 
     given()
         .contentType("application/json")
@@ -927,16 +909,14 @@ public class UpdateWarehouseQtyTest {
                 "{\"statusCode\":\"IIDS-2001\",\"message\":null,\"data\":{\"success\":[],\"fail\":[{\"uuid\":\"iids-integration-test-updateWarehouseQty-0001\",\"errorCode\":\"IIDS-0029\",\"msg\":\"share and non share quantity not enough to deduct, warehouseSeqNo[01]requestQuantity[60]shareQuantity[0]totalNonShareQuantity[0]\"}]}}"))
         .log()
         .all();
-  }
 
-  @Test
-  void deleteData() {
-    this.deleteProductInfoDto();
+    redisTempl.delete("inventory:" + uuid, uuid).block();
+    redisHKTVTempl.delete(sku, updEventKey).block();
   }
 
   // 增加非98倉庫數量，有NonShareMall，有bundle，不會影響Mall數量，都加到倉庫
   @Test
-  void updWhQty_add_non98Wh_singleNonShareMall_HKTV_hasBundle() throws InterruptedException {
+  void updWhQty_add_non98Wh_singleNonShareMall_HKTV_hasBundle() {
     // 預期結果: 不會影響nonShareMall數量，都加到共享庫存
     this.buildHKTVProductInfoDto("01");
     this.setWh01Child123Qty333();
@@ -956,11 +936,12 @@ public class UpdateWarehouseQtyTest {
     // parent123456 = 10
     this.assertion_wh_share_mall_parent(
         "01", "200", "300", "400", "193", "73", "153", "10", "10", "10", "10", "10", "10");
+    this.deleteProductInfoDto();
   }
 
   // 增加98倉庫數量，有NonShareMall，有bundle，增加的數量加進Mall的數量，不影響bundle數量
   @Test
-  void updWhQty_add_98Wh_singleNonShareMall_HKTV_hasBundle() throws InterruptedException {
+  void updWhQty_add_98Wh_singleNonShareMall_HKTV_hasBundle() {
     // 預期結果: 增加的數量加進Mall，不影響bundle數量
     this.buildHKTVProductInfoDto("98");
     this.setWh98Child123Qty333();
@@ -979,13 +960,13 @@ public class UpdateWarehouseQtyTest {
     // parent123456 = 10
     this.assertion_wh_share_mall_parent(
         "98", "0", "0", "0", "393", "373", "553", "10", "10", "10", "10", "10", "10");
+    this.deleteProductInfoDto();
   }
 
   // 設置非98倉庫數量，有NonShareMall，有bundle，request set > nonshare 總數，不會影響Mall單賣的跟組合的數量，都加到倉庫
   @Test
   void
-      updWhQty_set_non98Wh_singleNonShareMall_HKTV_hasBundle_requestQty_bigger_than_allNonShareQty()
-          throws InterruptedException {
+      updWhQty_set_non98Wh_singleNonShareMall_HKTV_hasBundle_requestQty_bigger_than_allNonShareQty() {
     // 預期結果: 不會影響nonShareMall數量，都加到共享庫存
     this.buildHKTVProductInfoDto("01");
     this.setWh01Child123Qty333();
@@ -1005,12 +986,12 @@ public class UpdateWarehouseQtyTest {
     // parent123456 = 10
     this.assertion_wh_share_mall_parent(
         "01", "200", "200", "200", "193", "73", "153", "10", "10", "10", "10", "10", "10");
+    this.deleteProductInfoDto();
   }
 
   // 設置98倉庫數量，有NonShareMall，有bundle，request set > nonshare 總數，，增加的數量加進Mall單賣的數量，不影響bundle數量
   @Test
-  void updWhQty_set_98Wh_singleNonShareMall_HKTV_hasBundle_requestQty_bigger_than_allNonShareQty()
-      throws InterruptedException {
+  void updWhQty_set_98Wh_singleNonShareMall_HKTV_hasBundle_requestQty_bigger_than_allNonShareQty() {
     // 預期結果: 增加的數量加進Mall，不影響bundle數量
     this.buildHKTVProductInfoDto("98");
     this.setWh98Child123Qty333();
@@ -1029,13 +1010,13 @@ public class UpdateWarehouseQtyTest {
     // parent123456 = 10
     this.assertion_wh_share_mall_parent(
         "98", "0", "0", "0", "393", "273", "353", "10", "10", "10", "10", "10", "10");
+    this.deleteProductInfoDto();
   }
 
   // 設置非98倉庫數量，有NonShareMall，沒有bundle，request set > nonshare 總數，不會影響Mall單賣的數量，都加到倉庫
   @Test
   void
-      updWhQty_set_non98Wh_singleNonShareMall_HKTV_nonBundle_requestQty_bigger_than_allNonShareQty()
-          throws InterruptedException {
+      updWhQty_set_non98Wh_singleNonShareMall_HKTV_nonBundle_requestQty_bigger_than_allNonShareQty() {
     // 預期結果: 不會影響nonShareMall數量，都加到共享庫存
     this.buildHKTVProductInfoDto("01");
     this.setWh01Child123Qty333();
@@ -1049,12 +1030,12 @@ public class UpdateWarehouseQtyTest {
     // child3 share = 200, mall = 233
     this.assertion_wh_share_mall_parent(
         "01", "200", "200", "200", "233", "233", "233", "0", "0", "0", "0", "0", "0");
+    this.deleteProductInfoDto();
   }
 
   // 設置LittleMall 倉庫數量，有NonShareMall，沒有bundle，request > nonShare + share
   @Test
-  void updWhQty_set_non98Wh_singleNonShareMall_LM_nonBundle_requestQty_bigger_than_whQty()
-      throws InterruptedException {
+  void updWhQty_set_non98Wh_singleNonShareMall_LM_nonBundle_requestQty_bigger_than_whQty() {
     // 預期結果: 不會影響nonShareMall數量，都加到共享庫存
     this.buildLMProductInfoDto("01");
     this.setWh01Child123Qty333();
@@ -1066,13 +1047,13 @@ public class UpdateWarehouseQtyTest {
     // child2 share = 200, mall = 233
     // child3 share = 200, mall = 233
     this.assertion_LM_wh_share_mall_parent("01", "200", "200", "200", "233", "233", "233");
+    this.deleteProductInfoDto();
   }
 
   // 設置LittleMall 倉庫數量，有NonShareMall，沒有bundle，request > nonShare，request < nonShare + share
   @Test
   void
-      updWhQty_set_non98Wh_singleNonShareMall_LM_nonBundle_requestQty_less_than_whQty_but_bigger_than_allNonShareQty()
-          throws InterruptedException {
+      updWhQty_set_non98Wh_singleNonShareMall_LM_nonBundle_requestQty_less_than_whQty_but_bigger_than_allNonShareQty() {
     // 預期結果: 不會影響nonShareMall數量，更改共享庫存
     this.buildLMProductInfoDto("01");
     this.setWh01Child123Qty333();
@@ -1084,12 +1065,12 @@ public class UpdateWarehouseQtyTest {
     // child2 share = 67, mall = 233
     // child3 share = 67, mall = 233
     this.assertion_LM_wh_share_mall_parent("01", "67", "67", "67", "233", "233", "233");
+    this.deleteProductInfoDto();
   }
 
   // 設置LittleMall 倉庫數量，有NonShareMall，沒有bundle，request < nonShare
   @Test
-  void updWhQty_set_non98Wh_singleNonShareMall_LM_nonBundle_requestQty_less_than_allNonShareQty()
-      throws InterruptedException {
+  void updWhQty_set_non98Wh_singleNonShareMall_LM_nonBundle_requestQty_less_than_allNonShareQty() {
     // 預期結果: share歸零，nonShareMall數量等於request
     this.buildLMProductInfoDto("01");
     this.setWh01Child123Qty333();
@@ -1101,13 +1082,13 @@ public class UpdateWarehouseQtyTest {
     // child2 share = 0, mall = 170
     // child3 share = 0, mall = 170
     this.assertion_LM_wh_share_mall_parent("01", "0", "0", "0", "170", "170", "170");
+    this.deleteProductInfoDto();
   }
 
   // 減少LittleMall 倉庫數量，有NonShareMall，沒有bundle，request > share + nonshare，拋錯，數量維持現狀
   @Test
   void
-      updWhQty_deduct_non98Wh_singleNonShareMall_LM_nonBundle_requestQty_bigger_than_allNonShareQty_plus_shareQty()
-          throws InterruptedException {
+      updWhQty_deduct_non98Wh_singleNonShareMall_LM_nonBundle_requestQty_bigger_than_allNonShareQty_plus_shareQty() {
     // 預期結果: IIDS-2001，不影響倉庫或是nonshare數量
     this.buildLMProductInfoDto("01");
     this.setWh01Child123Qty333();
@@ -1119,14 +1100,14 @@ public class UpdateWarehouseQtyTest {
     // child2 share = 100, mall = 233
     // child3 share = 100, mall = 233
     this.assertion_LM_wh_share_mall_parent("01", "100", "100", "100", "233", "233", "233");
+    this.deleteProductInfoDto();
   }
 
   // 減少LittleMall 倉庫數量，有NonShareMall，沒有bundle，request > share，request < share +
   // nonshare，share歸零nonshare扣差額
   @Test
   void
-      updWhQty_deduct_non98Wh_singleNonShareMall_LM_nonBundle_requestQty_bigger_than_shareQty_but_less_than_nonShareQty()
-          throws InterruptedException {
+      updWhQty_deduct_non98Wh_singleNonShareMall_LM_nonBundle_requestQty_bigger_than_shareQty_but_less_than_nonShareQty() {
     this.buildLMProductInfoDto("01");
     this.setWh01Child123Qty333();
     this.setChild123Qty233ToLM();
@@ -1137,12 +1118,12 @@ public class UpdateWarehouseQtyTest {
     // child2 share = 0, mall = 163
     // child3 share = 0, mall = 163
     this.assertion_LM_wh_share_mall_parent("01", "0", "0", "0", "163", "163", "163");
+    this.deleteProductInfoDto();
   }
 
   // 減少LittleMall 倉庫數量，有NonShareMall，沒有bundle，request < share，只扣share不影響nonshare數量
   @Test
-  void updWhQty_deduct_non98Wh_singleNonShareMall_LM_nonBundle_requestQty_less_than_shareQty()
-      throws InterruptedException {
+  void updWhQty_deduct_non98Wh_singleNonShareMall_LM_nonBundle_requestQty_less_than_shareQty() {
     this.buildLMProductInfoDto("01");
     this.setWh01Child123Qty333();
     this.setChild123Qty233ToLM();
@@ -1153,12 +1134,12 @@ public class UpdateWarehouseQtyTest {
     // child2 share = 30, mall = 233
     // child3 share = 30, mall = 233
     this.assertion_LM_wh_share_mall_parent("01", "30", "30", "30", "233", "233", "233");
+    this.deleteProductInfoDto();
   }
 
   // 設置98倉庫數量，有NonShareMall，沒有bundle，request set > nonshare 總數，增加的數量加進Mall單賣的數量
   @Test
-  void updWhQty_set_98Wh_singleNonShareMall_HKTV_nonBundle_requestQty_bigger_than_allNonShareQty()
-      throws InterruptedException {
+  void updWhQty_set_98Wh_singleNonShareMall_HKTV_nonBundle_requestQty_bigger_than_allNonShareQty() {
     // 預期結果: 增加的數量加進Mall
     this.buildHKTVProductInfoDto("98");
     this.setWh98Child123Qty333();
@@ -1171,14 +1152,14 @@ public class UpdateWarehouseQtyTest {
     // child3 share = 0, mall = 433
     this.assertion_wh_share_mall_parent(
         "98", "0", "0", "0", "433", "433", "433", "0", "0", "0", "0", "0", "0");
+    this.deleteProductInfoDto();
   }
 
   // 設置非98倉庫數量，有NonShareMall，有bundle，request < nonshare 總數，request > bundle
   // 總數，倉庫共享數量歸零，單賣的商品數量等於request 減 bundle 總數，不影響bundle數量
   @Test
   void
-      updWhQty_set_non98Wh_singleNonShareMall_HKTV_hasBundle_requestQty_less_than_allNonShareQty_but_bigger_than_allBundleQty()
-          throws InterruptedException {
+      updWhQty_set_non98Wh_singleNonShareMall_HKTV_hasBundle_requestQty_less_than_allNonShareQty_but_bigger_than_allBundleQty() {
     // 預期結果: 倉庫共享數量歸零，單賣的商品數量等於request 減 bundle 總數，不影響bundle數量
     this.buildHKTVProductInfoDto("01");
     this.setWh01Child123Qty333();
@@ -1199,13 +1180,13 @@ public class UpdateWarehouseQtyTest {
     // parent123456 = 10
     this.assertion_wh_share_mall_parent(
         "01", "0", "0", "0", "130", "10", "90", "10", "10", "10", "10", "10", "10");
+    this.deleteProductInfoDto();
   }
 
   // 設置非98倉庫數量，有NonShareMall，有bundle，request < nonshare 總數，request < bundle
   // 總數，倉庫共享數量歸零，以維持bundle種類最多的情況拆bundle，剩下無法組成Bundle的數量是單賣的商品數量
   @Test
-  void updWhQty_set_non98Wh_singleNonShareMall_HKTV_hasBundle_requestQty_less_than_allBundleQty()
-      throws InterruptedException {
+  void updWhQty_set_non98Wh_singleNonShareMall_HKTV_hasBundle_requestQty_less_than_allBundleQty() {
     // 預期結果: 倉庫共享數量歸零，以維持bundle種類最多的情況拆bundle，剩下無法組成Bundle的數量是單賣的商品數量
     this.buildHKTVProductInfoDto("01");
     this.setWh01Child123Qty333();
@@ -1230,14 +1211,14 @@ public class UpdateWarehouseQtyTest {
     // parent6 = 2
     this.assertion_wh_share_mall_parent(
         "01", "100", "0", "100", "193", "0", "153", "10", "10", "10", "4", "2", "2");
+    this.deleteProductInfoDto();
   }
 
   // 設置98倉庫數量，有NonShareMall，有bundle，request < nonshare 總數，request > bundle
   // 總數，倉庫共享數量歸零，單賣的商品數量等於request 減 bundle 總數，不影響bundle數量
   @Test
   void
-      updWhQty_set_98Wh_singleNonShareMall_HKTV_hasBundle_requestQty_less_than_allNonShareQty_but_bigger_than_allBundleQty()
-          throws InterruptedException {
+      updWhQty_set_98Wh_singleNonShareMall_HKTV_hasBundle_requestQty_less_than_allNonShareQty_but_bigger_than_allBundleQty() {
     // 預期結果: 倉庫共享數量歸零，單賣的商品數量等於request 減 bundle 總數，不影響bundle數量
     this.buildHKTVProductInfoDto("98");
     this.setWh98Child123Qty333();
@@ -1257,13 +1238,13 @@ public class UpdateWarehouseQtyTest {
     // parent123456 = 10
     this.assertion_wh_share_mall_parent(
         "98", "0", "0", "0", "130", "10", "90", "10", "10", "10", "10", "10", "10");
+    this.deleteProductInfoDto();
   }
 
   // 設置98倉庫數量，有NonShareMall，有bundle，request < nonshare 總數，request < bundle
   // 總數，倉庫共享數量歸零，以維持bundle種類最多的情況拆bundle，剩下無法組成Bundle的數量是單賣的商品數量
   @Test
-  void updWhQty_set_98Wh_singleNonShareMall_HKTV_hasBundle_requestQty_less_than_allBundleQty()
-      throws InterruptedException {
+  void updWhQty_set_98Wh_singleNonShareMall_HKTV_hasBundle_requestQty_less_than_allBundleQty() {
     // 預期結果: 倉庫共享數量歸零，以維持bundle種類最多的情況拆bundle，剩下無法組成Bundle的數量是單賣的商品數量
     this.buildHKTVProductInfoDto("98");
     this.setWh98Child123Qty333();
@@ -1288,11 +1269,11 @@ public class UpdateWarehouseQtyTest {
     // parent6 = 2
     this.assertion_wh_share_mall_parent(
         "98", "0", "0", "0", "293", "0", "253", "10", "10", "10", "4", "2", "2");
+    this.deleteProductInfoDto();
   }
 
   @Test
-  void updWhQty_set_non98Wh_qty_to_one_singleNonShareMall_HKTV_hasBundle()
-      throws InterruptedException {
+  void updWhQty_set_non98Wh_qty_to_one_singleNonShareMall_HKTV_hasBundle() {
     // 預期結果: 數量完全歸零，拆掉的bundle要把其他的child還回單賣的數量
     this.buildHKTVProductInfoDto("01");
     this.setWh01Child123Qty333();
@@ -1314,31 +1295,7 @@ public class UpdateWarehouseQtyTest {
     // parent123456 = 0
     this.assertion_wh_share_mall_parent(
         "01", "100", "0", "100", "233", "1", "233", "0", "0", "0", "0", "0", "0");
-  }
-
-  private void setWh01Child1Qty1() {
-    // set childUuid1/2/3 qty=233 to share
-    given()
-        .contentType("application/json")
-        .body(
-            "[\n"
-                + "  {\n"
-                + "    \"uuid\": \"childUuid-1\",\n"
-                + "    \"warehouseQty\": [\n"
-                + "      {\n"
-                + "        \"warehouseSeqNo\": \"01\",\n"
-                + "        \"mode\": \"set\",\n"
-                + "        \"quantity\": 1\n"
-                + "      }\n"
-                + "    ]\n"
-                + "  }\n"
-                + "]")
-        .when()
-        .put(BASIC_URL + "/warehouse/quantity")
-        .then()
-        .statusCode(200)
-        .log()
-        .all();
+    this.deleteProductInfoDto();
   }
 
   private void setWh01Child2Qty1() {
@@ -1366,34 +1323,8 @@ public class UpdateWarehouseQtyTest {
         .all();
   }
 
-  private void setWh01Child3Qty1() {
-    // set childUuid1/2/3 qty=233 to share
-    given()
-        .contentType("application/json")
-        .body(
-            "[\n"
-                + "  {\n"
-                + "    \"uuid\": \"childUuid-3\",\n"
-                + "    \"warehouseQty\": [\n"
-                + "      {\n"
-                + "        \"warehouseSeqNo\": \"01\",\n"
-                + "        \"mode\": \"set\",\n"
-                + "        \"quantity\": 1\n"
-                + "      }\n"
-                + "    ]\n"
-                + "  }\n"
-                + "]")
-        .when()
-        .put(BASIC_URL + "/warehouse/quantity")
-        .then()
-        .statusCode(200)
-        .log()
-        .all();
-  }
-
   @Test
-  void updWhQty_set_98Wh_qty_to_one_singleNonShareMall_HKTV_hasBundle()
-      throws InterruptedException {
+  void updWhQty_set_98Wh_qty_to_one_singleNonShareMall_HKTV_hasBundle() {
     // 預期結果: 數量完全歸零，拆掉的bundle要把其他的child還回單賣的數量
     this.buildHKTVProductInfoDto("98");
     this.setWh98Child123Qty333();
@@ -1413,12 +1344,12 @@ public class UpdateWarehouseQtyTest {
     // parent123456 = 0
     this.assertion_wh_share_mall_parent(
         "98", "0", "0", "0", "333", "1", "333", "0", "0", "0", "0", "0", "0");
+    this.deleteProductInfoDto();
   }
 
   // 設置98倉庫數量，有NonShareMall，沒有bundle，request < nonshare 總數，倉庫共享數量歸零，單賣的商品數量等於request
   @Test
-  void updWhQty_set_98Wh_singleNonShareMall_HKTV_nonBundle_requestQty_less_than_allNonShareQty()
-      throws InterruptedException {
+  void updWhQty_set_98Wh_singleNonShareMall_HKTV_nonBundle_requestQty_less_than_allNonShareQty() {
     // 預期結果: 倉庫共享數量歸零，單賣的商品數量等於request
     this.buildHKTVProductInfoDto("98");
     this.setWh98Child123Qty333();
@@ -1431,13 +1362,13 @@ public class UpdateWarehouseQtyTest {
     // child3 share = 0, mall = 333
     this.assertion_wh_share_mall_parent(
         "98", "0", "0", "0", "333", "1", "333", "0", "0", "0", "0", "0", "0");
+    this.deleteProductInfoDto();
   }
 
   // 減少非98倉庫數量，有NonShareMall，沒有bundle，request > (nonshare + share)，IIDS-2001，不影響倉庫或是nonshare數量
   @Test
   void
-      updWhQty_deduct_non98Wh_singleNonShareMall_HKTV_nonBundle_requestQty_bigger_than_allNonShareQty_plus_shareQty()
-          throws InterruptedException {
+      updWhQty_deduct_non98Wh_singleNonShareMall_HKTV_nonBundle_requestQty_bigger_than_allNonShareQty_plus_shareQty() {
     // 預期結果: IIDS-2001，不影響倉庫或是nonshare數量
     this.buildHKTVProductInfoDto("01");
     this.setWh01Child123Qty333();
@@ -1451,14 +1382,14 @@ public class UpdateWarehouseQtyTest {
     // child3 share = 100, mall = 233
     this.assertion_wh_share_mall_parent(
         "01", "100", "100", "100", "233", "233", "233", "0", "0", "0", "0", "0", "0");
+    this.deleteProductInfoDto();
   }
 
   // 減少非98倉庫數量，有NonShareMall，有bundle，request > (nonBundle + bundle +
   // share)，IIDS-2001，不影響倉庫或是nonshare數量
   @Test
   void
-      updWhQty_deduct_non98Wh_singleNonShareMall_HKTV_hasBundle_requestQty_bigger_than_allNonShareQty_plus_shareQty()
-          throws InterruptedException {
+      updWhQty_deduct_non98Wh_singleNonShareMall_HKTV_hasBundle_requestQty_bigger_than_allNonShareQty_plus_shareQty() {
     // 預期結果: IIDS-2001，不影響倉庫或是nonshare單賣的或bundle數量
     this.buildHKTVProductInfoDto("01");
     this.setWh01Child123Qty333();
@@ -1478,14 +1409,14 @@ public class UpdateWarehouseQtyTest {
     // parent123456 = 10
     this.assertion_wh_share_mall_parent(
         "01", "100", "100", "100", "193", "73", "153", "10", "10", "10", "10", "10", "10");
+    this.deleteProductInfoDto();
   }
 
   // 減少非98倉庫數量，有NonShareMall，有bundle，request > share，(nonBundle + share) >
   // request，倉庫共享數量歸零，nonBundle數量調整，不影響bundle數量
   @Test
   void
-      updWhQty_deduct_non98Wh_singleNonShareMall_HKTV_hasBundle_requestQty_bigger_than_shareQty_but_less_than_shareQty_plus_nonBundleQty()
-          throws InterruptedException {
+      updWhQty_deduct_non98Wh_singleNonShareMall_HKTV_hasBundle_requestQty_bigger_than_shareQty_but_less_than_shareQty_plus_nonBundleQty() {
     // 預期結果: 倉庫共享數量歸零，nonBundle數量調整，不影響bundle數量
     this.buildHKTVProductInfoDto("01");
     this.setWh01Child123Qty333();
@@ -1505,14 +1436,14 @@ public class UpdateWarehouseQtyTest {
     // parent123456 = 10
     this.assertion_wh_share_mall_parent(
         "01", "0", "0", "0", "123", "3", "83", "10", "10", "10", "10", "10", "10");
+    this.deleteProductInfoDto();
   }
 
   // 減少非98倉庫數量，有NonShareMall，有bundle，request > (nonBundle + share)，(nonBundle + bundle + share) >
   // request，倉庫共享數量歸零，以維持bundle種類最多的情況拆bundle，剩下無法組成Bundle的數量是單賣的商品數量
   @Test
   void
-      updWhQty_deduct_non98Wh_singleNonShareMall_HKTV_hasBundle_requestQty_bigger_than_shareQty_plus_nonBundleQty_but_less_than_shareQty_plus_allNonShareQty()
-          throws InterruptedException {
+      updWhQty_deduct_non98Wh_singleNonShareMall_HKTV_hasBundle_requestQty_bigger_than_shareQty_plus_nonBundleQty_but_less_than_shareQty_plus_allNonShareQty() {
     // 預期結果: 倉庫共享數量歸零，以維持bundle種類最多的情況拆bundle，剩下無法組成Bundle的數量是單賣的商品數量
     this.buildHKTVProductInfoDto("01");
     this.setWh01Child123Qty333();
@@ -1538,12 +1469,12 @@ public class UpdateWarehouseQtyTest {
     // parent6 = 0
     this.assertion_wh_share_mall_parent(
         "01", "100", "0", "100", "201", "0", "169", "9", "7", "7", "0", "0", "0");
+    this.deleteProductInfoDto();
   }
 
   // 減少98倉庫數量，有NonShareMall，沒有bundle，request > nonshare (share數量是0)，IIDS-2001，不影響倉庫或是nonshare數量
   @Test
-  void updWhQty_deduct_98Wh_singleNonShareMall_HKTV_nonBundle_requestQty_bigger_than_nonShareQty()
-      throws InterruptedException {
+  void updWhQty_deduct_98Wh_singleNonShareMall_HKTV_nonBundle_requestQty_bigger_than_nonShareQty() {
     // 預期初始: share數量是0
     // 預期結果: IIDS-2001，不影響倉庫或是nonshare數量
     this.buildHKTVProductInfoDto("98");
@@ -1555,14 +1486,14 @@ public class UpdateWarehouseQtyTest {
     // share = 0, mall = 333
     this.assertion_wh_share_mall_parent(
         "98", "0", "0", "0", "333", "333", "333", "0", "0", "0", "0", "0", "0");
+    this.deleteProductInfoDto();
   }
 
   // 減少98倉庫數量，有NonShareMall，有bundle，request > nonBundle，(bundle + nonBundle) >
   // request，倉庫共享數量歸零，以維持bundle種類最多的情況拆bundle，剩下無法組成Bundle的數量是單賣的商品數量
   @Test
   void
-      updWhQty_deduct_98Wh_singleNonShareMall_HKTV_hasBundle_requestQty_bigger_than_nonBundleQty_but_less_than_allNonShareQty()
-          throws InterruptedException {
+      updWhQty_deduct_98Wh_singleNonShareMall_HKTV_hasBundle_requestQty_bigger_than_nonBundleQty_but_less_than_allNonShareQty() {
     // 預期初始: share數量是0
     // 預期結果: 倉庫共享數量歸零，以維持bundle種類最多的情況拆bundle，剩下無法組成Bundle的數量是單賣的商品數量
     this.buildHKTVProductInfoDto("98");
@@ -1588,13 +1519,13 @@ public class UpdateWarehouseQtyTest {
     // parent6 = 9
     this.assertion_wh_share_mall_parent(
         "98", "0", "0", "0", "110", "1", "70", "10", "10", "10", "9", "8", "9");
+    this.deleteProductInfoDto();
   }
 
   // 減少98倉庫數量，有NonShareMall，有bundle，request > (bundle + nonBundle)，IIDS-2001，不影響倉庫或是nonshare數量
   @Test
   void
-      updWhQty_deduct_98Wh_singleNonShareMall_HKTV_hasBundle_requestQty_bigger_than_allNonShareQty()
-          throws InterruptedException {
+      updWhQty_deduct_98Wh_singleNonShareMall_HKTV_hasBundle_requestQty_bigger_than_allNonShareQty() {
     // 預期初始: share數量是0
     // 預期結果: IIDS-2001，不影響倉庫或是nonshare數量
     this.buildHKTVProductInfoDto("98");
@@ -1615,12 +1546,12 @@ public class UpdateWarehouseQtyTest {
     // parent123456 = 10
     this.assertion_wh_share_mall_parent(
         "98", "0", "0", "0", "293", "173", "253", "10", "10", "10", "10", "10", "10");
+    this.deleteProductInfoDto();
   }
 
   // 減少98倉庫數量，有NonShareMall，有bundle，request < nonBundle，不影響bundle數量
   @Test
-  void updWhQty_deduct_98Wh_singleNonShareMall_HKTV_hasBundle_requestQty_less_than_nonBundleQty()
-      throws InterruptedException {
+  void updWhQty_deduct_98Wh_singleNonShareMall_HKTV_hasBundle_requestQty_less_than_nonBundleQty() {
     // 預期初始: share數量是0
     // 預期結果: nonBundle數量調整，不影響bundle數量
     this.buildHKTVProductInfoDto("98");
@@ -1641,547 +1572,30 @@ public class UpdateWarehouseQtyTest {
     // parent123456 = 10
     this.assertion_wh_share_mall_parent(
         "98", "0", "0", "0", "123", "3", "83", "10", "10", "10", "10", "10", "10");
+    this.deleteProductInfoDto();
   }
 
-  private ProductInfoDto buildProductInfoDto(String uuid, String sku) {
-    return ProductInfoDto.builder()
-        .action("CREATE")
-        .products(
-            List.of(
-                ProductDto.builder()
-                    .uuid(uuid)
-                    .warehouseDetail(
-                        List.of(
-                            ProductWarehouseDetailDto.builder()
-                                .warehouseSeqNo("01")
-                                .mall(List.of("hktv"))
-                                .build()))
-                    .mallDetail(
-                        List.of(
-                            ProductMallDetailDto.builder()
-                                .mall("hktv")
-                                .storefrontStoreCode("H00001")
-                                .storeSkuId(sku)
-                                .build()))
-                    .build()))
-        .build();
-  }
-
-  private static Map<String, String> buildExpectedStockLevel_testcase0001(String sku, String time) {
-    Map<String, String> stockLevelMap = new HashMap<>();
-    stockLevelMap.put("01_mall", "hktv");
-    stockLevelMap.put("01_qty", "30");
-    stockLevelMap.put("hktv_instockstatus", "notSpecified");
-    stockLevelMap.put("hktv_share", "1");
-    stockLevelMap.put("hktv_sku", sku);
-    stockLevelMap.put("hktv_store_code", "H00001");
-    stockLevelMap.put("update_time", time);
-    stockLevelMap.put("create_time", time);
-    return stockLevelMap;
-  }
-
-  private static Map<String, String> buildExpectedStockLevel_testcase0002(String sku, String time) {
-    Map<String, String> stockLevelMap = new HashMap<>();
-    stockLevelMap.put("01_mall", "hktv");
-    stockLevelMap.put("01_qty", "10");
-    stockLevelMap.put("hktv_instockstatus", "notSpecified");
-    stockLevelMap.put("hktv_share", "0");
-    stockLevelMap.put("hktv_sku", sku);
-    stockLevelMap.put("hktv_store_code", "H00001");
-    stockLevelMap.put("update_time", time);
-    stockLevelMap.put("create_time", time);
-    return stockLevelMap;
-  }
-
-  private static Map<String, String> buildExpectedStockLevel_testcase0003(String sku, String time) {
-    Map<String, String> stockLevelMap = new HashMap<>();
-    stockLevelMap.put("01_mall", "hktv");
-    stockLevelMap.put("01_qty", "0");
-    stockLevelMap.put("hktv_instockstatus", "notSpecified");
-    stockLevelMap.put("hktv_share", "0");
-    stockLevelMap.put("hktv_sku", sku);
-    stockLevelMap.put("hktv_store_code", "H00001");
-    stockLevelMap.put("update_time", time);
-    stockLevelMap.put("create_time", time);
-    return stockLevelMap;
-  }
-
-  private static Map<String, String> buildExpectedStockLevel_testcase0004(String sku, String time) {
-    Map<String, String> stockLevelMap = new HashMap<>();
-    stockLevelMap.put("01_mall", "hktv");
-    stockLevelMap.put("01_qty", "80");
-    stockLevelMap.put("hktv_instockstatus", "notSpecified");
-    stockLevelMap.put("hktv_share", "1");
-    stockLevelMap.put("hktv_sku", sku);
-    stockLevelMap.put("hktv_store_code", "H00001");
-    stockLevelMap.put("update_time", time);
-    stockLevelMap.put("create_time", time);
-    return stockLevelMap;
-  }
-
-  private static Map<String, String> buildExpectedStockLevel_testcase0005(String sku, String time) {
-    Map<String, String> stockLevelMap = new HashMap<>();
-    stockLevelMap.put("01_mall", "hktv");
-    stockLevelMap.put("01_qty", "20");
-    stockLevelMap.put("hktv_instockstatus", "notSpecified");
-    stockLevelMap.put("hktv_share", "1");
-    stockLevelMap.put("hktv_sku", sku);
-    stockLevelMap.put("hktv_store_code", "H00001");
-    stockLevelMap.put("update_time", time);
-    stockLevelMap.put("create_time", time);
-    return stockLevelMap;
-  }
-
-  private static Map<String, String> buildExpectedStockLevel_testcase0006(String sku, String time) {
-    Map<String, String> stockLevelMap = new HashMap<>();
-    stockLevelMap.put("01_mall", "hktv");
-    stockLevelMap.put("01_qty", "20");
-    stockLevelMap.put("hktv_instockstatus", "notSpecified");
-    stockLevelMap.put("hktv_share", "0");
-    stockLevelMap.put("hktv_sku", sku);
-    stockLevelMap.put("hktv_store_code", "H00001");
-    stockLevelMap.put("update_time", time);
-    stockLevelMap.put("create_time", time);
-    return stockLevelMap;
-  }
-
-  private static Map<String, String> buildExpectedStockLevel_testcase0007(String sku, String time) {
-    Map<String, String> stockLevelMap = new HashMap<>();
-    stockLevelMap.put("01_mall", "hktv");
-    stockLevelMap.put("01_qty", "0");
-    stockLevelMap.put("hktv_instockstatus", "notSpecified");
-    stockLevelMap.put("hktv_share", "0");
-    stockLevelMap.put("hktv_sku", sku);
-    stockLevelMap.put("hktv_store_code", "H00001");
-    stockLevelMap.put("update_time", time);
-    stockLevelMap.put("create_time", time);
-    return stockLevelMap;
-  }
-
-  private static Map<String, String> buildExpectedHktvStockLevel(
-      String warehouseId,
-      String available,
-      String instockstatus,
-      String share,
-      String uuid,
-      String time) {
-    Map<String, String> stockLevelMap = new HashMap<>();
-    stockLevelMap.put(warehouseId + "_available", available);
-    stockLevelMap.put(warehouseId + "_instockstatus", instockstatus);
-    stockLevelMap.put(warehouseId + "_updatestocktime", time);
-    stockLevelMap.put("share", share);
-    stockLevelMap.put("uuid", uuid);
-    return stockLevelMap;
-  }
-
-  private static String buildExpectedUpdateEventKey(String sku, String warehouseId) {
-    String updateKey = sku + "|||" + warehouseId;
-    return "evtq_part_stockdata_" + Math.abs(updateKey.hashCode() % 10);
-  }
-
-  private static String buildExpectedUpdateEventValue(String sku, String warehouseId) {
-    return sku + "|||" + warehouseId;
-  }
-
-  private static Map<String, String> buildExpectedLMStockLevel(
-      String quantity, String instockstatus, String share, String time) {
-    Map<String, String> stockLevelMap = new HashMap<>();
-    stockLevelMap.put("quantity", quantity);
-    stockLevelMap.put("instockstatus", instockstatus);
-    stockLevelMap.put("updatestocktime", time);
-    stockLevelMap.put("share", share);
-    return stockLevelMap;
-  }
-
-  private void buildHKTVProductInfoDto(String warehouseSeqNo) throws InterruptedException {
+  private void buildHKTVProductInfoDto(String warehouseSeqNo) {
     // 清除資料
     this.deleteProductInfoDto();
 
-    defaultRabbitTemplate.convertAndSend(
-        EXCHANGE, ROUTING_KEY, buildBundleProductInfoDto_testcase0001(warehouseSeqNo));
-    Thread.sleep(2000L);
+    rabbitMqUtil.sendMsgToIidsQueue(buildBundleProductInfoDto_testcase0001(warehouseSeqNo));
+    AssertUtil.wait_1_sec();
 
-    defaultRabbitTemplate.convertAndSend(
-        EXCHANGE, ROUTING_KEY, buildBundleProductInfoDto_testcase0002(warehouseSeqNo));
-    Thread.sleep(2000L);
+    rabbitMqUtil.sendMsgToIidsQueue(buildBundleProductInfoDto_testcase0002(warehouseSeqNo));
+    AssertUtil.wait_1_sec();
 
-    defaultRabbitTemplate.convertAndSend(
-        EXCHANGE, ROUTING_KEY, buildBundleProductInfoDto_testcase0003(warehouseSeqNo));
-    Thread.sleep(2000L);
+    rabbitMqUtil.sendMsgToIidsQueue(buildBundleProductInfoDto_testcase0003(warehouseSeqNo));
+    AssertUtil.wait_1_sec();
 
-    defaultRabbitTemplate.convertAndSend(
-        EXCHANGE, ROUTING_KEY, buildBundleProductInfoDto_testcase0004(warehouseSeqNo));
-    Thread.sleep(2000L);
+    rabbitMqUtil.sendMsgToIidsQueue(buildBundleProductInfoDto_testcase0004(warehouseSeqNo));
+    AssertUtil.wait_1_sec();
 
-    defaultRabbitTemplate.convertAndSend(
-        EXCHANGE, ROUTING_KEY, buildBundleProductInfoDto_testcase0005(warehouseSeqNo));
-    Thread.sleep(2000L);
+    rabbitMqUtil.sendMsgToIidsQueue(buildBundleProductInfoDto_testcase0005(warehouseSeqNo));
+    AssertUtil.wait_1_sec();
 
-    defaultRabbitTemplate.convertAndSend(
-        EXCHANGE, ROUTING_KEY, buildBundleProductInfoDto_testcase0006(warehouseSeqNo));
-    Thread.sleep(2000L);
-  }
-
-  private ProductInfoDto buildBundleProductInfoDto_testcase0001(String warehouseSeqNo) {
-    return ProductInfoDto.builder()
-        .action("CREATE")
-        .products(
-            List.of(
-                ProductDto.builder()
-                    .uuid("test-BundleParent-0001-0001-0001")
-                    .mallDetail(
-                        List.of(
-                            ProductMallDetailDto.builder()
-                                .mall("hktv")
-                                .storeSkuId("H0121001_S_P0001")
-                                .storefrontStoreCode("H0121001")
-                                .build()))
-                    .warehouseDetail(
-                        List.of(
-                            ProductWarehouseDetailDto.builder()
-                                .warehouseSeqNo(warehouseSeqNo)
-                                .mall(List.of("hktv"))
-                                .build()))
-                    .bundleSetting(
-                        BundleSettingDto.builder()
-                            .isReserved(true)
-                            .isActive(false)
-                            .priority(0)
-                            .bundleMallInfoList(
-                                List.of(
-                                    BundleMallInfoDto.builder()
-                                        .mall("hktv")
-                                        .alertQty(100)
-                                        .ceilingQty(100)
-                                        .build()))
-                            .bundleChildInfoList(
-                                List.of(
-                                    BundleChildDto.builder()
-                                        .uuid(childUuid1)
-                                        .skuId(childSku1)
-                                        .skuQty(2)
-                                        .ceilingQty(0)
-                                        .storefrontStoreCode("child")
-                                        .isLoop(false)
-                                        .build(),
-                                    BundleChildDto.builder()
-                                        .uuid(childUuid2)
-                                        .skuId(childSku2)
-                                        .skuQty(2)
-                                        .ceilingQty(0)
-                                        .storefrontStoreCode("child")
-                                        .isLoop(false)
-                                        .build(),
-                                    BundleChildDto.builder()
-                                        .uuid(childUuid3)
-                                        .skuId(childSku3)
-                                        .skuQty(4)
-                                        .ceilingQty(0)
-                                        .storefrontStoreCode("child")
-                                        .isLoop(false)
-                                        .build()))
-                            .build())
-                    .build(),
-                ProductDto.builder()
-                    .uuid(childUuid1)
-                    .warehouseDetail(
-                        List.of(
-                            ProductWarehouseDetailDto.builder()
-                                .warehouseSeqNo(warehouseSeqNo)
-                                .mall(List.of("hktv"))
-                                .build()))
-                    .mallDetail(
-                        List.of(
-                            ProductMallDetailDto.builder()
-                                .mall("hktv")
-                                .storefrontStoreCode("child")
-                                .storeSkuId("child_S_" + childSku1)
-                                .build()))
-                    .build(),
-                ProductDto.builder()
-                    .uuid(childUuid2)
-                    .warehouseDetail(
-                        List.of(
-                            ProductWarehouseDetailDto.builder()
-                                .warehouseSeqNo(warehouseSeqNo)
-                                .mall(List.of("hktv"))
-                                .build()))
-                    .mallDetail(
-                        List.of(
-                            ProductMallDetailDto.builder()
-                                .mall("hktv")
-                                .storefrontStoreCode("child")
-                                .storeSkuId("child_S_" + childSku2)
-                                .build()))
-                    .build(),
-                ProductDto.builder()
-                    .uuid(childUuid3)
-                    .warehouseDetail(
-                        List.of(
-                            ProductWarehouseDetailDto.builder()
-                                .warehouseSeqNo(warehouseSeqNo)
-                                .mall(List.of("hktv"))
-                                .build()))
-                    .mallDetail(
-                        List.of(
-                            ProductMallDetailDto.builder()
-                                .mall("hktv")
-                                .storefrontStoreCode("child")
-                                .storeSkuId("child_S_" + childSku3)
-                                .build()))
-                    .build()))
-        .build();
-  }
-
-  private ProductInfoDto buildBundleProductInfoDto_testcase0002(String warehouseSeqNo) {
-    return ProductInfoDto.builder()
-        .action("CREATE")
-        .products(
-            List.of(
-                ProductDto.builder()
-                    .uuid("test-BundleParent-0002-0002-0002")
-                    .mallDetail(
-                        List.of(
-                            ProductMallDetailDto.builder()
-                                .mall("hktv")
-                                .storeSkuId("H0121001_S_P0002")
-                                .storefrontStoreCode("H0121001")
-                                .build()))
-                    .warehouseDetail(
-                        List.of(
-                            ProductWarehouseDetailDto.builder()
-                                .warehouseSeqNo(warehouseSeqNo)
-                                .mall(List.of("hktv"))
-                                .build()))
-                    .bundleSetting(
-                        BundleSettingDto.builder()
-                            .isReserved(true)
-                            .isActive(false)
-                            .priority(0)
-                            .bundleMallInfoList(
-                                List.of(
-                                    BundleMallInfoDto.builder()
-                                        .mall("hktv")
-                                        .alertQty(100)
-                                        .ceilingQty(100)
-                                        .build()))
-                            .bundleChildInfoList(
-                                List.of(
-                                    BundleChildDto.builder()
-                                        .uuid(childUuid1)
-                                        .skuId(childSku1)
-                                        .skuQty(2)
-                                        .ceilingQty(0)
-                                        .storefrontStoreCode("child")
-                                        .isLoop(false)
-                                        .build(),
-                                    BundleChildDto.builder()
-                                        .uuid(childUuid2)
-                                        .skuId(childSku2)
-                                        .skuQty(3)
-                                        .ceilingQty(0)
-                                        .storefrontStoreCode("child")
-                                        .isLoop(false)
-                                        .build()))
-                            .build())
-                    .build()))
-        .build();
-  }
-
-  private ProductInfoDto buildBundleProductInfoDto_testcase0003(String warehouseSeqNo) {
-    return ProductInfoDto.builder()
-        .action("CREATE")
-        .products(
-            List.of(
-                ProductDto.builder()
-                    .uuid("test-BundleParent-0003-0003-0003")
-                    .mallDetail(
-                        List.of(
-                            ProductMallDetailDto.builder()
-                                .mall("hktv")
-                                .storeSkuId("H0121001_S_P0003")
-                                .storefrontStoreCode("H0121001")
-                                .build()))
-                    .warehouseDetail(
-                        List.of(
-                            ProductWarehouseDetailDto.builder()
-                                .warehouseSeqNo(warehouseSeqNo)
-                                .mall(List.of("hktv"))
-                                .build()))
-                    .bundleSetting(
-                        BundleSettingDto.builder()
-                            .isReserved(true)
-                            .isActive(false)
-                            .priority(0)
-                            .bundleMallInfoList(
-                                List.of(
-                                    BundleMallInfoDto.builder()
-                                        .mall("hktv")
-                                        .alertQty(100)
-                                        .ceilingQty(100)
-                                        .build()))
-                            .bundleChildInfoList(
-                                List.of(
-                                    BundleChildDto.builder()
-                                        .uuid(childUuid3)
-                                        .skuId(childSku3)
-                                        .skuQty(4)
-                                        .ceilingQty(0)
-                                        .storefrontStoreCode("child")
-                                        .isLoop(false)
-                                        .build(),
-                                    BundleChildDto.builder()
-                                        .uuid(childUuid2)
-                                        .skuId(childSku2)
-                                        .skuQty(3)
-                                        .ceilingQty(0)
-                                        .storefrontStoreCode("child")
-                                        .isLoop(false)
-                                        .build()))
-                            .build())
-                    .build()))
-        .build();
-  }
-
-  private ProductInfoDto buildBundleProductInfoDto_testcase0004(String warehouseSeqNo) {
-    return ProductInfoDto.builder()
-        .action("CREATE")
-        .products(
-            List.of(
-                ProductDto.builder()
-                    .uuid("test-BundleParent-0004-0004-0004")
-                    .mallDetail(
-                        List.of(
-                            ProductMallDetailDto.builder()
-                                .mall("hktv")
-                                .storeSkuId("H0121001_S_P0004")
-                                .storefrontStoreCode("H0121001")
-                                .build()))
-                    .warehouseDetail(
-                        List.of(
-                            ProductWarehouseDetailDto.builder()
-                                .warehouseSeqNo(warehouseSeqNo)
-                                .mall(List.of("hktv"))
-                                .build()))
-                    .bundleSetting(
-                        BundleSettingDto.builder()
-                            .isReserved(true)
-                            .isActive(false)
-                            .priority(0)
-                            .bundleMallInfoList(
-                                List.of(
-                                    BundleMallInfoDto.builder()
-                                        .mall("hktv")
-                                        .alertQty(100)
-                                        .ceilingQty(100)
-                                        .build()))
-                            .bundleChildInfoList(
-                                List.of(
-                                    BundleChildDto.builder()
-                                        .uuid(childUuid2)
-                                        .skuId(childSku2)
-                                        .skuQty(2)
-                                        .ceilingQty(0)
-                                        .storefrontStoreCode("child")
-                                        .isLoop(false)
-                                        .build()))
-                            .build())
-                    .build()))
-        .build();
-  }
-
-  private ProductInfoDto buildBundleProductInfoDto_testcase0005(String warehouseSeqNo) {
-    return ProductInfoDto.builder()
-        .action("CREATE")
-        .products(
-            List.of(
-                ProductDto.builder()
-                    .uuid("test-BundleParent-0005-0005-0005")
-                    .mallDetail(
-                        List.of(
-                            ProductMallDetailDto.builder()
-                                .mall("hktv")
-                                .storeSkuId("H0121001_S_P0005")
-                                .storefrontStoreCode("H0121001")
-                                .build()))
-                    .warehouseDetail(
-                        List.of(
-                            ProductWarehouseDetailDto.builder()
-                                .warehouseSeqNo(warehouseSeqNo)
-                                .mall(List.of("hktv"))
-                                .build()))
-                    .bundleSetting(
-                        BundleSettingDto.builder()
-                            .isReserved(true)
-                            .isActive(false)
-                            .priority(0)
-                            .bundleMallInfoList(
-                                List.of(
-                                    BundleMallInfoDto.builder()
-                                        .mall("hktv")
-                                        .alertQty(100)
-                                        .ceilingQty(100)
-                                        .build()))
-                            .bundleChildInfoList(
-                                List.of(
-                                    BundleChildDto.builder()
-                                        .uuid(childUuid2)
-                                        .skuId(childSku2)
-                                        .skuQty(3)
-                                        .ceilingQty(0)
-                                        .storefrontStoreCode("child")
-                                        .isLoop(false)
-                                        .build()))
-                            .build())
-                    .build()))
-        .build();
-  }
-
-  private ProductInfoDto buildBundleProductInfoDto_testcase0006(String warehouseSeqNo) {
-    return ProductInfoDto.builder()
-        .action("CREATE")
-        .products(
-            List.of(
-                ProductDto.builder()
-                    .uuid("test-BundleParent-0006-0006-0006")
-                    .mallDetail(
-                        List.of(
-                            ProductMallDetailDto.builder()
-                                .mall("hktv")
-                                .storeSkuId("H0121001_S_P0006")
-                                .storefrontStoreCode("H0121001")
-                                .build()))
-                    .warehouseDetail(
-                        List.of(
-                            ProductWarehouseDetailDto.builder()
-                                .warehouseSeqNo(warehouseSeqNo)
-                                .mall(List.of("hktv"))
-                                .build()))
-                    .bundleSetting(
-                        BundleSettingDto.builder()
-                            .isReserved(true)
-                            .isActive(false)
-                            .priority(0)
-                            .bundleMallInfoList(
-                                List.of(
-                                    BundleMallInfoDto.builder()
-                                        .mall("hktv")
-                                        .alertQty(100)
-                                        .ceilingQty(100)
-                                        .build()))
-                            .bundleChildInfoList(
-                                List.of(
-                                    BundleChildDto.builder()
-                                        .uuid(childUuid2)
-                                        .skuId(childSku2)
-                                        .skuQty(3)
-                                        .ceilingQty(0)
-                                        .storefrontStoreCode("child")
-                                        .isLoop(false)
-                                        .build()))
-                            .build())
-                    .build()))
-        .build();
+    rabbitMqUtil.sendMsgToIidsQueue(buildBundleProductInfoDto_testcase0006(warehouseSeqNo));
+    AssertUtil.wait_1_sec();
   }
 
   private void deleteProductInfoDto() {
@@ -2342,7 +1756,7 @@ public class UpdateWarehouseQtyTest {
         .all();
   }
 
-  private void setAllBundleQtyTo10() throws InterruptedException {
+  private void setAllBundleQtyTo10() {
     // 建立每個 parentBundle qty=10
     given()
         .contentType("application/json")
@@ -2366,7 +1780,7 @@ public class UpdateWarehouseQtyTest {
         .log()
         .all();
 
-    Thread.sleep(1000L);
+    AssertUtil.wait_1_sec();
 
     given()
         .contentType("application/json")
@@ -2390,7 +1804,7 @@ public class UpdateWarehouseQtyTest {
         .log()
         .all();
 
-    Thread.sleep(1000L);
+    AssertUtil.wait_1_sec();
 
     given()
         .contentType("application/json")
@@ -2414,7 +1828,7 @@ public class UpdateWarehouseQtyTest {
         .log()
         .all();
 
-    Thread.sleep(1000L);
+    AssertUtil.wait_1_sec();
 
     given()
         .contentType("application/json")
@@ -2438,7 +1852,7 @@ public class UpdateWarehouseQtyTest {
         .log()
         .all();
 
-    Thread.sleep(1000L);
+    AssertUtil.wait_1_sec();
 
     given()
         .contentType("application/json")
@@ -2462,7 +1876,7 @@ public class UpdateWarehouseQtyTest {
         .log()
         .all();
 
-    Thread.sleep(1000L);
+    AssertUtil.wait_1_sec();
 
     given()
         .contentType("application/json")
@@ -2852,51 +2266,6 @@ public class UpdateWarehouseQtyTest {
         .all();
   }
 
-  private void setWh01Child123Qty1() {
-    // set childUuid1/2/3 qty=233 to share
-    given()
-        .contentType("application/json")
-        .body(
-            "[\n"
-                + "  {\n"
-                + "    \"uuid\": \"childUuid-1\",\n"
-                + "    \"warehouseQty\": [\n"
-                + "      {\n"
-                + "        \"warehouseSeqNo\": \"01\",\n"
-                + "        \"mode\": \"set\",\n"
-                + "        \"quantity\": 1\n"
-                + "      }\n"
-                + "    ]\n"
-                + "  },\n"
-                + "  {\n"
-                + "    \"uuid\": \"childUuid-2\",\n"
-                + "    \"warehouseQty\": [\n"
-                + "      {\n"
-                + "        \"warehouseSeqNo\": \"01\",\n"
-                + "        \"mode\": \"set\",\n"
-                + "        \"quantity\": 1\n"
-                + "      }\n"
-                + "    ]\n"
-                + "  },\n"
-                + "  {\n"
-                + "    \"uuid\": \"childUuid-3\",\n"
-                + "    \"warehouseQty\": [\n"
-                + "      {\n"
-                + "        \"warehouseSeqNo\": \"01\",\n"
-                + "        \"mode\": \"set\",\n"
-                + "        \"quantity\": 1\n"
-                + "      }\n"
-                + "    ]\n"
-                + "  }\n"
-                + "]")
-        .when()
-        .put(BASIC_URL + "/warehouse/quantity")
-        .then()
-        .statusCode(200)
-        .log()
-        .all();
-  }
-
   private void setWh98Child2Qty1() {
     // set childUuid1/2/3 qty=233 to share
     given()
@@ -3174,7 +2543,7 @@ public class UpdateWarehouseQtyTest {
 
   // 驗證拆bundle後的順序是依照child比例，愈小的愈先補，比例一樣是updatetime愈大的先補
   @Test
-  void updWhQty_set_98Wh_qty_to_3_singleNonShareMall_HKTV_hasBundle() throws InterruptedException {
+  void updWhQty_set_98Wh_qty_to_3_singleNonShareMall_HKTV_hasBundle() {
     // 預期結果: 數量完全歸零，拆掉的bundle要把其他的child還回單賣的數量
     this.buildHKTVProductInfoDto("98");
     this.setWh98Child123Qty333();
@@ -3315,17 +2684,18 @@ public class UpdateWarehouseQtyTest {
             });
 
     t1.start();
-    Thread.sleep(500L);
+    AssertUtil.wait_1_sec();
     this.assertion_wh_share_mall_parent(
         "98", "0", "0", "0", "1", "220", "293", "0", "1", "10", "10", "10", "10");
     t3.start();
-    Thread.sleep(500L);
+    AssertUtil.wait_1_sec();
     this.assertion_wh_share_mall_parent(
         "98", "0", "0", "0", "1", "250", "3", "0", "1", "0", "10", "10", "10");
     t2.start();
-    Thread.sleep(500L);
+    AssertUtil.wait_1_sec();
     this.assertion_wh_share_mall_parent(
         "98", "0", "0", "0", "1", "0", "3", "0", "1", "0", "0", "0", "0");
+    this.deleteProductInfoDto();
   }
 
   private void assertion_wh_share_mall_parent(
@@ -3479,65 +2849,11 @@ public class UpdateWarehouseQtyTest {
             .block());
   }
 
-  private void buildLMProductInfoDto(String warehouseSeqNo) throws InterruptedException {
+  private void buildLMProductInfoDto(String warehouseSeqNo) {
     // 清除資料
     this.deleteProductInfoDto();
-    defaultRabbitTemplate.convertAndSend(
-        EXCHANGE, ROUTING_KEY, buildBundleProductInfoDto_testcaseLM(warehouseSeqNo));
-    Thread.sleep(2000L);
-  }
-
-  private ProductInfoDto buildBundleProductInfoDto_testcaseLM(String warehouseSeqNo) {
-    return ProductInfoDto.builder()
-        .action("CREATE")
-        .products(
-            List.of(
-                ProductDto.builder()
-                    .uuid(childUuid1)
-                    .warehouseDetail(
-                        List.of(
-                            ProductWarehouseDetailDto.builder()
-                                .warehouseSeqNo(warehouseSeqNo)
-                                .mall(List.of("little_mall"))
-                                .build()))
-                    .mallDetail(
-                        List.of(
-                            ProductMallDetailDto.builder()
-                                .mall("little_mall")
-                                .storefrontStoreCode("child")
-                                .build()))
-                    .build(),
-                ProductDto.builder()
-                    .uuid(childUuid2)
-                    .warehouseDetail(
-                        List.of(
-                            ProductWarehouseDetailDto.builder()
-                                .warehouseSeqNo(warehouseSeqNo)
-                                .mall(List.of("little_mall"))
-                                .build()))
-                    .mallDetail(
-                        List.of(
-                            ProductMallDetailDto.builder()
-                                .mall("little_mall")
-                                .storefrontStoreCode("child")
-                                .build()))
-                    .build(),
-                ProductDto.builder()
-                    .uuid(childUuid3)
-                    .warehouseDetail(
-                        List.of(
-                            ProductWarehouseDetailDto.builder()
-                                .warehouseSeqNo(warehouseSeqNo)
-                                .mall(List.of("little_mall"))
-                                .build()))
-                    .mallDetail(
-                        List.of(
-                            ProductMallDetailDto.builder()
-                                .mall("little_mall")
-                                .storefrontStoreCode("child")
-                                .build()))
-                    .build()))
-        .build();
+    rabbitMqUtil.sendMsgToIidsQueue(buildBundleProductInfoDto_testcaseLM(warehouseSeqNo));
+    AssertUtil.wait_1_sec();
   }
 
   private void setChild123Qty233ToLM() {
@@ -3683,8 +2999,7 @@ public class UpdateWarehouseQtyTest {
   }
 
   @Test
-  void updWhQty_set_98Wh_qty_to_1_singleNonShareMall_HKTV_hasBundle_With_SAME_TIME_REQUEST()
-      throws InterruptedException {
+  void updWhQty_set_98Wh_qty_to_1_singleNonShareMall_HKTV_hasBundle_With_SAME_TIME_REQUEST() {
     // 預期結果: 數量完全歸零，拆掉的bundle要把其他的child還回單賣的數量
     this.buildHKTVProductInfoDto("98");
     this.setWh98Child123Qty333();
@@ -3828,17 +3143,18 @@ public class UpdateWarehouseQtyTest {
     t3.start();
     t2.start();
 
-    Thread.sleep(5000L);
+    AssertUtil.wait_10_sec();
 
     this.assertion_wh_share_mall_parent(
         "98", "0", "0", "0", "1", "1", "1", "0", "0", "0", "0", "0", "0");
+    this.deleteProductInfoDto();
   }
 
   @Test
   public void updWhQty_lockTimeNotBlockWhenRecordTimeBiggerThanNow() {
     String child1Sku = "H088800118_S_child-SKU-E-1";
     String child2Sku = "H088800118_S_child-SKU-E-2";
-    String parentSku = "SKU-E001";
+    String parentSku = "H088800118_S_parent-SKU-E-1";
     String child1Uuid = "child-UUID-E-1";
     String child2Uuid = "child-UUID-E-2";
     String parentUuid = "parent-E-001";
@@ -3866,7 +3182,12 @@ public class UpdateWarehouseQtyTest {
     apiUtil.callDeductWh4700QtyApi(child1Uuid);
 
     // verify
-    verifyUpdWhQtyTestCase.lockTimeNotBlockWhenRecordTimeBiggerThanNow();
+    Assertions.assertEquals(
+        "0", redisTempl.opsForHash().get(child1Sku, "H08880011898_available").block());
+    Assertions.assertEquals(
+        "7000", redisTempl.opsForHash().get(child2Sku, "H08880011898_available").block());
+    Assertions.assertEquals(
+        "100", redisTempl.opsForHash().get(parentSku, "H08880011898_available").block());
 
     // delete data
     redisUtil.deleteRedisNodeKey();
@@ -3881,7 +3202,7 @@ public class UpdateWarehouseQtyTest {
   public void updWhQty_setChildQtyWillConsiderParentQty() {
     String child1Sku = "H088800118_S_child-SKU-E-1";
     String child2Sku = "H088800118_S_child-SKU-E-2";
-    String parentSku = "SKU-E001";
+    String parentSku = "H088800118_S_parent-SKU-E-1";
     String child1Uuid = "child-UUID-E-1";
     String child2Uuid = "child-UUID-E-2";
     String parentUuid = "parent-E-001";
@@ -3908,7 +3229,12 @@ public class UpdateWarehouseQtyTest {
     apiUtil.callSetWh4900QtyApi(child2Uuid);
 
     //     verify
-    verifyUpdWhQtyTestCase.setChildQtyWillConsiderParentQty();
+    Assertions.assertEquals(
+        "2400", redisTempl.opsForHash().get(child1Sku, "H08880011898_available").block());
+    Assertions.assertEquals(
+        "100", redisTempl.opsForHash().get(child2Sku, "H08880011898_available").block());
+    Assertions.assertEquals(
+        "2400", redisTempl.opsForHash().get(parentSku, "H08880011898_available").block());
 
     // delete data
     redisUtil.deleteRedisNodeKey();
@@ -3917,5 +3243,62 @@ public class UpdateWarehouseQtyTest {
     redisUtil.deleteInventoryUuid(child1Uuid, child2Uuid, parentUuid);
     redisUtil.deleteSku(child1Sku, child2Sku, parentSku);
     redisUtil.deleteBundleLockParentRedisKey();
+  }
+
+  @Test
+  public void updWhQty_mallNotInWh98AndAddWh98QtyWillAddInWh() {
+    String sku = "H088800118_S_child-SKU-E-1";
+    String uuid = "child-UUID-E-1";
+
+    // delete data
+    redisUtil.deleteRedisNodeKey();
+    redisUtil.deleteInventoryUuid(uuid);
+    redisUtil.deleteSku(sku);
+
+    // insert default data
+    redisUtil.insertIidsAndSkuIimsData(uuid, sku, "01");
+
+    // testing api
+    apiUtil.addWh98Qty2400(uuid);
+
+    //     verify
+    Assertions.assertEquals(
+        "2400", redisTempl.opsForHash().get(sku, "H08880011801_available").block());
+    Assertions.assertNull(redisTempl.opsForHash().get(sku, "H08880011898_available").block());
+    Assertions.assertEquals(
+        "2400", redisTempl.opsForHash().get("inventory:" + uuid, "98_qty").block());
+
+    // delete data
+    redisUtil.deleteRedisNodeKey();
+    redisUtil.deleteInventoryUuid(uuid);
+    redisUtil.deleteSku(sku);
+  }
+
+  @Test
+  public void updWhQty_mallInWh98AndAddWh98QtyWillAddInMall() {
+    String sku = "H088800118_S_child-SKU-E-1";
+    String uuid = "child-UUID-E-1";
+
+    // delete data
+    redisUtil.deleteRedisNodeKey();
+    redisUtil.deleteInventoryUuid(uuid);
+    redisUtil.deleteSku(sku);
+
+    // insert default data
+    redisUtil.insertIidsAndSkuIimsData(uuid, sku, "98");
+
+    // testing api
+    apiUtil.addWh98Qty2400(uuid);
+
+    //     verify
+    Assertions.assertEquals(
+        "4800", redisTempl.opsForHash().get(sku, "H08880011898_available").block());
+    Assertions.assertEquals(
+        "0", redisTempl.opsForHash().get("inventory:" + uuid, "98_qty").block());
+
+    // delete data
+    redisUtil.deleteRedisNodeKey();
+    redisUtil.deleteInventoryUuid(uuid);
+    redisUtil.deleteSku(sku);
   }
 }

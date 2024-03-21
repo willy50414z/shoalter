@@ -472,4 +472,30 @@ public class ApiUtil {
         .log()
         .all();
   }
+
+  public void addWh98Qty2400(String uuid) {
+    given()
+        .contentType("application/json")
+        .body(
+            "[\n"
+                + "  {\n"
+                + "    \"uuid\": \""
+                + uuid
+                + "\",\n"
+                + "    \"warehouseQty\": [\n"
+                + "      {\n"
+                + "        \"warehouseSeqNo\": \"98\",\n"
+                + "        \"mode\": \"add\",\n"
+                + "        \"quantity\": 2400\n"
+                + "      }\n"
+                + "    ]\n"
+                + "  }\n"
+                + "]")
+        .when()
+        .put(getLocalUpdWhQtyUrl())
+        .then()
+        .statusCode(200)
+        .log()
+        .all();
+  }
 }

@@ -2,6 +2,10 @@ package com.shoalter.willy.shoaltertools.testtool;
 
 import static io.restassured.RestAssured.given;
 
+import java.util.List;
+import java.util.Map;
+import net.minidev.json.JSONObject;
+import org.json.JSONException;
 import org.springframework.stereotype.Component;
 
 @Component
@@ -24,6 +28,10 @@ public class ApiUtil {
 
   public String getLocalStockLevelV3Url() {
     return getLocalIidsUrl() + "/s2s/v3/get_stock_levels";
+  }
+
+  public String getAddMallOrUuidStockLevelsV1Url() {
+    return getLocalIidsUrl() + "/s2s/v1/products";
   }
 
   public void callDeductWh4700QtyApi(String childUuid) {
@@ -509,6 +517,34 @@ public class ApiUtil {
         .body("{\n" + "  \"uuidList\": [\n" + "    \"" + uuid + "\"\n" + "  ]\n" + "}")
         .when()
         .post(getLocalStockLevelV3Url())
+        .then()
+        .statusCode(200)
+        .log()
+        .all();
+  }
+
+  public void addMallOrUuidStockLevelsV1(Map<String, Object> requestMap) throws JSONException {
+
+    JSONObject productObject = new JSONObject();
+    JSONObject mallsObject = new JSONObject();
+
+    mallsObject.put("name", "hktv");
+    mallsObject.put("sku", requestMap.get("sku"));
+    mallsObject.put("warehouse", requestMap.get("warehouse"));
+    mallsObject.put("share", false);
+    mallsObject.put("quantity", requestMap.get("quantity"));
+    mallsObject.put("stockStatus", requestMap.get("stockStatus"));
+
+    productObject.put("uuid", requestMap.get("uuid"));
+    productObject.put("malls", List.of(mallsObject));
+
+    System.out.println(productObject.toJSONString());
+
+    given()
+        .contentType("application/json")
+        .body(List.of(productObject))
+        .when()
+        .post(getAddMallOrUuidStockLevelsV1Url())
         .then()
         .statusCode(200)
         .log()

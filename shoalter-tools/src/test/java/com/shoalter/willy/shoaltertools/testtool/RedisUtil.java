@@ -24,6 +24,7 @@ public class RedisUtil {
   public void deleteInventoryUuid(String... uuids) {
     for (String uuid : uuids) {
       redisTempl.delete("inventory:" + uuid).block();
+      redisTempl.delete(uuid).block();
     }
   }
 

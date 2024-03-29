@@ -1,0 +1,1 @@
+git submodule foreach -q "git checkout main && git pull"

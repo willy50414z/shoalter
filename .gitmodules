@@ -1,0 +1,6 @@
+[submodule "ids"]
+	path = ids
+	url = https://ite-git01.hktv.com.hk/hktv/tw/shoalter_ecommerce/inventory/ids.git
+[submodule "iims-hktv"]
+	path = iims-hktv
+	url = https://ite-git01.hktv.com.hk/hktv/tw/shoalter_ecommerce/inventory/ims.git

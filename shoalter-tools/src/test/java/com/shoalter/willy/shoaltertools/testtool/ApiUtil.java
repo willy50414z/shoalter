@@ -29,6 +29,13 @@ public class ApiUtil {
   public String getLocalStockLevelV3Url() {
     return getLocalIidsUrl() + "/s2s/v3/get_stock_levels";
   }
+  public String findStockLevelsV1Url(String uuid) {
+    return getLocalIidsUrl() + "/s2s/v1/products/"+uuid+"/stock-levels";
+  }
+
+  public String postStockLevelsV1Url() {
+    return getLocalIidsUrl() + "/s2s/v1/products/stock-levels";
+  }
 
   public String getAddMallOrUuidStockLevelsV1Url() {
     return getLocalIidsUrl() + "/s2s/v1/products";
@@ -521,6 +528,37 @@ public class ApiUtil {
         .statusCode(200)
         .log()
         .all();
+  }
+
+  public void findStockLevelsV1(String uuid) {
+    given()
+        .contentType("application/json")
+        .body("")
+        .when()
+        .get(findStockLevelsV1Url(uuid))
+        .then()
+        .statusCode(200)
+        .log()
+        .all();
+  }
+
+  public void updateStockQuantityListV1(String uuid) {
+    given()
+          .contentType("application/json")
+          .body("[{\n"
+                + "  \"uuid\": \"" + uuid + "\",\n"
+                + "  \"malls\": [{\n"
+                + "    \"name\": \"hktv\",\n"
+                + "    \"mode\": \"set\",\n"
+                + "    \"quantity\": 10\n"
+                + "  }]\n"
+                + "}]")
+          .when()
+          .post(postStockLevelsV1Url())
+          .then()
+          .statusCode(200)
+          .log()
+          .all();
   }
 
   public void addMallOrUuidStockLevelsV1(Map<String, Object> requestMap) throws JSONException {

@@ -181,4 +181,77 @@ public class GetStockLevelTest {
     redisUtil.deleteInventoryUuid(uuid);
     redisUtil.deleteSku(sku, uuid);
   }
+
+  @Test
+  void getStockLevel_whenNoUpdateTime_iims_V3() {
+
+    String sku = "H088800118_S_TEST01";
+    String uuid = "test-getStockLevel-uuid-0000-00001";
+
+    // delete data
+    redisUtil.deleteInventoryUuid(uuid);
+    redisUtil.deleteSku(sku, uuid);
+
+    // insert default data
+    redisUtil.insertIidsAndSkuIimsData(uuid, sku, "01");
+
+    //remove updatetime
+    redisTempl.opsForHash().remove(sku,"H08880011801_updatestocktime").block();
+
+    // testing api
+    apiUtil.getStockLevelV3(uuid);
+
+    //should have updatetime
+    Assertions.assertEquals(Boolean.TRUE, redisTempl.opsForHash().hasKey(sku, "H08880011801_updatestocktime").block());
+
+  }
+
+  @Test
+  void getStocklevels_whenNoUpdateTime_V1() {
+
+    String sku = "H088800118_S_TEST01";
+    String uuid = "test-getStockLevel-uuid-0000-00001";
+
+    // delete data
+    redisUtil.deleteInventoryUuid(uuid);
+    redisUtil.deleteSku(sku, uuid);
+
+    // insert default data
+    redisUtil.insertIidsAndSkuIimsData(uuid, sku, "01");
+    redisUtil.insertIidsV1DataAndSkuIimsData(uuid, sku, "01");
+
+    //remove updatetime
+    redisTempl.opsForHash().remove(sku,"H08880011801_updatestocktime").block();
+
+    // testing api
+    apiUtil.findStockLevelsV1(uuid);
+
+    //should have updatetime
+    Assertions.assertEquals(Boolean.TRUE, redisTempl.opsForHash().hasKey(sku, "H08880011801_updatestocktime").block());
+
+  }
+  @Test
+  void updateStocklevels_whenNoUpdateTime_V1() {
+
+    String sku = "H088800118_S_TEST01";
+    String uuid = "test-getStockLevel-uuid-0000-00001";
+
+    // delete data
+    redisUtil.deleteInventoryUuid(uuid);
+    redisUtil.deleteSku(sku, uuid);
+
+    // insert default data
+    redisUtil.insertIidsAndSkuIimsData(uuid, sku, "01");
+    redisUtil.insertIidsV1DataAndSkuIimsData(uuid, sku, "01");
+
+    //remove updatetime
+    redisTempl.opsForHash().remove(sku,"H08880011801_updatestocktime").block();
+
+    // testing api
+    apiUtil.updateStockQuantityListV1(uuid);
+
+    //should have updatetime
+    Assertions.assertEquals(Boolean.TRUE, redisTempl.opsForHash().hasKey(sku, "H08880011801_updatestocktime").block());
+
+  }
 }

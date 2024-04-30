@@ -13,6 +13,9 @@ public class ApiUtil {
   private String getLocalIidsUrl() {
     return "http://127.0.0.1:8099";
   }
+  private String getLocalIimsUrl() {
+    return "http://127.0.0.1:8088";
+  }
 
   public String getLocalUpdWhQtyUrl() {
     return getLocalIidsUrl() + "/s2s/v3/warehouse/quantity";
@@ -31,6 +34,9 @@ public class ApiUtil {
   }
   public String findStockLevelsV1Url(String uuid) {
     return getLocalIidsUrl() + "/s2s/v1/products/"+uuid+"/stock-levels";
+  }
+  public String findSkuStockLevelUrl(String sku) {
+    return getLocalIimsUrl() + "/iims/s2s/v1/products/"+sku+"/stock-levels";
   }
 
   public String postStockLevelsV1Url() {
@@ -560,6 +566,20 @@ public class ApiUtil {
           .log()
           .all();
   }
+
+  public void findSkuStockLevelIims(String sku) {
+    given()
+          .contentType("application/json")
+          .body("")
+          .when()
+          .get(findSkuStockLevelUrl(sku))
+          .then()
+          .statusCode(200)
+          .log()
+          .all();
+  }
+
+
 
   public void addMallOrUuidStockLevelsV1(Map<String, Object> requestMap) throws JSONException {
 

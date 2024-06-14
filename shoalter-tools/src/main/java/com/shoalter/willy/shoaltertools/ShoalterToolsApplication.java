@@ -22,11 +22,15 @@ import org.springframework.util.StringUtils;
 @SpringBootApplication
 public class ShoalterToolsApplication {
   static String redisCommend = "redis-cli -c -h $REDIS_HOST -p $REDIS_PORT -a $REDIS_PASSWORD ";
-  static String inputFilePath = "C:\\Users\\shelby.cheng\\Desktop\\0513.txt";
-  static String outPutFilePath = "C:\\Users\\shelby.cheng\\Desktop\\0513_patchFile.txt";
-  static String outPutCheckFilePath = "C:\\Users\\shelby.cheng\\Desktop\\0513_checkFile.txt";
-  static String outPutErrorFilePath = "C:\\Users\\shelby.cheng\\Desktop\\0513_errorFile.txt";
+  static String title = "0612_prd_2";
+  static String target_path = "C:\\Desktop\\" + title;
+
+  static String inputFilePath = target_path + ".txt";
+  static String outPutFilePath = target_path + "_patchFile.txt";
+  static String outPutCheckFilePath = target_path + "_checkFile.txt";
+  static String outPutErrorFilePath = target_path + "_errorFile.txt";
   static String splitRegex = "\t";
+  static String SYSTEM = "IIMS";
 
   public static void main(String[] args) {
     SpringApplication.run(ShoalterToolsApplication.class, args);
@@ -40,28 +44,36 @@ public class ShoalterToolsApplication {
       ArrayList<Map<String, String>> arrayList = readAndSplitTxtFile(inputFilePath);
       StringBuffer updateStringBf = new StringBuffer();
       StringBuffer dirtyDataBf = new StringBuffer();
-      for (Map<String, String> map : arrayList) {
-        if (!StringUtils.isEmpty(map.get("updatestocktime"))) {
-          updateStringBf.append(redisCommend + "HDEL " + map.get("sku") + " updatestocktime");
-          map.remove("updatestocktime");
-                    updateStringBf.append("\r\n");
+      if (SYSTEM.equals("IIDS")) {
+        for (Map<String, String> map : arrayList) {
+          String string = checkIidsData(map, map.get("sku"));
+          updateStringBf.append(string);
         }
-        String dirtyDataMsg = checkIimsData(map, map.get("sku"));
-        if (!StringUtils.isEmpty(dirtyDataMsg)) {
-          dirtyDataBf.append(dirtyDataMsg);
-        }
+      }else{
+        for (Map<String, String> map : arrayList) {
+          if (!StringUtils.isEmpty(map.get("updatestocktime"))) {
+            updateStringBf.append(redisCommend + "HDEL " + map.get("sku") + " updatestocktime");
+            map.remove("updatestocktime");
+            updateStringBf.append("\r\n");
+          }
+          String dirtyDataMsg = checkIimsData(map, map.get("sku"));
+          if (!StringUtils.isEmpty(dirtyDataMsg)) {
+            dirtyDataBf.append(dirtyDataMsg);
+          }
 
-        String content = StringUtil.EMPTY_STRING;
-        if (!StringUtils.isEmpty(getWarehouseId(map))){
-          content = inputData(map, map.get("sku"), getWarehouseId(map));
-        }
+          String content = StringUtil.EMPTY_STRING;
+          if (!StringUtils.isEmpty(getWarehouseId(map))){
+            content = inputData(map, map.get("sku"), getWarehouseId(map));
+          }
 
-        if (!StringUtils.isEmpty(content)) {
-          updateStringBf.append(content);
-          updateStringBf.append("\r\n");
-        }
+          if (!StringUtils.isEmpty(content)) {
+            updateStringBf.append(content);
+            updateStringBf.append("\r\n");
+          }
 
+        }
       }
+
       generateShellScript(outPutCheckFilePath, dirtyDataBf.toString());
       generateShellScript(outPutFilePath, updateStringBf.toString());
     } catch (IOException e) {
@@ -172,11 +184,16 @@ public class ShoalterToolsApplication {
       }
     }
 
+    if (!StringUtils.isEmpty(warehouseId) && availableKeyList.size() == 1) {
+      return availableKeyList.get(0);
+    }
+
     return warehouseId;
   }
 
   private static String checkIimsData(Map<String, String> iimsData, String sku) {
     boolean hasDirtyData = false;
+    StringBuffer dirtyDataBf = new StringBuffer();
 
     // WarehouseId _available, _instockstatus, _updatestocktime should be 1
     // check categories
@@ -215,7 +232,17 @@ public class ShoalterToolsApplication {
       hasDirtyData = true;
     }
 
-    if (hasDirtyData && availableKeySet.size() > 1) {
+    if (targetCounts.get("available")==1 && targetCounts.get("updatestocktime")==2 && targetCounts.get("instockstatus")==1) {
+
+      for (String warehouse : availableKeySet) {
+        String mapKey = warehouse + "_available";
+        if (!iimsData.containsKey(mapKey)) {
+          return redisCommend+"HDEL " + sku + " " + warehouse + "_updatestocktime" + "\r\n";
+        }
+      }
+      return "";
+    }
+    else if (hasDirtyData && availableKeySet.size() > 1) {
       String iimsDirtyDataMessage =
           "sku["
               + sku
@@ -225,10 +252,36 @@ public class ShoalterToolsApplication {
               + iimsData
               + "]";
             log.warn(iimsDirtyDataMessage);
+      dirtyDataBf.append(iimsDirtyDataMessage + "\r\n");
 
-		 return iimsDirtyDataMessage + "\r\n";
     }
 
-    return "";
+    if ("1".equals(iimsData.get("share"))){
+      String iimsDirtyDataMessage = redisCommend +
+            " HSET "
+                  + sku
+                  + " share 0";
+      dirtyDataBf.append(iimsDirtyDataMessage + "\r\n");
+    }
+
+
+    return dirtyDataBf.toString();
   }
+
+  static String checkIidsData(Map<String, String> iidsData, String uuid){
+    StringBuffer quantityList = new StringBuffer();
+    if ("1".equals(iidsData.get("hktv_share"))) {
+      quantityList.append("inventory:"+uuid+" hktv_share 0 ||");
+      for (String data : iidsData.keySet()){
+          if (data.contains("_qty") && !iidsData.get(data).equals("0")){
+            quantityList.append(data+":"+iidsData.get(data)+"\r\n");
+          }
+      }
+    }
+
+
+	  return quantityList.append("\r\n").toString();
+  }
+
+
 }

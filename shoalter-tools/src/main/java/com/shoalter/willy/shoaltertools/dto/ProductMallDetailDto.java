@@ -13,6 +13,9 @@ import lombok.NoArgsConstructor;
 public class ProductMallDetailDto {
   private String mall;
 
+  @JsonProperty("stock_status")
+  private String stockStatus;
+
   @JsonProperty("storefront_store_code")
   private String storefrontStoreCode;
 

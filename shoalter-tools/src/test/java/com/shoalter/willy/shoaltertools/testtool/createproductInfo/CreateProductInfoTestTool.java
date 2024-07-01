@@ -99,15 +99,45 @@ public class CreateProductInfoTestTool {
         .build();
   }
 
-  public static Map<String, String> buildExpectedStockLevel_testcase0001(String sku, String time) {
+  public ProductInfoDto buildProductInfoDto_testcaseWithStatus(String uuid, String sku) {
+    return ProductInfoDto.builder()
+            .action("CREATE")
+            .products(
+                    List.of(
+                            ProductDto.builder()
+                                    .uuid(uuid)
+                                    .warehouseDetail(
+                                            List.of(
+                                                    ProductWarehouseDetailDto.builder()
+                                                            .warehouseSeqNo("01")
+                                                            .mall(List.of("hktv", "little_mall"))
+                                                            .build()))
+                                    .mallDetail(
+                                            List.of(
+                                                    ProductMallDetailDto.builder()
+                                                            .mall("hktv")
+                                                            .storefrontStoreCode("H00001")
+                                                            .stockStatus("forceInStock")
+                                                            .storeSkuId(sku)
+                                                            .build(),
+                                                    ProductMallDetailDto.builder()
+                                                            .mall("little_mall")
+                                                            .stockStatus("forceInStock")
+                                                            .storefrontStoreCode("H00001")
+                                                            .build()))
+                                    .build()))
+            .build();
+  }
+
+  public static Map<String, String> buildExpectedStockLevel_testcase0001(String sku, String time, String instockstatus) {
     Map<String, String> stockLevelMap = new HashMap<>();
     stockLevelMap.put("01_mall", "hktv,little_mall");
     stockLevelMap.put("01_qty", "0");
-    stockLevelMap.put("hktv_instockstatus", "notSpecified");
+    stockLevelMap.put("hktv_instockstatus", instockstatus);
     stockLevelMap.put("hktv_share", "0");
     stockLevelMap.put("hktv_sku", sku);
     stockLevelMap.put("hktv_store_code", "H00001");
-    stockLevelMap.put("little_mall_instockstatus", "notSpecified");
+    stockLevelMap.put("little_mall_instockstatus", instockstatus);
     stockLevelMap.put("little_mall_share", "0");
     stockLevelMap.put("little_mall_store_code", "H00001");
     stockLevelMap.put("update_time", time);

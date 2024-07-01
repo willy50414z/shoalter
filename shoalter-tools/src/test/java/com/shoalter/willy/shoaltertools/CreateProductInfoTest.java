@@ -53,7 +53,7 @@ public class CreateProductInfoTest extends CreateProductInfoTestTool {
 
     // 驗證IIDS資料
     Assertions.assertEquals(
-        buildExpectedStockLevel_testcase0001(sku, time),
+        buildExpectedStockLevel_testcase0001(sku, time, "notSpecified"),
         redisTempl
             .<String, String>opsForHash()
             .entries("inventory:" + uuid)
@@ -428,5 +428,100 @@ public class CreateProductInfoTest extends CreateProductInfoTestTool {
     redisUtil.deleteBundleSettingKey(parentUuid);
     redisUtil.deleteInventoryUuid(child1Uuid, child2Uuid, parentUuid);
     redisUtil.deleteSku(child1Sku, child2Sku, parentSku);
+  }
+
+  @Test
+  void createProduct_testcaseWithStatus() throws InterruptedException {
+    String time = "20231207134648";
+    String uuid = "iids-integration-test-testcase-WithStatus";
+    String sku = "iims-integration-test-testcase-WithStatus";
+    String updEventKey = buildExpectedUpdateEventKey(sku, "H0000101");
+
+    redisTempl.delete("inventory:" + uuid, uuid).block();
+    redisHKTVTempl.delete(sku, updEventKey).block();
+    redisLMTempl.delete(uuid).block();
+
+    // createProduct
+    rabbitMqUtil.sendMsgToIidsQueue(buildProductInfoDto_testcaseWithStatus(uuid, sku));
+
+    Thread.sleep(1000L);
+
+    // 驗證IIDS資料
+    Assertions.assertEquals(
+        buildExpectedStockLevel_testcase0001(sku, time, "forceInStock"),
+        redisTempl
+            .<String, String>opsForHash()
+            .entries("inventory:" + uuid)
+            .collectList()
+            .flatMap(
+                entries -> {
+                  Map<String, String> entryMap = new HashMap<>();
+                  for (Map.Entry<String, String> entry : entries) {
+                    if (entry.getKey().equals("create_time")
+                        || entry.getKey().equals("update_time")) {
+                      entryMap.put(entry.getKey(), time);
+                    } else {
+                      entryMap.put(entry.getKey(), entry.getValue());
+                    }
+                  }
+                  return Mono.just(entryMap);
+                })
+            .block());
+
+    // 驗證HKTV資料
+    Assertions.assertEquals(
+        buildExpectedHktvStockLevel("H0000101", "0", "forceInStock", "0", uuid, time),
+        redisTempl
+            .<String, String>opsForHash()
+            .entries(sku)
+            .collectList()
+            .flatMap(
+                entries -> {
+                  Map<String, String> entryMap = new HashMap<>();
+                  for (Map.Entry<String, String> entry : entries) {
+                    if (entry.getKey().equals("H0000101_updatestocktime")) {
+                      entryMap.put(entry.getKey(), time);
+                    } else {
+                      entryMap.put(entry.getKey(), entry.getValue());
+                    }
+                  }
+                  return Mono.just(entryMap);
+                })
+            .block());
+
+    // 驗證HKTV updateEvent資料
+    Assertions.assertTrue(
+        redisTempl
+            .opsForList()
+            .range(updEventKey, 0, -1)
+            .switchIfEmpty(Mono.just(""))
+            .collectList()
+            .block()
+            .contains(buildExpectedUpdateEventValue(sku, "H0000101")));
+
+    // 驗證LM資料
+    Assertions.assertEquals(
+        buildExpectedLMStockLevel("0", "forceInStock", "0", time),
+        redisLMTempl
+            .<String, String>opsForHash()
+            .entries(uuid)
+            .collectList()
+            .flatMap(
+                entries -> {
+                  Map<String, String> entryMap = new HashMap<>();
+                  for (Map.Entry<String, String> entry : entries) {
+                    if (entry.getKey().equals("updatestocktime")) {
+                      entryMap.put(entry.getKey(), time);
+                    } else {
+                      entryMap.put(entry.getKey(), entry.getValue());
+                    }
+                  }
+                  return Mono.just(entryMap);
+                })
+            .block());
+
+    redisTempl.delete("inventory:" + uuid, uuid).block();
+    redisHKTVTempl.delete(sku, updEventKey).block();
+    redisLMTempl.delete(uuid).block();
   }
 }

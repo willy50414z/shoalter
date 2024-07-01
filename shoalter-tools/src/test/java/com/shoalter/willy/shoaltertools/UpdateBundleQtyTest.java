@@ -7,6 +7,7 @@ import com.shoalter.willy.shoaltertools.testtool.RabbitMqUtil;
 import com.shoalter.willy.shoaltertools.testtool.RedisUtil;
 import com.shoalter.willy.shoaltertools.testtool.SystemConstants;
 import com.shoalter.willy.shoaltertools.testtool.updbundleqty.UpdateBundleQtyTestTool;
+
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
@@ -995,8 +996,8 @@ public class UpdateBundleQtyTest extends UpdateBundleQtyTestTool {
     String child1Sku = "H088800118_S_child-SKU-E-1";
     String child2Sku = "H088800118_S_child-SKU-E-2";
     String parentSku = "H088800118_S_parent-SKU-E-1";
-    String child1Uuid = "child-UUID-E-1-1";
-    String child2Uuid = "child-UUID-E-2-2";
+    String child1Uuid = "child-UUID-E-1";
+    String child2Uuid = "child-UUID-E-2";
     String parentUuid = "parent-E-001-1";
     String parentSetting = UpdateBundleQtyTestTool.getParentSettingWithChild12();
 
@@ -1033,5 +1034,167 @@ public class UpdateBundleQtyTest extends UpdateBundleQtyTestTool {
     redisUtil.deleteBundleSettingKey(parentUuid);
     redisUtil.deleteInventoryUuid(child1Uuid, child2Uuid, parentUuid);
     redisUtil.deleteSku(child1Sku, child2Sku, parentSku);
+  }
+
+  @Test
+  public void updBundleQty_deductSameChildQtyByAddBundleQty() {
+    //parent1: child1Sku + child2Sku + child3Sku
+    //parent2: child2Sku + child3Sku + child4Sku
+    //同時編輯parent1+parent2
+    String child1Sku = "H088800118_S_child-SKU-E-1";
+    String child2Sku = "H088800118_S_child-SKU-E-2";
+    String child3Sku = "H088800118_S_child-SKU-E-3";
+    String child4Sku = "H088800118_S_child-SKU-E-4";
+    String parent1Sku = "H088800118_S_parent-SKU-E-1";
+    String parent2Sku = "H088800118_S_parent-SKU-E-2";
+
+    String child1Uuid = "child-UUID-E-1";
+    String child2Uuid = "child-UUID-E-2";
+    String child3Uuid = "child-UUID-E-3";
+    String child4Uuid = "child-UUID-E-4";
+    String parent1Uuid = "parent-E-001-1";
+    String parent2Uuid = "parent-E-001-2";
+    String parentSetting1 = UpdateBundleQtyTestTool.getParentSettingWithChild13();
+    String parentSetting2 = UpdateBundleQtyTestTool.getParentSettingWithChild14();
+
+    // delete data
+    redisUtil.deleteRedisNodeKey();
+    redisUtil.deleteBundleParentKey(child1Uuid, child2Uuid, child3Sku, child4Sku);
+    redisUtil.deleteBundleSettingKey(parent1Uuid);
+    redisUtil.deleteBundleSettingKey(parent2Uuid);
+    redisUtil.deleteInventoryUuid(child1Uuid, child2Uuid, child4Uuid, child3Uuid, parent1Uuid, parent2Uuid);
+    redisUtil.deleteSku(child1Sku, child2Sku, child3Sku,child4Sku, parent1Sku, parent2Sku);
+
+    // insert default data
+    redisUtil.insertIidsAndSkuIimsData(child1Uuid, child1Sku, "98", "1000");
+    redisUtil.insertIidsAndSkuIimsData(child2Uuid, child2Sku, "98", "1000");
+    redisUtil.insertIidsAndSkuIimsData(child3Uuid, child3Sku, "98", "1000");
+    redisUtil.insertIidsAndSkuIimsData(child4Uuid, child4Sku, "98", "1000");
+
+    redisUtil.insertIidsAndSkuIimsParentData(parent1Uuid, parent1Sku, "98","0");
+    redisUtil.insertIidsAndSkuIimsParentData(parent2Uuid, parent2Sku, "98", "0");
+
+    redisUtil.insertBundleParentKey(child1Uuid, parent1Uuid);
+    redisUtil.insertBundleParentKey(child2Uuid, parent1Uuid);
+    redisUtil.insertBundleParentKey(child3Uuid, parent1Uuid);
+    redisUtil.insertBundleParentKey(child2Uuid, parent2Uuid);
+    redisUtil.insertBundleParentKey(child3Uuid, parent2Uuid);
+    redisUtil.insertBundleParentKey(child4Uuid, parent2Uuid);
+
+    redisUtil.insertBundleSettingKey(parent1Uuid, parentSetting1);
+    redisUtil.insertBundleSettingKey(parent2Uuid, parentSetting2);
+
+    Thread t1 =
+            new Thread(
+                    () -> {
+                      try {
+                        apiUtil.updateBundleQtyApi(parent1Uuid, 5, "add");
+                      } catch (Exception e) {
+                        e.printStackTrace();
+                      }
+                    });
+
+    Thread t2 =
+            new Thread(
+                    () -> {
+                      try {
+                        apiUtil.updateBundleQtyApi(parent2Uuid, 5, "add");
+                      } catch (Exception e) {
+                        e.printStackTrace();
+                      }
+                    });
+    t1.start();
+    t2.start();
+    AssertUtil.wait_10_sec();
+    Assertions.assertEquals(
+            "985", redisTempl.opsForHash().get(child1Sku, "H08880011898_available").block());
+    Assertions.assertEquals(
+            "965", redisTempl.opsForHash().get(child2Sku, "H08880011898_available").block());
+    Assertions.assertEquals(
+            "955", redisTempl.opsForHash().get(child3Sku, "H08880011898_available").block());
+    Assertions.assertEquals(
+            "975", redisTempl.opsForHash().get(child4Sku, "H08880011898_available").block());
+
+  }
+
+  @Test
+  public void updBundleQty_addSameChildQtyByDeductBundleQty() {
+    //parent1: child1Sku + child2Sku + child3Sku
+    //parent2: child2Sku + child3Sku + child4Sku
+    //同時編輯parent1+parent2
+    String child1Sku = "H088800118_S_child-SKU-E-1";
+    String child2Sku = "H088800118_S_child-SKU-E-2";
+    String child3Sku = "H088800118_S_child-SKU-E-3";
+    String child4Sku = "H088800118_S_child-SKU-E-4";
+    String parent1Sku = "H088800118_S_parent-SKU-E-1";
+    String parent2Sku = "H088800118_S_parent-SKU-E-2";
+
+    String child1Uuid = "child-UUID-E-1";
+    String child2Uuid = "child-UUID-E-2";
+    String child3Uuid = "child-UUID-E-3";
+    String child4Uuid = "child-UUID-E-4";
+    String parent1Uuid = "parent-E-001-1";
+    String parent2Uuid = "parent-E-001-2";
+    String parentSetting1 = UpdateBundleQtyTestTool.getParentSettingWithChild13();
+    String parentSetting2 = UpdateBundleQtyTestTool.getParentSettingWithChild14();
+
+    // delete data
+    redisUtil.deleteRedisNodeKey();
+    redisUtil.deleteBundleParentKey(child1Uuid, child2Uuid, child3Sku, child4Sku);
+    redisUtil.deleteBundleSettingKey(parent1Uuid);
+    redisUtil.deleteBundleSettingKey(parent2Uuid);
+    redisUtil.deleteInventoryUuid(child1Uuid, child2Uuid, child4Uuid, child3Uuid, parent1Uuid, parent2Uuid);
+    redisUtil.deleteSku(child1Sku, child2Sku, child3Sku,child4Sku, parent1Sku, parent2Sku);
+
+    // insert default data
+    redisUtil.insertIidsAndSkuIimsData(child1Uuid, child1Sku, "98", "0");
+    redisUtil.insertIidsAndSkuIimsData(child2Uuid, child2Sku, "98", "0");
+    redisUtil.insertIidsAndSkuIimsData(child3Uuid, child3Sku, "98", "0");
+    redisUtil.insertIidsAndSkuIimsData(child4Uuid, child4Sku, "98", "0");
+
+    redisUtil.insertIidsAndSkuIimsParentData(parent1Uuid, parent1Sku, "98","1000");
+    redisUtil.insertIidsAndSkuIimsParentData(parent2Uuid, parent2Sku, "98", "1000");
+
+    redisUtil.insertBundleParentKey(child1Uuid, parent1Uuid);
+    redisUtil.insertBundleParentKey(child2Uuid, parent1Uuid);
+    redisUtil.insertBundleParentKey(child3Uuid, parent1Uuid);
+    redisUtil.insertBundleParentKey(child2Uuid, parent2Uuid);
+    redisUtil.insertBundleParentKey(child3Uuid, parent2Uuid);
+    redisUtil.insertBundleParentKey(child4Uuid, parent2Uuid);
+
+    redisUtil.insertBundleSettingKey(parent1Uuid, parentSetting1);
+    redisUtil.insertBundleSettingKey(parent2Uuid, parentSetting2);
+
+    Thread t1 =
+            new Thread(
+                    () -> {
+                      try {
+                        apiUtil.updateBundleQtyApi(parent1Uuid, 5, "deduct");
+                      } catch (Exception e) {
+                        e.printStackTrace();
+                      }
+                    });
+
+    Thread t2 =
+            new Thread(
+                    () -> {
+                      try {
+                        apiUtil.updateBundleQtyApi(parent2Uuid, 5, "deduct");
+                      } catch (Exception e) {
+                        e.printStackTrace();
+                      }
+                    });
+    t1.start();
+    t2.start();
+    AssertUtil.wait_10_sec();
+    Assertions.assertEquals(
+            "15", redisTempl.opsForHash().get(child1Sku, "H08880011898_available").block());
+    Assertions.assertEquals(
+            "35", redisTempl.opsForHash().get(child2Sku, "H08880011898_available").block());
+    Assertions.assertEquals(
+            "45", redisTempl.opsForHash().get(child3Sku, "H08880011898_available").block());
+    Assertions.assertEquals(
+            "25", redisTempl.opsForHash().get(child4Sku, "H08880011898_available").block());
+
   }
 }

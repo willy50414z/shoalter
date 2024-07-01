@@ -73,6 +73,32 @@ public class ApiUtil {
         .all();
   }
 
+  public void updateBundleQtyApi(String bundleUuid, int qty, String mode) {
+    String jsonString = "[\n"
+            + "  {\n"
+            + "    \"uuid\": \"" + bundleUuid + "\",\n"
+            + "    \"mallQty\": [\n"
+            + "      {\n"
+            + "        \"mall\": \"hktv\",\n"
+            + "        \"mode\": \"" + mode + "\",\n"
+            + "        \"qty\": " + qty + "\n"
+            + "      }\n"
+            + "    ]\n"
+            + "  }\n"
+            + "]";
+
+
+    given()
+            .contentType("application/json")
+            .body(jsonString)
+            .when()
+            .put(getLocalUpdBundleQtyUrl())
+            .then()
+            .statusCode(200)
+            .log()
+            .all();
+  }
+
   public void callDeductBundle2500QtyApi(String bundleUuid) {
     given()
         .contentType("application/json")

@@ -73,9 +73,11 @@ public class RedisUtil {
   public void insertIidsAndSkuIimsParentData(String uuid, String sku, String seqNo) {
     insertIidsAndIimsParentData(uuid, sku, seqNo, "2400");
   }
+
   public void insertIidsAndSkuIimsParentData(String uuid, String sku, String seqNo, String qty) {
     insertIidsAndIimsParentData(uuid, sku, seqNo, qty);
   }
+
   public void insertIidsAndIimsParentData(String uuid, String sku, String seqNo, String qty) {
     String iidsKey = "inventory:" + uuid;
     Map<String, String> iidsData = BuildDtoUtil.buildIidsParenthktvData(sku, seqNo);

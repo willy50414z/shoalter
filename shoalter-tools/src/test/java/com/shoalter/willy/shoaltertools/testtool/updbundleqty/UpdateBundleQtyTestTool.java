@@ -95,77 +95,79 @@ public class UpdateBundleQtyTestTool {
         + "    ]\n"
         + "}";
   }
+
   public static String getParentSettingWithChild13() {
-    return "{\n" +
-            "    \"is_reserved\": true,\n" +
-            "    \"is_active\": false,\n" +
-            "    \"priority\": 0,\n" +
-            "    \"bundle_mall_info\": [{\n" +
-            "            \"mall\": \"hktv\",\n" +
-            "            \"alert_qty\": 100,\n" +
-            "            \"ceiling_qty\": 100\n" +
-            "        }\n" +
-            "    ],\n" +
-            "    \"bundle_child_info\": [{\n" +
-            "            \"uuid\": \"child-UUID-E-1\",\n" +
-            "            \"sku_id\": \"child-SKU-E-1\",\n" +
-            "            \"storefront_store_code\": \"H088800118\",\n" +
-            "            \"sku_qty\": 3,\n" +
-            "            \"ceiling_qty\": 0,\n" +
-            "            \"is_loop\": false\n" +
-            "        }, {\n" +
-            "            \"uuid\": \"child-UUID-E-2\",\n" +
-            "            \"sku_id\": \"child-SKU-E-2\",\n" +
-            "            \"storefront_store_code\": \"H088800118\",\n" +
-            "            \"sku_qty\": 4,\n" +
-            "            \"ceiling_qty\": 0,\n" +
-            "            \"is_loop\": false\n" +
-            "        }, {\n" +
-            "            \"uuid\": \"child-UUID-E-3\",\n" +
-            "            \"sku_id\": \"child-SKU-E-3\",\n" +
-            "            \"storefront_store_code\": \"H088800118\",\n" +
-            "            \"sku_qty\": 5,\n" +
-            "            \"ceiling_qty\": 0,\n" +
-            "            \"is_loop\": false\n" +
-            "        }\n" +
-            "    ]\n" +
-            "}\n";
+    return "{\n"
+        + "    \"is_reserved\": true,\n"
+        + "    \"is_active\": false,\n"
+        + "    \"priority\": 0,\n"
+        + "    \"bundle_mall_info\": [{\n"
+        + "            \"mall\": \"hktv\",\n"
+        + "            \"alert_qty\": 100,\n"
+        + "            \"ceiling_qty\": 100\n"
+        + "        }\n"
+        + "    ],\n"
+        + "    \"bundle_child_info\": [{\n"
+        + "            \"uuid\": \"child-UUID-E-1\",\n"
+        + "            \"sku_id\": \"child-SKU-E-1\",\n"
+        + "            \"storefront_store_code\": \"H088800118\",\n"
+        + "            \"sku_qty\": 3,\n"
+        + "            \"ceiling_qty\": 0,\n"
+        + "            \"is_loop\": false\n"
+        + "        }, {\n"
+        + "            \"uuid\": \"child-UUID-E-2\",\n"
+        + "            \"sku_id\": \"child-SKU-E-2\",\n"
+        + "            \"storefront_store_code\": \"H088800118\",\n"
+        + "            \"sku_qty\": 4,\n"
+        + "            \"ceiling_qty\": 0,\n"
+        + "            \"is_loop\": false\n"
+        + "        }, {\n"
+        + "            \"uuid\": \"child-UUID-E-3\",\n"
+        + "            \"sku_id\": \"child-SKU-E-3\",\n"
+        + "            \"storefront_store_code\": \"H088800118\",\n"
+        + "            \"sku_qty\": 5,\n"
+        + "            \"ceiling_qty\": 0,\n"
+        + "            \"is_loop\": false\n"
+        + "        }\n"
+        + "    ]\n"
+        + "}\n";
   }
+
   public static String getParentSettingWithChild14() {
-    return "{\n" +
-            "    \"is_reserved\": true,\n" +
-            "    \"is_active\": false,\n" +
-            "    \"priority\": 0,\n" +
-            "    \"bundle_mall_info\": [{\n" +
-            "            \"mall\": \"hktv\",\n" +
-            "            \"alert_qty\": 100,\n" +
-            "            \"ceiling_qty\": 100\n" +
-            "        }\n" +
-            "    ],\n" +
-            "    \"bundle_child_info\": [{\n" +
-            "            \"uuid\": \"child-UUID-E-2\",\n" +
-            "            \"sku_id\": \"child-SKU-E-2\",\n" +
-            "            \"storefront_store_code\": \"H088800118\",\n" +
-            "            \"sku_qty\": 3,\n" +
-            "            \"ceiling_qty\": 0,\n" +
-            "            \"is_loop\": false\n" +
-            "        }, {\n" +
-            "            \"uuid\": \"child-UUID-E-3\",\n" +
-            "            \"sku_id\": \"child-SKU-E-3\",\n" +
-            "            \"storefront_store_code\": \"H088800118\",\n" +
-            "            \"sku_qty\": 4,\n" +
-            "            \"ceiling_qty\": 0,\n" +
-            "            \"is_loop\": false\n" +
-            "        }, {\n" +
-            "            \"uuid\": \"child-UUID-E-4\",\n" +
-            "            \"sku_id\": \"child-SKU-E-4\",\n" +
-            "            \"storefront_store_code\": \"H088800118\",\n" +
-            "            \"sku_qty\": 5,\n" +
-            "            \"ceiling_qty\": 0,\n" +
-            "            \"is_loop\": false\n" +
-            "        }\n" +
-            "    ]\n" +
-            "}\n";
+    return "{\n"
+        + "    \"is_reserved\": true,\n"
+        + "    \"is_active\": false,\n"
+        + "    \"priority\": 0,\n"
+        + "    \"bundle_mall_info\": [{\n"
+        + "            \"mall\": \"hktv\",\n"
+        + "            \"alert_qty\": 100,\n"
+        + "            \"ceiling_qty\": 100\n"
+        + "        }\n"
+        + "    ],\n"
+        + "    \"bundle_child_info\": [{\n"
+        + "            \"uuid\": \"child-UUID-E-2\",\n"
+        + "            \"sku_id\": \"child-SKU-E-2\",\n"
+        + "            \"storefront_store_code\": \"H088800118\",\n"
+        + "            \"sku_qty\": 3,\n"
+        + "            \"ceiling_qty\": 0,\n"
+        + "            \"is_loop\": false\n"
+        + "        }, {\n"
+        + "            \"uuid\": \"child-UUID-E-3\",\n"
+        + "            \"sku_id\": \"child-SKU-E-3\",\n"
+        + "            \"storefront_store_code\": \"H088800118\",\n"
+        + "            \"sku_qty\": 4,\n"
+        + "            \"ceiling_qty\": 0,\n"
+        + "            \"is_loop\": false\n"
+        + "        }, {\n"
+        + "            \"uuid\": \"child-UUID-E-4\",\n"
+        + "            \"sku_id\": \"child-SKU-E-4\",\n"
+        + "            \"storefront_store_code\": \"H088800118\",\n"
+        + "            \"sku_qty\": 5,\n"
+        + "            \"ceiling_qty\": 0,\n"
+        + "            \"is_loop\": false\n"
+        + "        }\n"
+        + "    ]\n"
+        + "}\n";
   }
 
   public static String getParentSettingWithChild124() {

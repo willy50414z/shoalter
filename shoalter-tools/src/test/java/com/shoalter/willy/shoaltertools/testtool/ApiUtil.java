@@ -13,6 +13,7 @@ public class ApiUtil {
   private String getLocalIidsUrl() {
     return "http://127.0.0.1:8099";
   }
+
   private String getLocalIimsUrl() {
     return "http://127.0.0.1:8088";
   }
@@ -32,11 +33,17 @@ public class ApiUtil {
   public String getLocalStockLevelV3Url() {
     return getLocalIidsUrl() + "/s2s/v3/get_stock_levels";
   }
+
   public String findStockLevelsV1Url(String uuid) {
-    return getLocalIidsUrl() + "/s2s/v1/products/"+uuid+"/stock-levels";
+    return getLocalIidsUrl() + "/s2s/v1/products/" + uuid + "/stock-levels";
   }
-  public String findSkuStockLevelUrl(String sku) {
-    return getLocalIimsUrl() + "/iims/s2s/v1/products/"+sku+"/stock-levels";
+
+  public String findSkuStockLevelUrlIims(String sku) {
+    return getLocalIimsUrl() + "/iims/s2s/v1/products/" + sku + "/stock-levels";
+  }
+
+  public String updateSkuStockLevelUrlIims(String sku) {
+    return getLocalIimsUrl() + "/iims/s2s/v1/products/" + sku + "/stock-levels";
   }
 
   public String postStockLevelsV1Url() {
@@ -74,29 +81,35 @@ public class ApiUtil {
   }
 
   public void updateBundleQtyApi(String bundleUuid, int qty, String mode) {
-    String jsonString = "[\n"
+    String jsonString =
+        "[\n"
             + "  {\n"
-            + "    \"uuid\": \"" + bundleUuid + "\",\n"
+            + "    \"uuid\": \""
+            + bundleUuid
+            + "\",\n"
             + "    \"mallQty\": [\n"
             + "      {\n"
             + "        \"mall\": \"hktv\",\n"
-            + "        \"mode\": \"" + mode + "\",\n"
-            + "        \"qty\": " + qty + "\n"
+            + "        \"mode\": \""
+            + mode
+            + "\",\n"
+            + "        \"qty\": "
+            + qty
+            + "\n"
             + "      }\n"
             + "    ]\n"
             + "  }\n"
             + "]";
 
-
     given()
-            .contentType("application/json")
-            .body(jsonString)
-            .when()
-            .put(getLocalUpdBundleQtyUrl())
-            .then()
-            .statusCode(200)
-            .log()
-            .all();
+        .contentType("application/json")
+        .body(jsonString)
+        .when()
+        .put(getLocalUpdBundleQtyUrl())
+        .then()
+        .statusCode(200)
+        .log()
+        .all();
   }
 
   public void callDeductBundle2500QtyApi(String bundleUuid) {
@@ -576,36 +589,52 @@ public class ApiUtil {
 
   public void updateStockQuantityListV1(String uuid) {
     given()
-          .contentType("application/json")
-          .body("[{\n"
-                + "  \"uuid\": \"" + uuid + "\",\n"
+        .contentType("application/json")
+        .body(
+            "[{\n"
+                + "  \"uuid\": \""
+                + uuid
+                + "\",\n"
                 + "  \"malls\": [{\n"
                 + "    \"name\": \"hktv\",\n"
                 + "    \"mode\": \"set\",\n"
                 + "    \"quantity\": 10\n"
                 + "  }]\n"
                 + "}]")
-          .when()
-          .post(postStockLevelsV1Url())
-          .then()
-          .statusCode(200)
-          .log()
-          .all();
+        .when()
+        .post(postStockLevelsV1Url())
+        .then()
+        .statusCode(200)
+        .log()
+        .all();
   }
 
   public void findSkuStockLevelIims(String sku) {
     given()
-          .contentType("application/json")
-          .body("")
-          .when()
-          .get(findSkuStockLevelUrl(sku))
-          .then()
-          .statusCode(200)
-          .log()
-          .all();
+        .contentType("application/json")
+        .body("")
+        .when()
+        .get(findSkuStockLevelUrlIims(sku))
+        .then()
+        .statusCode(200)
+        .log()
+        .all();
   }
 
-
+  public void updateSkuStockLevelIims(String sku, String mode, int quantity) {
+    JSONObject jsonObject = new JSONObject();
+    jsonObject.put("mode", mode);
+    jsonObject.put("quantity", quantity);
+    given()
+        .contentType("application/json")
+        .body(jsonObject)
+        .when()
+        .post(updateSkuStockLevelUrlIims(sku))
+        .then()
+        .statusCode(200)
+        .log()
+        .all();
+  }
 
   public void addMallOrUuidStockLevelsV1(Map<String, Object> requestMap) throws JSONException {
 

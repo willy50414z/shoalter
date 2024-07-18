@@ -101,35 +101,36 @@ public class CreateProductInfoTestTool {
 
   public ProductInfoDto buildProductInfoDto_testcaseWithStatus(String uuid, String sku) {
     return ProductInfoDto.builder()
-            .action("CREATE")
-            .products(
-                    List.of(
-                            ProductDto.builder()
-                                    .uuid(uuid)
-                                    .warehouseDetail(
-                                            List.of(
-                                                    ProductWarehouseDetailDto.builder()
-                                                            .warehouseSeqNo("01")
-                                                            .mall(List.of("hktv", "little_mall"))
-                                                            .build()))
-                                    .mallDetail(
-                                            List.of(
-                                                    ProductMallDetailDto.builder()
-                                                            .mall("hktv")
-                                                            .storefrontStoreCode("H00001")
-                                                            .stockStatus("forceInStock")
-                                                            .storeSkuId(sku)
-                                                            .build(),
-                                                    ProductMallDetailDto.builder()
-                                                            .mall("little_mall")
-                                                            .stockStatus("forceInStock")
-                                                            .storefrontStoreCode("H00001")
-                                                            .build()))
-                                    .build()))
-            .build();
+        .action("CREATE")
+        .products(
+            List.of(
+                ProductDto.builder()
+                    .uuid(uuid)
+                    .warehouseDetail(
+                        List.of(
+                            ProductWarehouseDetailDto.builder()
+                                .warehouseSeqNo("01")
+                                .mall(List.of("hktv", "little_mall"))
+                                .build()))
+                    .mallDetail(
+                        List.of(
+                            ProductMallDetailDto.builder()
+                                .mall("hktv")
+                                .storefrontStoreCode("H00001")
+                                .stockStatus("forceInStock")
+                                .storeSkuId(sku)
+                                .build(),
+                            ProductMallDetailDto.builder()
+                                .mall("little_mall")
+                                .stockStatus("forceInStock")
+                                .storefrontStoreCode("H00001")
+                                .build()))
+                    .build()))
+        .build();
   }
 
-  public static Map<String, String> buildExpectedStockLevel_testcase0001(String sku, String time, String instockstatus) {
+  public static Map<String, String> buildExpectedStockLevel_testcase0001(
+      String sku, String time, String instockstatus) {
     Map<String, String> stockLevelMap = new HashMap<>();
     stockLevelMap.put("01_mall", "hktv,little_mall");
     stockLevelMap.put("01_qty", "0");

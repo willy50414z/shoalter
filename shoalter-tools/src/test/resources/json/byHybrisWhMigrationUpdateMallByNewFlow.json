@@ -1,0 +1,30 @@
+{
+  "statusCode": "IIDS-2000",
+  "message": null,
+  "data": {
+    "success": [
+      {
+        "uuid": "5d99-8f06-2e5452215b0a",
+        "before": [
+          {
+            "mall": "hktv",
+            "instockstatus": "notSpecified",
+            "qty": 2000,
+            "share": 0
+          }
+        ],
+        "after": [
+          {
+            "mall": "hktv",
+            "instockstatus": "notSpecified",
+            "qty": 40,
+            "share": 0
+          }
+        ]
+      }
+    ],
+    "fail": [
+
+    ]
+  }
+}

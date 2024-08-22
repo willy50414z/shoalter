@@ -1,0 +1,52 @@
+{
+  "statusCode": "IIDS-2000",
+  "message": null,
+  "data": {
+    "success": [
+      {
+        "uuid": "5d99-8f06-2e5452215b0a",
+        "warehouseQty": [
+          {
+            "warehouseSeqNo": "01",
+            "before": {
+              "shareQty": 0,
+              "nonShare": [
+
+              ]
+            },
+            "after": {
+              "shareQty": 233,
+              "nonShare": [
+
+              ]
+            }
+          },
+          {
+            "warehouseSeqNo": "02",
+            "before": {
+              "shareQty": 0,
+              "nonShare": [
+                {
+                  "mall": "hktv",
+                  "qty": 2000
+                }
+              ]
+            },
+            "after": {
+              "shareQty": 0,
+              "nonShare": [
+                {
+                  "mall": "hktv",
+                  "qty": 233
+                }
+              ]
+            }
+          }
+        ]
+      }
+    ],
+    "fail": [
+
+    ]
+  }
+}

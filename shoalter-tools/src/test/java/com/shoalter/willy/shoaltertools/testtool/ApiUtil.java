@@ -54,6 +54,54 @@ public class ApiUtil {
     return getLocalIidsUrl() + "/s2s/v1/products";
   }
 
+  public String getLocalStockLevelWithBundleInfoUrl() {
+    return getLocalIidsUrl() + "/s2s/v3/get_stock_levels/bundle";
+  }
+
+  public String getLocalFindStockLevelV1Url() {
+    return getLocalIidsUrl() + "/s2s/v1/products/{products_uuids}/stock-levels";
+  }
+
+  public String getLocalCreateHktvStockLevelUrl() {
+    return getLocalIidsUrl() + "/s2s/v1/products";
+  }
+
+  public String getLocalUpdateStockLevelQtyV1Url() {
+    return getLocalIidsUrl() + "/s2s/v1/products/stock-levels";
+  }
+
+  public String getLocalUpdateStockLevelInStockStatusV1Url() {
+    return getLocalIidsUrl() + "/s2s/v1/products/stock-levels/stock-status";
+  }
+
+  public String getLocalUpdateStockLevelToShareModeV1Url() {
+    return getLocalIidsUrl() + "/s2s/v1/products/stock-levels/share-mode";
+  }
+
+  public String getLocalUpdateStockLevelToNonShareModeV1Url() {
+    return getLocalIidsUrl() + "/s2s/v1/products/stock-levels/share-mode";
+  }
+
+  public String getLocalUpdateHktvByMixUrl() {
+    return getLocalIidsUrl() + "/s2s/v1/products/stock-levels";
+  }
+
+  public String getLocalUpdateProductQtyByMixUrl() {
+    return getLocalIidsUrl() + "/s2s/v2/products/stock-levels";
+  }
+
+  public String getLocalCreateLittleMallStockLevelUrl() {
+    return getLocalIidsUrl() + "/s2s/v2/products";
+  }
+
+  public String getLocalSkuStockLevelUrl() {
+    return getLocalIimsUrl() + "/iims/s2s/v1/products/{product_SKU_id}/stock-levels";
+  }
+
+  public String getLocalUpdSkuStockLevelQtyUrl() {
+    return getLocalIimsUrl() + "/iims/s2s/v1/products/{product_SKU_id}/stock-levels";
+  }
+
   public void callDeductWh4700QtyApi(String childUuid) {
     given()
         .contentType("application/json")
@@ -658,6 +706,54 @@ public class ApiUtil {
         .body(List.of(productObject))
         .when()
         .post(getAddMallOrUuidStockLevelsV1Url())
+        .then()
+        .statusCode(200)
+        .log()
+        .all();
+  }
+
+  public void callSetWh0QtyApi(String childUuid) {
+    given()
+        .contentType("application/json")
+        .body(
+            "[\n"
+                + "  {\n"
+                + "    \"uuid\": \""
+                + childUuid
+                + "\",\n"
+                + "    \"warehouseQty\": [\n"
+                + "      {\n"
+                + "        \"warehouseSeqNo\": \"98\",\n"
+                + "        \"mode\": \"set\",\n"
+                + "        \"quantity\": 0\n"
+                + "      }\n"
+                + "    ]\n"
+                + "  }\n"
+                + "]")
+        .when()
+        .put(getLocalUpdWhQtyUrl())
+        .then()
+        .statusCode(200)
+        .log()
+        .all();
+  }
+
+  public void getStockLevelV1(String uuid) {
+    given()
+        .contentType("application/json")
+        .pathParam("products_uuids", uuid)
+        .get(getLocalFindStockLevelV1Url())
+        .then()
+        .statusCode(200)
+        .log()
+        .all();
+  }
+
+  public void getIimsStockLevel(String sku) {
+    given()
+        .contentType("application/json")
+        .pathParam("product_SKU_id", sku)
+        .get(getLocalSkuStockLevelUrl())
         .then()
         .statusCode(200)
         .log()

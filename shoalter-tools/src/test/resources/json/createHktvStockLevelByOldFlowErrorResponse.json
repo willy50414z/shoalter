@@ -1,0 +1,13 @@
+{
+  "data": {
+    "success": [
+
+    ],
+    "fail": [
+      {
+        "uuid": "5d99-8f06-2e5452215b0a",
+        "message": "400 BAD_REQUEST \"Mall already exists in Redis\""
+      }
+    ]
+  }
+}

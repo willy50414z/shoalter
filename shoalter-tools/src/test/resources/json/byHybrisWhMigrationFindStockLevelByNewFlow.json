@@ -1,0 +1,43 @@
+{
+    "statusCode": "IIDS-2000",
+    "message": null,
+    "data": {
+        "success": [
+            {
+                "uuid": "5d99-8f06-2e5452215b0a",
+                "warehouseDetail": [
+                    {
+                        "warehouseSeqNo": "98",
+                        "qty": 0,
+                        "stockLevels": null
+                    },
+                    {
+                        "warehouseSeqNo": "01",
+                        "qty": 0,
+                        "stockLevels": null
+                    },
+                    {
+                        "warehouseSeqNo": "02",
+                        "qty": 2000,
+                        "stockLevels": [
+                            {
+                                "mall": "hktv",
+                                "sku": "H088800118_S_10021451M",
+                                "instockstatus": "notSpecified",
+                                "qty": 2000,
+                                "share": 0,
+                                "updateStockTime": "20240101000000",
+                                "sellingQty": null,
+                                "settingQty": null,
+                                "storefrontStoreCode": "H088800118"
+                            }
+                        ]
+                    }
+                ]
+            }
+        ],
+        "fail": [
+
+        ]
+    }
+}

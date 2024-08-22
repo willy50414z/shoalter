@@ -1,0 +1,34 @@
+{
+  "data": {
+    "success": [
+      {
+        "uuid": "5d99-8f06-2e5452215b0a",
+        "shareMall": [
+
+        ],
+        "nonShareMall": [
+          "hktv"
+        ],
+        "quantity": 0,
+        "inStockStatus": "notSpecified",
+        "updateStockTime": "20240101000000",
+        "skuMap": {
+          "hktv": "H088800118_S_10021451M"
+        },
+        "warehouseMap": {
+          "hktv": "H08880011802"
+        },
+        "nonShareData": [
+          {
+            "name": "hktv",
+            "quantity": 2000,
+            "inStockStatus": "notSpecified"
+          }
+        ]
+      }
+    ],
+    "fail": [
+
+    ]
+  }
+}

@@ -1,0 +1,16 @@
+{
+  "statusCode": "IIDS-2001",
+  "message": null,
+  "data": {
+    "success": [
+
+    ],
+    "fail": [
+      {
+        "uuid": "5d99-8f06-2e5452215b0a",
+        "errorCode": "IIDS-0009",
+        "msg": "Internal server error, message[Request has influence on non share mall quantity, need to change non share mall status to FOS, but grpc fail, reason[FAILED_PRECONDITION: {\"warehouseId\":\"H08880011802\",\"H08880011802_instockstatus\":\"notSpecified\",\"H08880011802_available\":\"2000\",\"share\":\"0\",\"uuid\":\"5d99-8f06-2e5452215b0a\",\"H08880011802_updatestocktime\":\"20240101000000\"}], mall[hktv], uuid[5d99-8f06-2e5452215b0a]]"
+      }
+    ]
+  }
+}

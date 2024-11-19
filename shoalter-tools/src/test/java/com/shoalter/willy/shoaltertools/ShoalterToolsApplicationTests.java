@@ -49,7 +49,7 @@ class ShoalterToolsApplicationTests {
         .and()
         .body(
             equalTo(
-                "{\"data\":{\"success\":[{\"uuid\":\"willy230706-ba43-11ec-8422-0242ac120002\",\"shareMall\":[],\"nonShareMall\":[\"hktv\"],\"quantity\":0,\"inStockStatus\":\"notSpecified\",\"updateStockTime\":\"20230808140211\",\"skuMap\":{\"hktv\":\"willy_A12345\"},\"warehouseMap\":{\"hktv\":\"H0101010\"},\"nonShareData\":[{\"name\":\"hktv\",\"quantity\":990,\"inStockStatus\":\"notSpecified\"}]}],\"fail\":[cc]}}"))
+                "{\"data\":{\"success\":[{\"uuid\":\"willy230706-ba43-11ec-8422-0242ac120002\",\"shareMall\":[],\"nonShareMall\":[\"hktv\"],\"quantity\":0,\"inStockStatus\":\"notSpecified\",\"updateStockTime\":\"20230808140211\",\"skuMap\":{\"hktv\":\"willy_A12345\"},\"warehouseMap\":{\"hktv\":\"H0101010\"},\"nonShareData\":[{\"name\":\"hktv\",\"quantity\":990,\"inStockStatus\":\"notSpecified\"}]}],\"fail\":[]}}"))
         .given()
         .when()
         .get(

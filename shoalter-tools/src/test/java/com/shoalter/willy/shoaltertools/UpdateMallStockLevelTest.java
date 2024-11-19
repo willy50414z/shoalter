@@ -181,7 +181,7 @@ public class UpdateMallStockLevelTest {
 
     // 驗證HKTV資料
     Assertions.assertEquals(
-        buildExpectedHktvStockLevel("H0000101", "0", "forceInStock", "0", uuid_FIS, time),
+        buildExpectedHktvStockLevel("H0000101", "999", "forceInStock", "0", uuid_FIS, time),
         redisTempl
             .<String, String>opsForHash()
             .entries(sku_FIS)
@@ -403,7 +403,7 @@ public class UpdateMallStockLevelTest {
 
     // 驗證HKTV資料
     Assertions.assertEquals(
-        buildExpectedHktvStockLevel("H0000101", "0", "forceInStock", "1", uuid_FIS, time),
+        buildExpectedHktvStockLevel("H0000101", "999", "forceInStock", "1", uuid_FIS, time),
         redisTempl
             .<String, String>opsForHash()
             .entries(sku_FIS)

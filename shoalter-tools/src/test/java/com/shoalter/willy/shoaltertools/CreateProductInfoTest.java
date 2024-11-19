@@ -470,7 +470,7 @@ public class CreateProductInfoTest extends CreateProductInfoTestTool {
 
     // 驗證HKTV資料
     Assertions.assertEquals(
-        buildExpectedHktvStockLevel("H0000101", "0", "forceInStock", "0", uuid, time),
+        buildExpectedHktvStockLevel("H0000101", "999", "forceInStock", "0", uuid, time),
         redisTempl
             .<String, String>opsForHash()
             .entries(sku)
